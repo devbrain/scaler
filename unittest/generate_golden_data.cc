@@ -1,11 +1,11 @@
 // Program to generate golden data for all scaling algorithms
 #include <scaler/sdl_compat.hh>
 #include <scaler/sdl_image.hh>
-#include <scaler/epx_crtp.hh>
-#include <scaler/eagle_crtp.hh>
-#include <scaler/2xsai_crtp.hh>
-#include <scaler/xbr_crtp.hh>
-#include <scaler/hq2x_crtp.hh>
+#include <scaler/epx.hh>
+#include <scaler/eagle.hh>
+#include <scaler/2xsai.hh>
+#include <scaler/xbr.hh>
+#include <scaler/hq2x.hh>
 #include <iostream>
 #include <fstream>
 #include <vector>

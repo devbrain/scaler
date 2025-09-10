@@ -9,10 +9,10 @@ file(REMOVE_RECURSE
   "CMakeFiles/scaler_unittest.dir/test_golden_data.cc.o.d"
   "CMakeFiles/scaler_unittest.dir/test_main.cc.o"
   "CMakeFiles/scaler_unittest.dir/test_main.cc.o.d"
-  "CMakeFiles/scaler_unittest.dir/test_original_vs_crtp.cc.o"
-  "CMakeFiles/scaler_unittest.dir/test_original_vs_crtp.cc.o.d"
   "CMakeFiles/scaler_unittest.dir/test_scalers_comprehensive.cc.o"
   "CMakeFiles/scaler_unittest.dir/test_scalers_comprehensive.cc.o.d"
+  "CMakeFiles/scaler_unittest.dir/test_sdl_interface.cc.o"
+  "CMakeFiles/scaler_unittest.dir/test_sdl_interface.cc.o.d"
   "CMakeFiles/scaler_unittest.dir/test_xbr_hq2x.cc.o"
   "CMakeFiles/scaler_unittest.dir/test_xbr_hq2x.cc.o.d"
 )

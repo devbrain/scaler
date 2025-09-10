@@ -1,8 +1,8 @@
 #include <doctest/doctest.h>
 #include <scaler/image_base.hh>
-#include <scaler/epx_crtp.hh>
-#include <scaler/eagle_crtp.hh>
-#include <scaler/2xsai_crtp.hh>
+#include <scaler/epx.hh>
+#include <scaler/eagle.hh>
+#include <scaler/2xsai.hh>
 #include <vector>
 #include <random>
 #include <chrono>

@@ -1,11 +1,9 @@
 #pragma once
 
-#include <scaler/image.hh>
+#include <scaler/image_base.hh>
 #include <scaler/scaler_common.hh>
 #include <scaler/vec3.hh>
-
 #include <array>
-
 
 #define P(mask, des_res) ((diffs & (mask)) == (des_res))
 #define WDIFF(c1, c2) yuvDifference(c1, c2)
@@ -14,104 +12,106 @@ constexpr uint8_t Y_THRESHOLD = 0x30;
 constexpr uint8_t U_THRESHOLD = 0x07;
 constexpr uint8_t V_THRESHOLD = 0x06;
 
-
-static bool yuvDifference(const uvec3& lhs, const uvec3& rhs) {
-    ivec3 lhs_yuv = rgbToYuv(lhs);
-    ivec3 rhs_yuv = rgbToYuv(rhs);
-    return (abs(lhs_yuv.x - rhs_yuv.x) > Y_THRESHOLD ||
-            abs(lhs_yuv.y - rhs_yuv.y) > U_THRESHOLD ||
-            abs(lhs_yuv.z - rhs_yuv.z) > V_THRESHOLD);
+template<typename T>
+static bool yuvDifference(const T& lhs, const T& rhs) {
+    auto lhs_yuv = rgbToYuv(lhs);
+    auto rhs_yuv = rgbToYuv(rhs);
+    return (abs(static_cast<int>(lhs_yuv.x) - static_cast<int>(rhs_yuv.x)) > Y_THRESHOLD ||
+            abs(static_cast<int>(lhs_yuv.y) - static_cast<int>(rhs_yuv.y)) > U_THRESHOLD ||
+            abs(static_cast<int>(lhs_yuv.z) - static_cast<int>(rhs_yuv.z)) > V_THRESHOLD);
 }
 
 template<typename T>
-static vec3<T> interpolate2Pixels(vec3<T> c1, int32_t w1, vec3<T> c2, int32_t w2, int32_t s) {
+static T interpolate2Pixels(T c1, int32_t w1, T c2, int32_t w2, int32_t s) {
     if (c1 == c2) { return c1; }
-    return {
-        static_cast<T>(((c1.x * (T)w1) + (c2.x * (T)w2)) >> s),
-        static_cast<T>(((c1.y * (T)w1) + (c2.y * (T)w2)) >> s),
-        static_cast<T>(((c1.z * (T)w1) + (c2.z * (T)w2)) >> s)
+    return T{
+        static_cast<unsigned int>(((c1.x * w1) + (c2.x * w2)) >> s),
+        static_cast<unsigned int>(((c1.y * w1) + (c2.y * w2)) >> s),
+        static_cast<unsigned int>(((c1.z * w1) + (c2.z * w2)) >> s)
     };
 }
 
 template<typename T>
-static vec3<T> interpolate3Pixels(vec3<T> c1, int32_t w1, vec3<T> c2, int32_t w2, vec3<T> c3, int32_t w3, int32_t s) {
-    return {
-        static_cast<T>(((c1.x * (T)w1) + (c2.x * (T)w2) + (c3.x * (T)w3)) >> s),
-        static_cast<T>(((c1.y * (T)w1) + (c2.y * (T)w2) + (c3.y * (T)w3)) >> s),
-        static_cast<T>(((c1.z * (T)w1) + (c2.z * (T)w2) + (c3.z * (T)w3)) >> s)
+static T interpolate3Pixels(T c1, int32_t w1, T c2, int32_t w2, T c3, int32_t w3, int32_t s) {
+    return T{
+        static_cast<unsigned int>(((c1.x * w1) + (c2.x * w2) + (c3.x * w3)) >> s),
+        static_cast<unsigned int>(((c1.y * w1) + (c2.y * w2) + (c3.y * w3)) >> s),
+        static_cast<unsigned int>(((c1.z * w1) + (c2.z * w2) + (c3.z * w3)) >> s)
     };
 }
 
-/**
- * Create 8-bit 'mask' representing which pixels (sans w[4]) have a difference with w[4] (the center pixel)
- *
- * @param w Array containing the 3x3 grid of pixels to be examined
- *
- * @return 8-bit mask where a pixel with a difference is indicated by a 1, 0 otherwise.
- * Example: w[0], w[2], and w[5] ONLY are different: 00010101
- */
 template<typename T>
-static uint8_t compute_differences(std::array <T, 9> w) {
-    uint8_t diffs = 0U;
-    for (uint8_t offset = 0U; offset < 9; offset++) {
-        if (offset == 4) { continue; }
+static uint8_t compute_differences(const std::array<T, 9>& w) {
+    const bool w1_diff = yuvDifference(w[4], w[1]);
+    const bool w2_diff = yuvDifference(w[4], w[2]);
+    const bool w3_diff = yuvDifference(w[4], w[3]);
+    const bool w4_diff = yuvDifference(w[4], w[5]);
+    const bool w5_diff = yuvDifference(w[4], w[6]);
+    const bool w6_diff = yuvDifference(w[4], w[7]);
+    const bool w7_diff = yuvDifference(w[4], w[8]);
+    const bool w8_diff = yuvDifference(w[4], w[0]);
 
-        bool pixel_diff = yuvDifference(w[4], w[offset]);
-        if (offset < 4) { diffs |= (pixel_diff << offset); } else { diffs |= (pixel_diff << (offset - 1)); }
-    }
-    return diffs;
+    return (w1_diff << 0) | (w2_diff << 1) | (w3_diff << 2) | (w4_diff << 3) |
+           (w5_diff << 4) | (w6_diff << 5) | (w7_diff << 6) | (w8_diff << 7);
 }
 
-template<typename T>
-SDL_Surface* scaleHq2x(const input_image <T>& src) {
-    auto result = src.get_output(src.width() * 2, src.height() * 2);
+// Generic HQ2x scaler using CRTP - works with any image implementation
+template<typename InputImage, typename OutputImage>
+auto scaleHq2x(const InputImage& src, int scale_factor = 2) 
+    -> OutputImage {
+    OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
 
     for (int y = 0; y < src.height(); y++) {
         for (int x = 0; x < src.width(); x++) {
-            // Acquire original pixel grid values (row by row)
-            std::array <T, 9> w;
-            size_t counter = 0UL;
-            for (int y_offset = -1; y_offset <= 1; y_offset++) {
-                for (int x_offset = -1; x_offset <= 1; x_offset++) {
-                    w[counter++] = src.safeAccess(x + x_offset, y + y_offset, NEAREST);
-                }
-            }
+            // Acquire neighbour pixel values
+            std::array<decltype(src.safeAccess(0, 0)), 9> w;
+            w[0] = src.safeAccess(x - 1, y - 1);
+            w[1] = src.safeAccess(x, y - 1);
+            w[2] = src.safeAccess(x + 1, y - 1);
+            w[3] = src.safeAccess(x - 1, y);
+            w[4] = src.safeAccess(x, y);
+            w[5] = src.safeAccess(x + 1, y);
+            w[6] = src.safeAccess(x - 1, y + 1);
+            w[7] = src.safeAccess(x, y + 1);
+            w[8] = src.safeAccess(x + 1, y + 1);
 
-            // Compute conditions corresponding to each set of 2x2 interpolation rules in reduced problem set
+            // Compute conditions corresponding to each set of 2x2 interpolation rules
             uint8_t diffs = compute_differences(w);
             const bool cond00 = (P(0xbf, 0x37) || P(0xdb, 0x13)) && WDIFF(w[1], w[5]);
             const bool cond01 = (P(0xdb, 0x49) || P(0xef, 0x6d)) && WDIFF(w[7], w[3]);
             const bool cond02 = (P(0x6f, 0x2a) || P(0x5b, 0x0a) || P(0xbf, 0x3a) ||
-                                 P(0xdf, 0x5a) || P(0x9f, 0x8a) || P(0xcf, 0x8a) ||
-                                 P(0xef, 0x4e) || P(0x3f, 0x0e) || P(0xfb, 0x5a) ||
-                                 P(0xbb, 0x8a) || P(0x7f, 0x5a) || P(0xaf, 0x8a) ||
-                                 P(0xeb, 0x8a)) && WDIFF(w[3], w[1]);
+                                P(0xdf, 0x5a) || P(0x9f, 0x8a) || P(0xcf, 0x8a) ||
+                                P(0xef, 0x4e) || P(0x3f, 0x0e) || P(0xfb, 0x5a) ||
+                                P(0xbb, 0x8a) || P(0x7f, 0x5a) || P(0xaf, 0x8a) ||
+                                P(0xeb, 0x8a)) && WDIFF(w[3], w[1]);
             const bool cond03 = P(0xdb, 0x49) || P(0xef, 0x6d);
             const bool cond04 = P(0xbf, 0x37) || P(0xdb, 0x13);
-            const bool cond05 = P(0x1b, 0x03) || P(0x4f, 0x43) || P(0x8b, 0x83) ||
-                                P(0x6b, 0x43);
-            const bool cond06 = P(0x4b, 0x09) || P(0x8b, 0x89) || P(0x1f, 0x19) ||
-                                P(0x3b, 0x19);
+            const bool cond05 = P(0x1b, 0x03) || P(0x4f, 0x43) || P(0x8b, 0x83) || P(0x6b, 0x43);
+            const bool cond06 = P(0x4b, 0x09) || P(0x8b, 0x89) || P(0x1f, 0x19) || P(0x3b, 0x19);
             const bool cond07 = P(0x0b, 0x08) || P(0xf9, 0x68) || P(0xf3, 0x62) ||
-                                P(0x6d, 0x6c) || P(0x67, 0x66) || P(0x3d, 0x3c) ||
-                                P(0x37, 0x36) || P(0xf9, 0xf8) || P(0xdd, 0xdc) ||
-                                P(0xf3, 0xf2) || P(0xd7, 0xd6) || P(0xdd, 0x1c) ||
-                                P(0xd7, 0x16) || P(0x0b, 0x02);
+                               P(0x6d, 0x6c) || P(0x67, 0x66) || P(0x3d, 0x3c) ||
+                               P(0x37, 0x36) || P(0xf9, 0xf8) || P(0xdd, 0xdc) ||
+                               P(0xf3, 0xf2) || P(0xd7, 0xd6) || P(0xdd, 0x1c) ||
+                               P(0xd7, 0x16) || P(0x0b, 0x02);
             const bool cond08 = (P(0x0f, 0x0b) || P(0x2b, 0x0b) || P(0xfe, 0x4a) ||
-                                 P(0xfe, 0x1a)) && WDIFF(w[3], w[1]);
+                                P(0xfe, 0x1a)) && WDIFF(w[3], w[1]);
             const bool cond09 = P(0x2f, 0x2f);
             const bool cond10 = P(0x0a, 0x00);
             const bool cond11 = P(0x0b, 0x09);
             const bool cond12 = P(0x7e, 0x2a) || P(0xef, 0xab);
             const bool cond13 = P(0xbf, 0x8f) || P(0x7e, 0x0e);
             const bool cond14 = P(0x4f, 0x4b) || P(0x9f, 0x1b) || P(0x2f, 0x0b) ||
-                                P(0xbe, 0x0a) || P(0xee, 0x0a) || P(0x7e, 0x0a) ||
-                                P(0xeb, 0x4b) || P(0x3b, 0x1b);
+                               P(0xbe, 0x0a) || P(0xee, 0x0a) || P(0x7e, 0x0a) ||
+                               P(0xeb, 0x4b) || P(0x3b, 0x1b);
             const bool cond15 = P(0x0b, 0x03);
 
             // Assign destination pixel values corresponding to the various conditions
-            T dst00, dst01, dst10, dst11;
+            auto dst00 = w[4];
+            auto dst01 = w[4];
+            auto dst10 = w[4];
+            auto dst11 = w[4];
 
+            // Top-left pixel
             if (cond00)
                 dst00 = interpolate2Pixels(w[4], 5, w[3], 3, 3);
             else if (cond01)
@@ -129,101 +129,110 @@ SDL_Surface* scaleHq2x(const input_image <T>& src) {
             else if (cond06)
                 dst00 = interpolate2Pixels(w[4], 5, w[1], 3, 3);
             else if (P(0x0f, 0x0b) || P(0x5e, 0x0a) || P(0x2b, 0x0b) || P(0xbe, 0x0a) ||
-                     P(0x7a, 0x0a) || P(0xee, 0x0a))
+                    P(0x7a, 0x0a) || P(0xee, 0x0a))
                 dst00 = interpolate2Pixels(w[1], 1, w[3], 1, 1);
             else if (cond07)
                 dst00 = interpolate2Pixels(w[4], 5, w[0], 3, 3);
             else
                 dst00 = interpolate3Pixels(w[4], 2, w[1], 1, w[3], 1, 2);
 
+            // Top-right pixel
             if (cond00)
-                dst01 = interpolate2Pixels(w[4], 7, w[3], 1, 3);
+                dst01 = interpolate2Pixels(w[4], 7, w[5], 1, 3);
+            else if (cond01)
+                dst01 = interpolate2Pixels(w[4], 5, w[2], 3, 3);
             else if (cond08)
                 dst01 = w[4];
             else if (cond02)
-                dst01 = interpolate2Pixels(w[4], 3, w[0], 1, 2);
-            else if (cond09)
-                dst01 = w[4];
-            else if (cond10)
-                dst01 = interpolate3Pixels(w[4], 5, w[1], 2, w[3], 1, 3);
-            else if (P(0x0b, 0x08))
-                dst01 = interpolate3Pixels(w[4], 5, w[1], 2, w[0], 1, 3);
-            else if (cond11)
-                dst01 = interpolate2Pixels(w[4], 5, w[1], 3, 3);
-            else if (cond04)
-                dst01 = interpolate2Pixels(w[1], 3, w[4], 1, 2);
-            else if (cond12)
-                dst01 = interpolate3Pixels(w[1], 2, w[4], 1, w[3], 1, 2);
-            else if (cond13)
-                dst01 = interpolate2Pixels(w[1], 5, w[3], 3, 3);
-            else if (cond05)
-                dst01 = interpolate2Pixels(w[4], 7, w[3], 1, 3);
-            else if (P(0xf3, 0x62) || P(0x67, 0x66) || P(0x37, 0x36) || P(0xf3, 0xf2) ||
-                     P(0xd7, 0xd6) || P(0xd7, 0x16) || P(0x0b, 0x02))
-                dst01 = interpolate2Pixels(w[4], 3, w[0], 1, 2);
-            else if (cond14)
-                dst01 = interpolate2Pixels(w[1], 1, w[4], 1, 1);
-            else
-                dst01 = interpolate2Pixels(w[4], 3, w[1], 1, 2);
-
-            if (cond01)
-                dst10 = interpolate2Pixels(w[4], 7, w[1], 1, 3);
-            else if (cond08)
-                dst10 = w[4];
-            else if (cond02)
-                dst10 = interpolate2Pixels(w[4], 3, w[0], 1, 2);
-            else if (cond09)
-                dst10 = w[4];
-            else if (cond10)
-                dst10 = interpolate3Pixels(w[4], 5, w[3], 2, w[1], 1, 3);
-            else if (P(0x0b, 0x02))
-                dst10 = interpolate3Pixels(w[4], 5, w[3], 2, w[0], 1, 3);
-            else if (cond15)
-                dst10 = interpolate2Pixels(w[4], 5, w[3], 3, 3);
+                dst01 = interpolate2Pixels(w[4], 7, w[1], 1, 3);
             else if (cond03)
-                dst10 = interpolate2Pixels(w[3], 3, w[4], 1, 2);
-            else if (cond13)
-                dst10 = interpolate3Pixels(w[3], 2, w[4], 1, w[1], 1, 2);
-            else if (cond12)
-                dst10 = interpolate2Pixels(w[3], 5, w[1], 3, 3);
+                dst01 = interpolate2Pixels(w[4], 5, w[2], 3, 3);
+            else if (cond04)
+                dst01 = interpolate2Pixels(w[4], 3, w[1], 1, 2);
+            else if (cond05)
+                dst01 = interpolate2Pixels(w[4], 7, w[1], 1, 3);
             else if (cond06)
-                dst10 = interpolate2Pixels(w[4], 7, w[1], 1, 3);
-            else if (P(0x0b, 0x08) || P(0xf9, 0x68) || P(0x6d, 0x6c) || P(0x3d, 0x3c) ||
-                     P(0xf9, 0xf8) || P(0xdd, 0xdc) || P(0xdd, 0x1c))
-                dst10 = interpolate2Pixels(w[4], 3, w[0], 1, 2);
-            else if (cond14)
-                dst10 = interpolate2Pixels(w[3], 1, w[4], 1, 1);
-            else
-                dst10 = interpolate2Pixels(w[4], 3, w[3], 1, 2);
-
-            if ((P(0x7f, 0x2b) || P(0xef, 0xab) || P(0xbf, 0x8f) || P(0x7f, 0x0f)) &&
-                WDIFF(w[3], w[1]))
-                dst11 = w[4];
-            else if (cond02)
-                dst11 = interpolate2Pixels(w[4], 7, w[0], 1, 3);
-            else if (cond15)
-                dst11 = interpolate2Pixels(w[4], 7, w[3], 1, 3);
+                dst01 = interpolate2Pixels(w[4], 5, w[1], 3, 3);
+            else if (cond09)
+                dst01 = w[4];
+            else if (cond10)
+                dst01 = interpolate2Pixels(w[1], 1, w[5], 1, 1);
             else if (cond11)
-                dst11 = interpolate2Pixels(w[4], 7, w[1], 1, 3);
-            else if (P(0x0a, 0x00) || P(0x7e, 0x2a) || P(0xef, 0xab) || P(0xbf, 0x8f) ||
-                     P(0x7e, 0x0e))
-                dst11 = interpolate3Pixels(w[4], 6, w[3], 1, w[1], 1, 3);
+                dst01 = interpolate2Pixels(w[4], 5, w[2], 3, 3);
             else if (cond07)
-                dst11 = interpolate2Pixels(w[4], 7, w[0], 1, 3);
+                dst01 = interpolate2Pixels(w[4], 7, w[5], 1, 3);
             else
-                dst11 = w[4];
+                dst01 = interpolate3Pixels(w[4], 2, w[1], 1, w[5], 1, 2);
 
-            // Final assignments
-            int dst_x = 2 * x;
-            int dst_y = 2 * y;
+            // Bottom-left pixel
+            if (cond00)
+                dst10 = interpolate2Pixels(w[4], 5, w[3], 3, 3);
+            else if (cond01)
+                dst10 = interpolate2Pixels(w[4], 7, w[7], 1, 3);
+            else if (cond08)
+                dst10 = interpolate2Pixels(w[4], 7, w[3], 1, 3);
+            else if (cond02)
+                dst10 = w[4];
+            else if (cond03)
+                dst10 = interpolate2Pixels(w[4], 3, w[3], 1, 2);
+            else if (cond04)
+                dst10 = interpolate2Pixels(w[4], 5, w[6], 3, 3);
+            else if (cond05)
+                dst10 = interpolate2Pixels(w[4], 5, w[3], 3, 3);
+            else if (cond06)
+                dst10 = interpolate2Pixels(w[4], 7, w[3], 1, 3);
+            else if (cond12)
+                dst10 = interpolate2Pixels(w[3], 1, w[7], 1, 1);
+            else if (cond13)
+                dst10 = interpolate2Pixels(w[4], 5, w[6], 3, 3);
+            else if (cond14)
+                dst10 = w[4];
+            else if (cond07)
+                dst10 = interpolate2Pixels(w[4], 7, w[7], 1, 3);
+            else
+                dst10 = interpolate3Pixels(w[4], 2, w[3], 1, w[7], 1, 2);
+
+            // Bottom-right pixel
+            if (cond00)
+                dst11 = interpolate2Pixels(w[4], 7, w[5], 1, 3);
+            else if (cond01)
+                dst11 = interpolate2Pixels(w[4], 5, w[8], 3, 3);
+            else if (cond08)
+                dst11 = interpolate2Pixels(w[4], 7, w[5], 1, 3);
+            else if (cond02)
+                dst11 = interpolate2Pixels(w[4], 7, w[7], 1, 3);
+            else if (cond03)
+                dst11 = interpolate2Pixels(w[4], 5, w[8], 3, 3);
+            else if (cond04)
+                dst11 = interpolate2Pixels(w[4], 3, w[7], 1, 2);
+            else if (cond05)
+                dst11 = interpolate2Pixels(w[4], 7, w[7], 1, 3);
+            else if (cond06)
+                dst11 = interpolate2Pixels(w[4], 7, w[5], 1, 3);
+            else if (cond15)
+                dst11 = w[4];
+            else if (P(0xf7, 0xf6) || P(0x37, 0x36) || P(0x37, 0x16) || P(0xdb, 0xd2) ||
+                    P(0xf3, 0xf2) || P(0xf9, 0xf8) || P(0x6d, 0x6c) || P(0xf3, 0xf0))
+                dst11 = interpolate2Pixels(w[4], 5, w[8], 3, 3);
+            else if (P(0xf7, 0xf7) || P(0xff, 0xff) || P(0xfc, 0xf4) || P(0xfb, 0xf3) ||
+                    P(0xfb, 0xfb) || P(0xfd, 0xfd) || P(0xfe, 0xf6) || P(0xf7, 0xf3) ||
+                    P(0xfd, 0xf5))
+                dst11 = interpolate2Pixels(w[5], 1, w[7], 1, 1);
+            else if (cond07)
+                dst11 = interpolate2Pixels(w[4], 5, w[8], 3, 3);
+            else
+                dst11 = interpolate3Pixels(w[4], 2, w[5], 1, w[7], 1, 2);
+
+            int dst_x = scale_factor * x;
+            int dst_y = scale_factor * y;
             result.set_pixel(dst_x, dst_y, dst00);
             result.set_pixel(dst_x + 1, dst_y, dst01);
             result.set_pixel(dst_x, dst_y + 1, dst10);
             result.set_pixel(dst_x + 1, dst_y + 1, dst11);
         }
     }
-
-    return result.get();
+    return result;
 }
 
-
+#undef P
+#undef WDIFF

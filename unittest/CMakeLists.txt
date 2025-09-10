@@ -11,8 +11,8 @@ add_executable(scaler_unittest
         test_algorithm_correctness.cc
         # XBR and HQ2x tests
         test_xbr_hq2x.cc
-        # Original vs CRTP comparison tests
-        test_original_vs_crtp.cc
+        # SDL interface tests
+        test_sdl_interface.cc
         # Golden data tests
         test_golden_data.cc
 )

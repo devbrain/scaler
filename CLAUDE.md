@@ -50,13 +50,17 @@ cmake --build build
 - **include/scaler/**: All implementation headers
   - `scaler_common.hh`: Common utilities (color conversion, interpolation)
   - `vec3.hh`: Vector math utilities
+  - `sdl_compat.hh`: SDL2/SDL3 compatibility layer
   - **CRTP Framework-Agnostic Interface:**
     - `image_base.hh`: CRTP base classes for input/output images
-    - `sdl_image.hh`: SDL3 implementation of CRTP interfaces
+    - `sdl_image.hh`: SDL implementation of CRTP interfaces (works with SDL2 and SDL3)
     - `sdl_scalers.hh`: Convenience functions for SDL users
-  - **Scaling Algorithms:**
-    - Original SDL-specific: `2xsai.hh`, `eagle.hh`, `epx.hh`, `hq2x.hh`, `xbr.hh`, `image.hh`
-    - CRTP-based (framework agnostic): `epx_crtp.hh` (template-based, works with any backend)
+  - **Scaling Algorithms (all CRTP-based):**
+    - `epx.hh`: EPX/Scale2x algorithm
+    - `eagle.hh`: Eagle algorithm
+    - `2xsai.hh`: 2xSaI algorithm
+    - `xbr.hh`: XBR algorithm
+    - `hq2x.hh`: HQ2x algorithm
 
 ### Build System
 - CMake-based build (minimum version 3.20)
@@ -76,12 +80,12 @@ cmake --build build
 
 ## CRTP Framework Design
 
-The library now supports a framework-agnostic design using CRTP (Curiously Recurring Template Pattern):
+The library uses a framework-agnostic design with CRTP (Curiously Recurring Template Pattern):
 
 - **InputImageBase/OutputImageBase**: Base classes providing common interface
 - **Zero runtime overhead**: All polymorphism resolved at compile time
 - **Custom backends**: Users can implement their own image classes
-- **SDL3 implementation**: Provided as reference and for backward compatibility
+- **SDL implementation**: Provided as reference (works with both SDL2 and SDL3)
 
 Example custom backend:
 ```cpp
@@ -89,4 +93,17 @@ class MyImage : public InputImageBase<MyImage>,
                 public OutputImageBase<MyImage> {
     // Implement width_impl(), height_impl(), get_pixel_impl(), set_pixel_impl()
 };
+
+// Use with any algorithm
+auto scaled = scaleEpx<MyImage, MyImage>(input_image);
+```
+
+Example SDL usage:
+```cpp
+// Direct CRTP usage
+SDLInputImage input(surface);
+auto output = scaleEpx<SDLInputImage, SDLOutputImage>(input);
+
+// Or use convenience functions
+SDL_Surface* scaled = scaleEpxSDL(surface);
 ```

@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
 #include <scaler/image_base.hh>
-#include <scaler/epx_crtp.hh>
+#include <scaler/epx.hh>
 #include <vector>
 
 // Simple test image implementation - combined input/output

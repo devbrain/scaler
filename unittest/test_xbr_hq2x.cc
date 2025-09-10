@@ -1,7 +1,7 @@
 #include <doctest/doctest.h>
 #include <scaler/image_base.hh>
-#include <scaler/xbr_crtp.hh>
-#include <scaler/hq2x_crtp.hh>
+#include <scaler/xbr.hh>
+#include <scaler/hq2x.hh>
 #include <vector>
 
 // Test image implementation for XBR/HQ2x tests

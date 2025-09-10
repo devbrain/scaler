@@ -264,30 +264,6 @@ test_main.cc.s:
 	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_main.cc.s
 .PHONY : test_main.cc.s
 
-test_original_vs_crtp.o: test_original_vs_crtp.cc.o
-.PHONY : test_original_vs_crtp.o
-
-# target to build an object file
-test_original_vs_crtp.cc.o:
-	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_original_vs_crtp.cc.o
-.PHONY : test_original_vs_crtp.cc.o
-
-test_original_vs_crtp.i: test_original_vs_crtp.cc.i
-.PHONY : test_original_vs_crtp.i
-
-# target to preprocess a source file
-test_original_vs_crtp.cc.i:
-	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_original_vs_crtp.cc.i
-.PHONY : test_original_vs_crtp.cc.i
-
-test_original_vs_crtp.s: test_original_vs_crtp.cc.s
-.PHONY : test_original_vs_crtp.s
-
-# target to generate assembly for a file
-test_original_vs_crtp.cc.s:
-	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_original_vs_crtp.cc.s
-.PHONY : test_original_vs_crtp.cc.s
-
 test_scalers_comprehensive.o: test_scalers_comprehensive.cc.o
 .PHONY : test_scalers_comprehensive.o
 
@@ -311,6 +287,30 @@ test_scalers_comprehensive.s: test_scalers_comprehensive.cc.s
 test_scalers_comprehensive.cc.s:
 	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_scalers_comprehensive.cc.s
 .PHONY : test_scalers_comprehensive.cc.s
+
+test_sdl_interface.o: test_sdl_interface.cc.o
+.PHONY : test_sdl_interface.o
+
+# target to build an object file
+test_sdl_interface.cc.o:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_sdl_interface.cc.o
+.PHONY : test_sdl_interface.cc.o
+
+test_sdl_interface.i: test_sdl_interface.cc.i
+.PHONY : test_sdl_interface.i
+
+# target to preprocess a source file
+test_sdl_interface.cc.i:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_sdl_interface.cc.i
+.PHONY : test_sdl_interface.cc.i
+
+test_sdl_interface.s: test_sdl_interface.cc.s
+.PHONY : test_sdl_interface.s
+
+# target to generate assembly for a file
+test_sdl_interface.cc.s:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_sdl_interface.cc.s
+.PHONY : test_sdl_interface.cc.s
 
 test_xbr_hq2x.o: test_xbr_hq2x.cc.o
 .PHONY : test_xbr_hq2x.o
@@ -361,12 +361,12 @@ help:
 	@echo "... test_main.o"
 	@echo "... test_main.i"
 	@echo "... test_main.s"
-	@echo "... test_original_vs_crtp.o"
-	@echo "... test_original_vs_crtp.i"
-	@echo "... test_original_vs_crtp.s"
 	@echo "... test_scalers_comprehensive.o"
 	@echo "... test_scalers_comprehensive.i"
 	@echo "... test_scalers_comprehensive.s"
+	@echo "... test_sdl_interface.o"
+	@echo "... test_sdl_interface.i"
+	@echo "... test_sdl_interface.s"
 	@echo "... test_xbr_hq2x.o"
 	@echo "... test_xbr_hq2x.i"
 	@echo "... test_xbr_hq2x.s"

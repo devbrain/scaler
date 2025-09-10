@@ -12,8 +12,8 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/igor/proj/ares/scaler/unittest/test_crtp.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_crtp.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_crtp.cc.o.d"
   "/home/igor/proj/ares/scaler/unittest/test_golden_data.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_golden_data.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_golden_data.cc.o.d"
   "/home/igor/proj/ares/scaler/unittest/test_main.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_main.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_main.cc.o.d"
-  "/home/igor/proj/ares/scaler/unittest/test_original_vs_crtp.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_original_vs_crtp.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_original_vs_crtp.cc.o.d"
   "/home/igor/proj/ares/scaler/unittest/test_scalers_comprehensive.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_scalers_comprehensive.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_scalers_comprehensive.cc.o.d"
+  "/home/igor/proj/ares/scaler/unittest/test_sdl_interface.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_sdl_interface.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_sdl_interface.cc.o.d"
   "/home/igor/proj/ares/scaler/unittest/test_xbr_hq2x.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_xbr_hq2x.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_xbr_hq2x.cc.o.d"
   )
 

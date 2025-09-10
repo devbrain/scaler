@@ -119,23 +119,20 @@ add_subdirectory(ext)
 # ==========================================================================
 
 add_library(scaler INTERFACE
-        ${SCALER_PROJECT_ROOT}/include/scaler/2xsai.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/eagle.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/epx.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/hq2x.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/image.hh
+        # Core utilities
         ${SCALER_PROJECT_ROOT}/include/scaler/scaler_common.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/vec3.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/xbr.hh
         # CRTP framework-agnostic interface
         ${SCALER_PROJECT_ROOT}/include/scaler/image_base.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/sdl_compat.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/sdl_image.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/sdl_scalers.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/epx_crtp.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/eagle_crtp.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/2xsai_crtp.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/xbr_crtp.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/hq2x_crtp.hh
+        # Scaling algorithms (CRTP-based)
+        ${SCALER_PROJECT_ROOT}/include/scaler/epx.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/eagle.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/2xsai.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/xbr.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/hq2x.hh
 )
 
 target_include_directories(scaler INTERFACE ${SCALER_PROJECT_ROOT}/include)
