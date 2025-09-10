@@ -2,6 +2,7 @@
 
 #include <scaler/image_base.hh>
 #include <scaler/scaler_common.hh>
+#include <scaler/scaler_common.hh>
 
 constexpr uint8_t Y_COEFF = 0x30;
 constexpr uint8_t U_COEFF = 0x07;
@@ -105,25 +106,25 @@ auto scaleXbr(const InputImage& src, int scale_factor = 2)
             // Anti-aliasing for diagonal edges
             if (edr_top_left) {
                 auto interp_weight = (dist(E, C) <= dist(E, G)) ? EDGE_ANTI_ALIAS_WEIGHT : 0;
-                if (interp_weight > 0 && A != E && B != E && C != E && D != E) {
+                if (interp_weight > 0 && legacyNotEqual(A, E) && legacyNotEqual(B, E) && legacyNotEqual(C, E) && legacyNotEqual(D, E)) {
                     top_left_pixel = mix(top_left_pixel, A, 0.25f);
                 }
             }
             if (edr_top_right) {
                 auto interp_weight = (dist(E, G) <= dist(E, C)) ? EDGE_ANTI_ALIAS_WEIGHT : 0;
-                if (interp_weight > 0 && B != E && C != E && A != E && F != E) {
+                if (interp_weight > 0 && legacyNotEqual(B, E) && legacyNotEqual(C, E) && legacyNotEqual(A, E) && legacyNotEqual(F, E)) {
                     top_right_pixel = mix(top_right_pixel, C, 0.25f);
                 }
             }
             if (edr_bot_left) {
                 auto interp_weight = (dist(E, C) <= dist(E, I)) ? EDGE_ANTI_ALIAS_WEIGHT : 0;
-                if (interp_weight > 0 && D != E && G != E && H != E && A != E) {
+                if (interp_weight > 0 && legacyNotEqual(D, E) && legacyNotEqual(G, E) && legacyNotEqual(H, E) && legacyNotEqual(A, E)) {
                     bot_left_pixel = mix(bot_left_pixel, G, 0.25f);
                 }
             }
             if (edr_bot_right) {
                 auto interp_weight = (dist(E, A) <= dist(E, I)) ? EDGE_ANTI_ALIAS_WEIGHT : 0;
-                if (interp_weight > 0 && F != E && H != E && I != E && C != E) {
+                if (interp_weight > 0 && legacyNotEqual(F, E) && legacyNotEqual(H, E) && legacyNotEqual(I, E) && legacyNotEqual(C, E)) {
                     bot_right_pixel = mix(bot_right_pixel, I, 0.25f);
                 }
             }

@@ -66,10 +66,10 @@ auto scaleAdvMame(const InputImage& src, int scale_factor = 2)
             auto four = original_pixel;
 
             // Interpolation conditions
-            if (C == A && C != D && A != B) { one = A; }
-            if (A == B && A != C && B != D) { two = B; }
-            if (D == C && D != B && C != A) { three = C; }
-            if (B == D && B != A && D != C) { four = D; }
+            if (C == A && legacyNotEqual(C, D) && legacyNotEqual(A, B)) { one = A; }
+            if (A == B && legacyNotEqual(A, C) && legacyNotEqual(B, D)) { two = B; }
+            if (D == C && legacyNotEqual(D, B) && legacyNotEqual(C, A)) { three = C; }
+            if (B == D && legacyNotEqual(B, A) && legacyNotEqual(D, C)) { four = D; }
 
             int dst_x = scale_factor * x;
             int dst_y = scale_factor * y;

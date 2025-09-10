@@ -42,7 +42,7 @@ bool operator ==(const vec3 <T>& a, const vec3 <T>& b) {
 
 template<typename T>
 bool operator !=(const vec3 <T>& a, const vec3 <T>& b) {
-    return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
+    return !((a.x == b.x) && (a.y == b.y) && (a.z == b.z));  // Fixed: Now correctly returns true when vectors are different
 }
 
 template<typename T>
