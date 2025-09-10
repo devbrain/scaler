@@ -9,33 +9,39 @@ enum OutOfBoundsStrategy { ZERO, NEAREST };
 template<typename Derived, typename PixelType = uvec3>
 class InputImageBase {
 public:
-    [[nodiscard]] int width() const {
+    [[nodiscard]] inline int width() const noexcept {
         return static_cast<const Derived*>(this)->width_impl();
     }
     
-    [[nodiscard]] int height() const {
+    [[nodiscard]] inline int height() const noexcept {
         return static_cast<const Derived*>(this)->height_impl();
     }
     
-    [[nodiscard]] PixelType get_pixel(int x, int y) const {
+    [[nodiscard]] inline PixelType get_pixel(int x, int y) const noexcept {
         return static_cast<const Derived*>(this)->get_pixel_impl(x, y);
     }
     
-    [[nodiscard]] PixelType safeAccess(int x, int y, OutOfBoundsStrategy strategy = NEAREST) const {
-        bool out_of_bounds = (x < 0 || x >= width()) || (y < 0 || y >= height());
+    [[nodiscard]] inline PixelType safeAccess(int x, int y, OutOfBoundsStrategy strategy = NEAREST) const noexcept {
+        // Optimize for the common case where access is within bounds
+        // Use likely/unlikely hints for branch prediction
+        const int w = width();
+        const int h = height();
         
-        if (out_of_bounds) {
-            switch (strategy) {
-                case ZERO:
-                    return {};
-                case NEAREST:
-                    x = std::clamp(x, 0, width() - 1);
-                    y = std::clamp(y, 0, height() - 1);
-                    break;
-            }
+        if [[likely]]((x >= 0 && x < w) && (y >= 0 && y < h)) {
+            return get_pixel(x, y);
         }
         
-        return get_pixel(x, y);
+        // Handle out-of-bounds cases
+        switch (strategy) {
+            case ZERO:
+                return {};
+            case NEAREST:
+                x = (x < 0) ? 0 : (x >= w) ? (w - 1) : x;
+                y = (y < 0) ? 0 : (y >= h) ? (h - 1) : y;
+                return get_pixel(x, y);
+        }
+        
+        return {};  // Unreachable, but keeps compiler happy
     }
 };
 

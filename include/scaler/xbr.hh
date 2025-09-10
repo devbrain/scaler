@@ -8,15 +8,19 @@ constexpr uint8_t U_COEFF = 0x07;
 constexpr uint8_t V_COEFF = 0x06;
 
 template<typename T>
-static uint32_t dist(T A, T B) {
+inline static uint32_t dist(T A, T B) noexcept {
+    // Early exit for identical pixels
+    if (A == B) return 0;
+    
     auto A_yuv = rgbToYuv(A);
     auto B_yuv = rgbToYuv(B);
-    auto diff = uvec3{
-        static_cast<unsigned int>(abs(static_cast<int>(A_yuv.x) - static_cast<int>(B_yuv.x))),
-        static_cast<unsigned int>(abs(static_cast<int>(A_yuv.y) - static_cast<int>(B_yuv.y))),
-        static_cast<unsigned int>(abs(static_cast<int>(A_yuv.z) - static_cast<int>(B_yuv.z)))
-    };
-    return (diff.x * Y_COEFF) + (diff.y * U_COEFF) + (diff.z * V_COEFF);
+    
+    // Optimize absolute difference calculation without branching
+    auto dy = (A_yuv.x > B_yuv.x) ? (A_yuv.x - B_yuv.x) : (B_yuv.x - A_yuv.x);
+    auto du = (A_yuv.y > B_yuv.y) ? (A_yuv.y - B_yuv.y) : (B_yuv.y - A_yuv.y);
+    auto dv = (A_yuv.z > B_yuv.z) ? (A_yuv.z - B_yuv.z) : (B_yuv.z - A_yuv.z);
+    
+    return (dy * Y_COEFF) + (du * U_COEFF) + (dv * V_COEFF);
 }
 
 // Generic XBR scaler using CRTP - works with any image implementation
