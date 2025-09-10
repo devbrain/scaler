@@ -33,10 +33,28 @@ include(GNUInstallDirs)
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to 'Release' as none was specified.")
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo" "Performance")
 endif ()
 
+# Custom Performance build type
+set(CMAKE_CXX_FLAGS_PERFORMANCE "-O3 -march=native -mtune=native -DNDEBUG"
+    CACHE STRING "Flags used by the C++ compiler during performance builds.")
+set(CMAKE_C_FLAGS_PERFORMANCE "-O3 -march=native -mtune=native -DNDEBUG"
+    CACHE STRING "Flags used by the C compiler during performance builds.")
+set(CMAKE_EXE_LINKER_FLAGS_PERFORMANCE ""
+    CACHE STRING "Flags used for linking binaries during performance builds.")
+set(CMAKE_SHARED_LINKER_FLAGS_PERFORMANCE ""
+    CACHE STRING "Flags used by the shared libraries linker during performance builds.")
+
+mark_as_advanced(
+    CMAKE_CXX_FLAGS_PERFORMANCE
+    CMAKE_C_FLAGS_PERFORMANCE
+    CMAKE_EXE_LINKER_FLAGS_PERFORMANCE
+    CMAKE_SHARED_LINKER_FLAGS_PERFORMANCE
+)
+
 option(SCALER_BUILD_TEST "Build unittests for scaler" ON)
+option(SCALER_BUILD_BENCHMARK "Build benchmarks for scaler" ON)
 
 # Set visibility settings for shared libraries
 
@@ -150,6 +168,10 @@ endif()
 
 if (SCALER_BUILD_TEST)
     add_subdirectory(unittest)
+endif()
+
+if (SCALER_BUILD_BENCHMARK)
+    add_subdirectory(benchmark)
 endif()
 
 

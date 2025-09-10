@@ -1,0 +1,18 @@
+{
+  "description": "Performance baseline for scaler library",
+  "version": "1.0",
+  "date": "2025-09-10 13:51:27",
+  "build_type": "Release",
+  "cpu_info": "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz",
+  "benchmarks": {
+    "rotozoom_256x200": {
+
+    },    "random_64x64": {
+
+    },    "gradient_256x256": {
+
+    },    "checkerboard_512x512": {
+
+    }
+  }
+}
