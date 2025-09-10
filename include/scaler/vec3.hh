@@ -36,13 +36,15 @@ struct vec3 {
 };
 
 template<typename T>
-bool operator ==(const vec3 <T>& a, const vec3 <T>& b) {
+inline bool operator ==(const vec3 <T>& a, const vec3 <T>& b) noexcept {
+    // Short-circuit evaluation for early exit
     return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
 }
 
 template<typename T>
-bool operator !=(const vec3 <T>& a, const vec3 <T>& b) {
-    return !((a.x == b.x) && (a.y == b.y) && (a.z == b.z));  // Fixed: Now correctly returns true when vectors are different
+inline bool operator !=(const vec3 <T>& a, const vec3 <T>& b) noexcept {
+    // Short-circuit evaluation - if x differs, we know they're not equal
+    return (a.x != b.x) || (a.y != b.y) || (a.z != b.z);
 }
 
 template<typename T>
@@ -59,13 +61,24 @@ using uvec3 = vec3 <unsigned int>;
 using ivec3 = vec3 <int>;
 
 template<typename T, typename U>
-T mix(T const& x, T const& y, U const& a) {
+inline T mix(T const& x, T const& y, U const& a) noexcept {
+    // Optimize for common cases
+    if (a == static_cast<U>(0)) return x;
+    if (a == static_cast<U>(1)) return y;
     return static_cast <T>(static_cast <U>(x) * (static_cast <U>(1) - a) + static_cast <U>(y) * a);
 }
 
 template<typename T, typename U>
-vec3 <T> mix(vec3 <T> const& x, vec3 <T> const& y, U const& a) {
-    return {mix(x.x, y.x, a), mix(x.y, y.y, a), mix(x.z, y.z, a)};
+inline vec3 <T> mix(vec3 <T> const& x, vec3 <T> const& y, U const& a) noexcept {
+    // Optimize for common cases
+    if (a == static_cast<U>(0)) return x;
+    if (a == static_cast<U>(1)) return y;
+    // Inline the scalar mix to avoid function call overhead
+    return {
+        static_cast<T>(static_cast<U>(x.x) * (static_cast<U>(1) - a) + static_cast<U>(y.x) * a),
+        static_cast<T>(static_cast<U>(x.y) * (static_cast<U>(1) - a) + static_cast<U>(y.y) * a),
+        static_cast<T>(static_cast<U>(x.z) * (static_cast<U>(1) - a) + static_cast<U>(y.z) * a)
+    };
 }
 
 

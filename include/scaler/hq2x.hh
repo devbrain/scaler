@@ -25,7 +25,50 @@ inline static bool yuvDifference(const T& lhs, const T& rhs) noexcept {
 
 template<typename T>
 inline static T interpolate2Pixels(T c1, int32_t w1, T c2, int32_t w2, int32_t s) noexcept {
+    // Early exit for identical colors
     if (c1 == c2) { return c1; }
+    
+    // Fast path for (w[4], 5, w[x], 3, 3) - most common case (16 instances)
+    // This gives us (5*c1 + 3*c2) >> 3
+    if (w1 == 5 && w2 == 3 && s == 3) {
+        return T{
+            static_cast<unsigned int>((c1.x * 5 + c2.x * 3) >> 3),
+            static_cast<unsigned int>((c1.y * 5 + c2.y * 3) >> 3),
+            static_cast<unsigned int>((c1.z * 5 + c2.z * 3) >> 3)
+        };
+    }
+    
+    // Fast path for (w[4], 7, w[x], 1, 3) - second most common (10 instances)
+    // This gives us (7*c1 + c2) >> 3
+    if (w1 == 7 && w2 == 1 && s == 3) {
+        return T{
+            static_cast<unsigned int>((c1.x * 7 + c2.x) >> 3),
+            static_cast<unsigned int>((c1.y * 7 + c2.y) >> 3),
+            static_cast<unsigned int>((c1.z * 7 + c2.z) >> 3)
+        };
+    }
+    
+    // Fast path for (w[4], 3, w[x], 1, 2) - (4 instances)
+    // This gives us (3*c1 + c2) >> 2
+    if (w1 == 3 && w2 == 1 && s == 2) {
+        return T{
+            static_cast<unsigned int>((c1.x * 3 + c2.x) >> 2),
+            static_cast<unsigned int>((c1.y * 3 + c2.y) >> 2),
+            static_cast<unsigned int>((c1.z * 3 + c2.z) >> 2)
+        };
+    }
+    
+    // Fast path for (w[x], 1, w[y], 1, 1) - (3 instances)
+    // This gives us (c1 + c2) >> 1 (simple average)
+    if (w1 == 1 && w2 == 1 && s == 1) {
+        return T{
+            static_cast<unsigned int>((c1.x + c2.x) >> 1),
+            static_cast<unsigned int>((c1.y + c2.y) >> 1),
+            static_cast<unsigned int>((c1.z + c2.z) >> 1)
+        };
+    }
+    
+    // General case for any other combination
     return T{
         static_cast<unsigned int>(((c1.x * w1) + (c2.x * w2)) >> s),
         static_cast<unsigned int>(((c1.y * w1) + (c2.y * w2)) >> s),
@@ -35,6 +78,17 @@ inline static T interpolate2Pixels(T c1, int32_t w1, T c2, int32_t w2, int32_t s
 
 template<typename T>
 inline static T interpolate3Pixels(T c1, int32_t w1, T c2, int32_t w2, T c3, int32_t w3, int32_t s) noexcept {
+    // Fast path for the common case: (c1, 2, c2, 1, c3, 1, 2)
+    // This accounts for 100% of calls in HQ2x
+    if (w1 == 2 && w2 == 1 && w3 == 1 && s == 2) {
+        // (2*c1 + c2 + c3) >> 2 = (c1 + c1 + c2 + c3) >> 2
+        return T{
+            static_cast<unsigned int>((c1.x + c1.x + c2.x + c3.x) >> 2),
+            static_cast<unsigned int>((c1.y + c1.y + c2.y + c3.y) >> 2),
+            static_cast<unsigned int>((c1.z + c1.z + c2.z + c3.z) >> 2)
+        };
+    }
+    
     return T{
         static_cast<unsigned int>(((c1.x * w1) + (c2.x * w2) + (c3.x * w3)) >> s),
         static_cast<unsigned int>(((c1.y * w1) + (c2.y * w2) + (c3.y * w3)) >> s),

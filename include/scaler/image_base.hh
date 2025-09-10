@@ -27,7 +27,16 @@ public:
         const int w = width();
         const int h = height();
         
-        if [[likely]]((x >= 0 && x < w) && (y >= 0 && y < h)) {
+#if __cplusplus >= 202002L
+        if [[likely]] ((x >= 0 && x < w) && (y >= 0 && y < h)) {
+#else
+        // For C++17, use __builtin_expect for GCC/Clang
+        #ifdef __GNUC__
+        if (__builtin_expect((x >= 0 && x < w) && (y >= 0 && y < h), 1)) {
+        #else
+        if ((x >= 0 && x < w) && (y >= 0 && y < h)) {
+        #endif
+#endif
             return get_pixel(x, y);
         }
         
