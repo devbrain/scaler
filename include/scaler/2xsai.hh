@@ -2,6 +2,7 @@
 
 #include <scaler/image_base.hh>
 #include <scaler/scaler_common.hh>
+#include <scaler/sliding_window_buffer.hh>
 
 /**
  * Compute if C and D exclusively match either A or B.
@@ -29,29 +30,43 @@ template<typename InputImage, typename OutputImage>
 auto scale2xSaI(const InputImage& src, int scale_factor = 2) 
     -> OutputImage {
     OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+    
+    // Use cache-friendly sliding window buffer for 4x4 neighborhood
+    using PixelType = decltype(src.get_pixel(0, 0));
+    SlidingWindow4x4<PixelType> window(src.width());
+    window.initialize(src, 0);
 
     for (int y = 0; y < src.height(); y++) {
+        // Advance sliding window for next row
+        if (y > 0) {
+            window.advance(src);
+        }
+        
         for (int x = 0; x < src.width(); x++) {
-            // Acquire original pixel grid values (row by row)
-            auto I = src.safeAccess(x - 1, y - 1);
-            auto E = src.safeAccess(x, y - 1);
-            auto F = src.safeAccess(x + 1, y - 1);
-            auto J = src.safeAccess(x + 2, y - 1);
+            // Get 4x4 grid from cache-friendly buffer
+            PixelType grid[4][4];
+            window.get4x4(x, grid);
             
-            auto G = src.safeAccess(x - 1, y);
-            auto A = src.safeAccess(x, y);
-            auto B = src.safeAccess(x + 1, y);
-            auto K = src.safeAccess(x + 2, y);
+            // Map to original variable names for clarity
+            auto I = grid[0][0];  // (x-1, y-1)
+            auto E = grid[0][1];  // (x,   y-1)
+            auto F = grid[0][2];  // (x+1, y-1)
+            auto J = grid[0][3];  // (x+2, y-1)
             
-            auto H = src.safeAccess(x - 1, y + 1);
-            auto C = src.safeAccess(x, y + 1);
-            auto D = src.safeAccess(x + 1, y + 1);
-            auto L = src.safeAccess(x + 2, y + 1);
+            auto G = grid[1][0];  // (x-1, y)
+            auto A = grid[1][1];  // (x,   y)
+            auto B = grid[1][2];  // (x+1, y)
+            auto K = grid[1][3];  // (x+2, y)
             
-            auto M = src.safeAccess(x - 1, y + 2);
-            auto N = src.safeAccess(x, y + 2);
-            auto O = src.safeAccess(x + 1, y + 2);
-            auto P = src.safeAccess(x + 2, y + 2);
+            auto H = grid[2][0];  // (x-1, y+1)
+            auto C = grid[2][1];  // (x,   y+1)
+            auto D = grid[2][2];  // (x+1, y+1)
+            auto L = grid[2][3];  // (x+2, y+1)
+            
+            auto M = grid[3][0];  // (x-1, y+2)
+            auto N = grid[3][1];  // (x,   y+2)
+            auto O = grid[3][2];  // (x+1, y+2)
+            auto P = grid[3][3];  // (x+2, y+2)
 
             decltype(A) right_interp, bottom_interp, bottom_right_interp;
 

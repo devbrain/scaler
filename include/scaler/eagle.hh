@@ -2,29 +2,40 @@
 
 #include <scaler/image_base.hh>
 #include <scaler/scaler_common.hh>
+#include <scaler/sliding_window_buffer.hh>
 
 // Generic Eagle scaler using CRTP - works with any image implementation
 template<typename InputImage, typename OutputImage>
 auto scaleEagle(const InputImage& src, int scale_factor = 2) 
     -> OutputImage {
     OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+    
+    // Use cache-friendly sliding window buffer for 3x3 neighborhood
+    using PixelType = decltype(src.get_pixel(0, 0));
+    SlidingWindow3x3<PixelType> window(src.width());
+    window.initialize(src, 0);
 
     for (int y = 0; y < src.height(); y++) {
+        // Advance sliding window for next row
+        if (y > 0) {
+            window.advance(src);
+        }
+        
         for (int x = 0; x < src.width(); x++) {
-            // Acquire neighbour pixel values
-            auto top_left = src.safeAccess(x - 1, y - 1, NEAREST);
-            auto top = src.safeAccess(x, y - 1, NEAREST);
-            auto top_right = src.safeAccess(x + 1, y - 1, NEAREST);
+            // Acquire neighbour pixel values from cache-friendly buffer
+            auto top_left = window.getTopLeft(x);
+            auto top = window.getTop(x);
+            auto top_right = window.getTopRight(x);
             
-            auto left = src.safeAccess(x - 1, y, NEAREST);
-            auto right = src.safeAccess(x + 1, y, NEAREST);
+            auto left = window.getLeft(x);
+            auto original_pixel = window.getCenter(x);
+            auto right = window.getRight(x);
             
-            auto bottom_left = src.safeAccess(x - 1, y + 1, NEAREST);
-            auto bottom = src.safeAccess(x, y + 1, NEAREST);
-            auto bottom_right = src.safeAccess(x + 1, y + 1, NEAREST);
+            auto bottom_left = window.getBottomLeft(x);
+            auto bottom = window.getBottom(x);
+            auto bottom_right = window.getBottomRight(x);
 
             // Initial expanded pixel value assignments
-            auto original_pixel = src.safeAccess(x, y);
             auto one = original_pixel;
             auto two = original_pixel;
             auto three = original_pixel;

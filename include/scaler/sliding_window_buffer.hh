@@ -160,6 +160,22 @@ public:
 };
 
 template<typename PixelType>
+class SlidingWindow4x4 : public SlidingWindowBuffer<PixelType> {
+public:
+    SlidingWindow4x4(int image_width)
+        : SlidingWindowBuffer<PixelType>(4, image_width, 1, -1) {}
+    
+    // Get pixels in 4x4 pattern for 2xSaI (from y-1 to y+2, x-1 to x+2)
+    void get4x4(int x, PixelType out[4][4]) const {
+        for (int dy = -1; dy <= 2; ++dy) {
+            for (int dx = -1; dx <= 2; ++dx) {
+                out[dy + 1][dx + 1] = this->get(x + dx, dy);
+            }
+        }
+    }
+};
+
+template<typename PixelType>
 class SlidingWindow5x5 : public SlidingWindowBuffer<PixelType> {
 public:
     SlidingWindow5x5(int image_width)

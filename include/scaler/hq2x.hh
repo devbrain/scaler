@@ -4,6 +4,7 @@
 #include <scaler/scaler_common.hh>
 #include <scaler/vec3.hh>
 #include <array>
+#include <scaler/sliding_window_buffer.hh>
 
 #define P(mask, des_res) ((diffs & (mask)) == (des_res))
 #define WDIFF(c1, c2) yuvDifference(c1, c2)
@@ -116,20 +117,30 @@ template<typename InputImage, typename OutputImage>
 auto scaleHq2x(const InputImage& src, int scale_factor = 2) 
     -> OutputImage {
     OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+    
+    // Use cache-friendly sliding window buffer for 3x3 neighborhood
+    using PixelType = decltype(src.get_pixel(0, 0));
+    SlidingWindow3x3<PixelType> window(src.width());
+    window.initialize(src, 0);
 
     for (int y = 0; y < src.height(); y++) {
+        // Advance sliding window for next row
+        if (y > 0) {
+            window.advance(src);
+        }
+        
         for (int x = 0; x < src.width(); x++) {
-            // Acquire neighbour pixel values
-            std::array<decltype(src.safeAccess(0, 0)), 9> w;
-            w[0] = src.safeAccess(x - 1, y - 1);
-            w[1] = src.safeAccess(x, y - 1);
-            w[2] = src.safeAccess(x + 1, y - 1);
-            w[3] = src.safeAccess(x - 1, y);
-            w[4] = src.safeAccess(x, y);
-            w[5] = src.safeAccess(x + 1, y);
-            w[6] = src.safeAccess(x - 1, y + 1);
-            w[7] = src.safeAccess(x, y + 1);
-            w[8] = src.safeAccess(x + 1, y + 1);
+            // Acquire neighbour pixel values from cache-friendly buffer
+            std::array<PixelType, 9> w;
+            w[0] = window.getTopLeft(x);
+            w[1] = window.getTop(x);
+            w[2] = window.getTopRight(x);
+            w[3] = window.getLeft(x);
+            w[4] = window.getCenter(x);
+            w[5] = window.getRight(x);
+            w[6] = window.getBottomLeft(x);
+            w[7] = window.getBottom(x);
+            w[8] = window.getBottomRight(x);
 
             // Compute conditions corresponding to each set of 2x2 interpolation rules
             uint8_t diffs = compute_differences(w);

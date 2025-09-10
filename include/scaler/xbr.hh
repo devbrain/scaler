@@ -2,6 +2,7 @@
 
 #include <scaler/image_base.hh>
 #include <scaler/scaler_common.hh>
+#include <scaler/sliding_window_buffer.hh>
 
 constexpr uint8_t Y_COEFF = 0x30;
 constexpr uint8_t U_COEFF = 0x07;
@@ -42,35 +43,54 @@ template<typename InputImage, typename OutputImage>
 auto scaleXbr(const InputImage& src, int scale_factor = 2) 
     -> OutputImage {
     OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+    
+    // Use cache-friendly sliding window buffer for 5x5 neighborhood
+    using PixelType = decltype(src.get_pixel(0, 0));
+    SlidingWindow5x5<PixelType> window(src.width());
+    window.initialize(src, 0);
 
     for (int y = 0; y < src.height(); y++) {
+        // Advance sliding window for next row
+        if (y > 0) {
+            window.advance(src);
+        }
+        
         for (int x = 0; x < src.width(); x++) {
-            // Acquire original pixel grid values (row by row)
-            auto A1 = src.safeAccess(x - 1, y - 2, NEAREST);
-            auto B1 = src.safeAccess(x, y - 2, NEAREST);
-            auto C1 = src.safeAccess(x + 1, y - 2, NEAREST);
+            // Get 5x5 neighborhood from cache-friendly buffer
+            PixelType neighborhood[5][5];
+            window.getNeighborhood(x, neighborhood);
             
-            auto A0 = src.safeAccess(x - 2, y - 1, NEAREST);
-            auto A = src.safeAccess(x - 1, y - 1, NEAREST);
-            auto B = src.safeAccess(x, y - 1, NEAREST);
-            auto C = src.safeAccess(x + 1, y - 1, NEAREST);
-            auto C4 = src.safeAccess(x + 2, y - 1, NEAREST);
+            // Map to original variable names
+            // Row y-2
+            auto A1 = neighborhood[0][1];
+            auto B1 = neighborhood[0][2];
+            auto C1 = neighborhood[0][3];
             
-            auto D0 = src.safeAccess(x - 2, y, NEAREST);
-            auto D = src.safeAccess(x - 1, y, NEAREST);
-            auto E = src.safeAccess(x, y, NEAREST);
-            auto F = src.safeAccess(x + 1, y, NEAREST);
-            auto F4 = src.safeAccess(x + 2, y, NEAREST);
+            // Row y-1
+            auto A0 = neighborhood[1][0];
+            auto A = neighborhood[1][1];
+            auto B = neighborhood[1][2];
+            auto C = neighborhood[1][3];
+            auto C4 = neighborhood[1][4];
             
-            auto G0 = src.safeAccess(x - 2, y + 1, NEAREST);
-            auto G = src.safeAccess(x - 1, y + 1, NEAREST);
-            auto H = src.safeAccess(x, y + 1, NEAREST);
-            auto I = src.safeAccess(x + 1, y + 1, NEAREST);
-            auto I4 = src.safeAccess(x + 2, y + 1, NEAREST);
+            // Row y
+            auto D0 = neighborhood[2][0];
+            auto D = neighborhood[2][1];
+            auto E = neighborhood[2][2];
+            auto F = neighborhood[2][3];
+            auto F4 = neighborhood[2][4];
             
-            auto G5 = src.safeAccess(x - 1, y + 2, NEAREST);
-            auto H5 = src.safeAccess(x, y + 2, NEAREST);
-            auto I5 = src.safeAccess(x + 1, y + 2, NEAREST);
+            // Row y+1
+            auto G0 = neighborhood[3][0];
+            auto G = neighborhood[3][1];
+            auto H = neighborhood[3][2];
+            auto I = neighborhood[3][3];
+            auto I4 = neighborhood[3][4];
+            
+            // Row y+2
+            auto G5 = neighborhood[4][1];
+            auto H5 = neighborhood[4][2];
+            auto I5 = neighborhood[4][3];
 
             // Pre-convert frequently used pixels to YUV to avoid redundant conversions
             // E is used 8 times, so caching it saves 7 conversions
