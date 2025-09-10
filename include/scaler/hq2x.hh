@@ -129,18 +129,25 @@ auto scaleHq2x(const InputImage& src, int scale_factor = 2)
             window.advance(src);
         }
         
+        // Get row references once per scanline for better performance
+        const auto& topRow = window.getRow(-1);
+        const auto& midRow = window.getRow(0);
+        const auto& botRow = window.getRow(1);
+        const int pad = window.getPadding();
+        
         for (int x = 0; x < src.width(); x++) {
-            // Acquire neighbour pixel values from cache-friendly buffer
+            // Acquire neighbour pixel values from cached row references
             std::array<PixelType, 9> w;
-            w[0] = window.getTopLeft(x);
-            w[1] = window.getTop(x);
-            w[2] = window.getTopRight(x);
-            w[3] = window.getLeft(x);
-            w[4] = window.getCenter(x);
-            w[5] = window.getRight(x);
-            w[6] = window.getBottomLeft(x);
-            w[7] = window.getBottom(x);
-            w[8] = window.getBottomRight(x);
+            const int xp = x + pad;
+            w[0] = topRow[xp - 1];  // top-left
+            w[1] = topRow[xp];      // top
+            w[2] = topRow[xp + 1];  // top-right
+            w[3] = midRow[xp - 1];  // left
+            w[4] = midRow[xp];      // center
+            w[5] = midRow[xp + 1];  // right
+            w[6] = botRow[xp - 1];  // bottom-left
+            w[7] = botRow[xp];      // bottom
+            w[8] = botRow[xp + 1];  // bottom-right
 
             // Compute conditions corresponding to each set of 2x2 interpolation rules
             uint8_t diffs = compute_differences(w);

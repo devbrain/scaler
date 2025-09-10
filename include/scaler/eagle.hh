@@ -21,19 +21,26 @@ auto scaleEagle(const InputImage& src, int scale_factor = 2)
             window.advance(src);
         }
         
+        // Get row references once per scanline for better performance
+        const auto& topRow = window.getRow(-1);
+        const auto& midRow = window.getRow(0);
+        const auto& botRow = window.getRow(1);
+        const int pad = window.getPadding();
+        
         for (int x = 0; x < src.width(); x++) {
-            // Acquire neighbour pixel values from cache-friendly buffer
-            auto top_left = window.getTopLeft(x);
-            auto top = window.getTop(x);
-            auto top_right = window.getTopRight(x);
+            // Acquire neighbour pixel values from cached row references
+            const int xp = x + pad;
+            auto top_left = topRow[xp - 1];
+            auto top = topRow[xp];
+            auto top_right = topRow[xp + 1];
             
-            auto left = window.getLeft(x);
-            auto original_pixel = window.getCenter(x);
-            auto right = window.getRight(x);
+            auto left = midRow[xp - 1];
+            auto original_pixel = midRow[xp];
+            auto right = midRow[xp + 1];
             
-            auto bottom_left = window.getBottomLeft(x);
-            auto bottom = window.getBottom(x);
-            auto bottom_right = window.getBottomRight(x);
+            auto bottom_left = botRow[xp - 1];
+            auto bottom = botRow[xp];
+            auto bottom_right = botRow[xp + 1];
 
             // Initial expanded pixel value assignments
             auto one = original_pixel;

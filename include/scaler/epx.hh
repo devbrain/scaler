@@ -2,23 +2,41 @@
 
 #include <scaler/image_base.hh>
 #include <scaler/scaler_common.hh>
+#include <scaler/sliding_window_buffer.hh>
 
 // Generic EPX scaler using CRTP - works with any image implementation
 template<typename InputImage, typename OutputImage>
 auto scaleEpx(const InputImage& src, int scale_factor = 2) 
     -> OutputImage {
     OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+    
+    // Use cache-friendly sliding window buffer for 3x3 neighborhood
+    using PixelType = decltype(src.get_pixel(0, 0));
+    SlidingWindow3x3<PixelType> window(src.width());
+    window.initialize(src, 0);
 
     for (int y = 0; y < src.height(); y++) {
+        // Advance sliding window for next row
+        if (y > 0) {
+            window.advance(src);
+        }
+        
+        // Get row references once per scanline for better performance
+        const auto& topRow = window.getRow(-1);
+        const auto& midRow = window.getRow(0);
+        const auto& botRow = window.getRow(1);
+        const int pad = window.getPadding();
+        
         for (int x = 0; x < src.width(); x++) {
-            // Acquire neighbour pixel values
-            auto A = src.safeAccess(x, y - 1);
-            auto B = src.safeAccess(x + 1, y);
-            auto C = src.safeAccess(x - 1, y);
-            auto D = src.safeAccess(x, y + 1);
+            // Acquire neighbour pixel values from cached row references
+            const int xp = x + pad;
+            auto A = topRow[xp];      // top
+            auto B = midRow[xp + 1];   // right
+            auto C = midRow[xp - 1];   // left
+            auto D = botRow[xp];       // bottom
+            auto original_pixel = midRow[xp];  // center
 
             // Initial expanded pixel value assignments
-            auto original_pixel = src.safeAccess(x, y);
             auto one = original_pixel;
             auto two = original_pixel;
             auto three = original_pixel;
@@ -49,17 +67,34 @@ template<typename InputImage, typename OutputImage>
 auto scaleAdvMame(const InputImage& src, int scale_factor = 2) 
     -> OutputImage {
     OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+    
+    // Use cache-friendly sliding window buffer for 3x3 neighborhood
+    using PixelType = decltype(src.get_pixel(0, 0));
+    SlidingWindow3x3<PixelType> window(src.width());
+    window.initialize(src, 0);
 
     for (int y = 0; y < src.height(); y++) {
+        // Advance sliding window for next row
+        if (y > 0) {
+            window.advance(src);
+        }
+        
+        // Get row references once per scanline for better performance
+        const auto& topRow = window.getRow(-1);
+        const auto& midRow = window.getRow(0);
+        const auto& botRow = window.getRow(1);
+        const int pad = window.getPadding();
+        
         for (int x = 0; x < src.width(); x++) {
-            // Acquire neighbour pixel values
-            auto A = src.safeAccess(x, y - 1);
-            auto B = src.safeAccess(x + 1, y);
-            auto C = src.safeAccess(x - 1, y);
-            auto D = src.safeAccess(x, y + 1);
+            // Acquire neighbour pixel values from cached row references
+            const int xp = x + pad;
+            auto A = topRow[xp];      // top
+            auto B = midRow[xp + 1];   // right
+            auto C = midRow[xp - 1];   // left
+            auto D = botRow[xp];       // bottom
+            auto original_pixel = midRow[xp];  // center
 
             // Initial expanded pixel value assignments
-            auto original_pixel = src.safeAccess(x, y);
             auto one = original_pixel;
             auto two = original_pixel;
             auto three = original_pixel;

@@ -13,7 +13,7 @@
  */
 template<typename PixelType>
 class SlidingWindowBuffer {
-private:
+protected:  // Changed from private to protected for derived class access
     std::vector<std::vector<PixelType>> buffer_;
     int window_height_;      // Number of rows in the window (e.g., 3 for 3x3, 5 for 5x5)
     int width_;              // Width of each row (image width + padding)
@@ -22,10 +22,12 @@ private:
     int buffer_offset_;      // Offset from current_y to first buffer row
     
     // Maps a source row index to buffer index
-    int rowToBufferIndex(int src_row) const {
-        // The key insight: buffer index = (src_row % window_height_)
-        // This ensures consistent mapping throughout processing
-        return ((src_row % window_height_) + window_height_) % window_height_;
+    inline int rowToBufferIndex(int src_row) const noexcept {
+        // Optimize modulo for positive numbers and power-of-2 sizes
+        // For non-power-of-2, use single modulo for positive src_row
+        int idx = src_row % window_height_;
+        // Handle negative case (only happens at image boundaries)
+        return (idx < 0) ? (idx + window_height_) : idx;
     }
     
 public:
@@ -84,12 +86,14 @@ public:
      * @param y_offset Offset from current_y (e.g., -1, 0, 1)
      * @return The pixel value
      */
-    PixelType get(int x, int y_offset) const {
-        int src_row = current_y_ + y_offset;
-        int buffer_idx = rowToBufferIndex(src_row);
+    inline PixelType get(int x, int y_offset) const noexcept {
+        const int src_row = current_y_ + y_offset;
+        const int buffer_idx = rowToBufferIndex(src_row);
         
+#ifdef DEBUG
         assert(buffer_idx >= 0 && buffer_idx < window_height_);
         assert(x + padding_ >= 0 && x + padding_ < width_);
+#endif
         
         return buffer_[buffer_idx][x + padding_];
     }
@@ -99,11 +103,13 @@ public:
      * @param y_offset Offset from current_y
      * @return Reference to the row vector
      */
-    const std::vector<PixelType>& getRow(int y_offset) const {
-        int src_row = current_y_ + y_offset;
-        int buffer_idx = rowToBufferIndex(src_row);
+    inline const std::vector<PixelType>& getRow(int y_offset) const noexcept {
+        const int src_row = current_y_ + y_offset;
+        const int buffer_idx = rowToBufferIndex(src_row);
         
+#ifdef DEBUG
         assert(buffer_idx >= 0 && buffer_idx < window_height_);
+#endif
         return buffer_[buffer_idx];
     }
     
@@ -144,49 +150,129 @@ auto makeSlidingWindowBuffer(int window_height, int image_width, int padding, in
 template<typename PixelType>
 class SlidingWindow3x3 : public SlidingWindowBuffer<PixelType> {
 public:
-    SlidingWindow3x3(int image_width)
+    explicit SlidingWindow3x3(int image_width)
         : SlidingWindowBuffer<PixelType>(3, image_width, 1, -1) {}
     
-    // Convenience accessors for 3x3 neighborhood
-    PixelType getTopLeft(int x) const { return this->get(x - 1, -1); }
-    PixelType getTop(int x) const { return this->get(x, -1); }
-    PixelType getTopRight(int x) const { return this->get(x + 1, -1); }
-    PixelType getLeft(int x) const { return this->get(x - 1, 0); }
-    PixelType getCenter(int x) const { return this->get(x, 0); }
-    PixelType getRight(int x) const { return this->get(x + 1, 0); }
-    PixelType getBottomLeft(int x) const { return this->get(x - 1, 1); }
-    PixelType getBottom(int x) const { return this->get(x, 1); }
-    PixelType getBottomRight(int x) const { return this->get(x + 1, 1); }
+    // Get all 3x3 pixels with a single row lookup per row - more efficient
+    inline void get3x3(int x, PixelType& tl, PixelType& t, PixelType& tr,
+                       PixelType& l, PixelType& c, PixelType& r,
+                       PixelType& bl, PixelType& b, PixelType& br) const noexcept {
+        const int xp = x + this->getPadding();
+        const auto& topRow = this->getRow(-1);
+        const auto& midRow = this->getRow(0);
+        const auto& botRow = this->getRow(1);
+        
+        tl = topRow[xp - 1]; t = topRow[xp]; tr = topRow[xp + 1];
+        l = midRow[xp - 1]; c = midRow[xp]; r = midRow[xp + 1];
+        bl = botRow[xp - 1]; b = botRow[xp]; br = botRow[xp + 1];
+    }
+    
+    // Keep individual accessors for compatibility but optimize them
+    inline PixelType getTopLeft(int x) const noexcept { 
+        return this->buffer_[this->rowToBufferIndex(this->current_y_ - 1)][x + this->padding_ - 1];
+    }
+    inline PixelType getTop(int x) const noexcept { 
+        return this->buffer_[this->rowToBufferIndex(this->current_y_ - 1)][x + this->padding_];
+    }
+    inline PixelType getTopRight(int x) const noexcept { 
+        return this->buffer_[this->rowToBufferIndex(this->current_y_ - 1)][x + this->padding_ + 1];
+    }
+    inline PixelType getLeft(int x) const noexcept { 
+        return this->buffer_[this->rowToBufferIndex(this->current_y_)][x + this->padding_ - 1];
+    }
+    inline PixelType getCenter(int x) const noexcept { 
+        return this->buffer_[this->rowToBufferIndex(this->current_y_)][x + this->padding_];
+    }
+    inline PixelType getRight(int x) const noexcept { 
+        return this->buffer_[this->rowToBufferIndex(this->current_y_)][x + this->padding_ + 1];
+    }
+    inline PixelType getBottomLeft(int x) const noexcept { 
+        return this->buffer_[this->rowToBufferIndex(this->current_y_ + 1)][x + this->padding_ - 1];
+    }
+    inline PixelType getBottom(int x) const noexcept { 
+        return this->buffer_[this->rowToBufferIndex(this->current_y_ + 1)][x + this->padding_];
+    }
+    inline PixelType getBottomRight(int x) const noexcept { 
+        return this->buffer_[this->rowToBufferIndex(this->current_y_ + 1)][x + this->padding_ + 1];
+    }
+    
+private:
+    // Optimized modulo for size 3
+    inline int rowToBufferIndex(int src_row) const noexcept {
+        int idx = src_row % 3;
+        return (idx < 0) ? (idx + 3) : idx;
+    }
 };
 
 template<typename PixelType>
 class SlidingWindow4x4 : public SlidingWindowBuffer<PixelType> {
 public:
-    SlidingWindow4x4(int image_width)
+    explicit SlidingWindow4x4(int image_width)
         : SlidingWindowBuffer<PixelType>(4, image_width, 1, -1) {}
     
     // Get pixels in 4x4 pattern for 2xSaI (from y-1 to y+2, x-1 to x+2)
-    void get4x4(int x, PixelType out[4][4]) const {
-        for (int dy = -1; dy <= 2; ++dy) {
-            for (int dx = -1; dx <= 2; ++dx) {
-                out[dy + 1][dx + 1] = this->get(x + dx, dy);
-            }
-        }
+    inline void get4x4(int x, PixelType out[4][4]) const noexcept {
+        const int xp = x + this->padding_;
+        
+        // Unroll loops and use direct buffer access with optimized modulo
+        const auto& row0 = this->buffer_[rowToBufferIndex(this->current_y_ - 1)];
+        const auto& row1 = this->buffer_[rowToBufferIndex(this->current_y_)];
+        const auto& row2 = this->buffer_[rowToBufferIndex(this->current_y_ + 1)];
+        const auto& row3 = this->buffer_[rowToBufferIndex(this->current_y_ + 2)];
+        
+        // Load all 16 pixels with minimal index calculations
+        out[0][0] = row0[xp - 1]; out[0][1] = row0[xp]; out[0][2] = row0[xp + 1]; out[0][3] = row0[xp + 2];
+        out[1][0] = row1[xp - 1]; out[1][1] = row1[xp]; out[1][2] = row1[xp + 1]; out[1][3] = row1[xp + 2];
+        out[2][0] = row2[xp - 1]; out[2][1] = row2[xp]; out[2][2] = row2[xp + 1]; out[2][3] = row2[xp + 2];
+        out[3][0] = row3[xp - 1]; out[3][1] = row3[xp]; out[3][2] = row3[xp + 1]; out[3][3] = row3[xp + 2];
+    }
+    
+private:
+    // Optimized modulo for power of 2 (size 4)
+    inline int rowToBufferIndex(int src_row) const noexcept {
+        // For power of 2, we can use bitwise AND which is much faster than modulo
+        return src_row & 3;  // Equivalent to src_row % 4 for positive numbers
     }
 };
 
 template<typename PixelType>
 class SlidingWindow5x5 : public SlidingWindowBuffer<PixelType> {
 public:
-    SlidingWindow5x5(int image_width)
+    explicit SlidingWindow5x5(int image_width)
         : SlidingWindowBuffer<PixelType>(5, image_width, 2, -2) {}
     
     // Get all pixels for a 5x5 neighborhood centered at (x, current_y)
-    void getNeighborhood(int x, PixelType neighborhood[5][5]) const {
-        for (int dy = -2; dy <= 2; ++dy) {
-            for (int dx = -2; dx <= 2; ++dx) {
-                neighborhood[dy + 2][dx + 2] = this->get(x + dx, dy);
-            }
-        }
+    inline void getNeighborhood(int x, PixelType neighborhood[5][5]) const noexcept {
+        const int xp = x + this->padding_;
+        
+        // Unroll loops and use direct buffer access
+        const auto& row0 = this->buffer_[rowToBufferIndex(this->current_y_ - 2)];
+        const auto& row1 = this->buffer_[rowToBufferIndex(this->current_y_ - 1)];
+        const auto& row2 = this->buffer_[rowToBufferIndex(this->current_y_)];
+        const auto& row3 = this->buffer_[rowToBufferIndex(this->current_y_ + 1)];
+        const auto& row4 = this->buffer_[rowToBufferIndex(this->current_y_ + 2)];
+        
+        // Load all 25 pixels with minimal index calculations
+        neighborhood[0][0] = row0[xp - 2]; neighborhood[0][1] = row0[xp - 1]; 
+        neighborhood[0][2] = row0[xp]; neighborhood[0][3] = row0[xp + 1]; neighborhood[0][4] = row0[xp + 2];
+        
+        neighborhood[1][0] = row1[xp - 2]; neighborhood[1][1] = row1[xp - 1]; 
+        neighborhood[1][2] = row1[xp]; neighborhood[1][3] = row1[xp + 1]; neighborhood[1][4] = row1[xp + 2];
+        
+        neighborhood[2][0] = row2[xp - 2]; neighborhood[2][1] = row2[xp - 1]; 
+        neighborhood[2][2] = row2[xp]; neighborhood[2][3] = row2[xp + 1]; neighborhood[2][4] = row2[xp + 2];
+        
+        neighborhood[3][0] = row3[xp - 2]; neighborhood[3][1] = row3[xp - 1]; 
+        neighborhood[3][2] = row3[xp]; neighborhood[3][3] = row3[xp + 1]; neighborhood[3][4] = row3[xp + 2];
+        
+        neighborhood[4][0] = row4[xp - 2]; neighborhood[4][1] = row4[xp - 1]; 
+        neighborhood[4][2] = row4[xp]; neighborhood[4][3] = row4[xp + 1]; neighborhood[4][4] = row4[xp + 2];
+    }
+    
+private:
+    // Optimized modulo for size 5
+    inline int rowToBufferIndex(int src_row) const noexcept {
+        int idx = src_row % 5;
+        return (idx < 0) ? (idx + 5) : idx;
     }
 };
