@@ -57,28 +57,28 @@ auto scale2xSaI(const InputImage& src, int scale_factor = 2)
 
             // First filter layer: check for edges (i.e. same colour) along A-D and B-C edge
             // Second filter layer: acquire concrete values for interpolated pixels based on matching of neighbour pixel colours
-            if (A == D && legacyNotEqual(B, C)) {
-                if ((A == E && B == L) || (A == C && A == F && legacyNotEqual(B, E) && B == J)) { 
+            if (A == D && B != C) {
+                if ((A == E && B == L) || (A == C && A == F && B != E && B == J)) { 
                     right_interp = A; 
                 } else { 
                     right_interp = mix(A, B, 0.50f); 
                 }
 
-                if ((A == G && C == O) || (A == B && A == H && legacyNotEqual(G, C) && C == M)) { 
+                if ((A == G && C == O) || (A == B && A == H && G != C && C == M)) { 
                     bottom_interp = A; 
                 } else { 
                     bottom_interp = A; 
                 }
 
                 bottom_right_interp = A;
-            } else if (legacyNotEqual(A, D) && B == C) {
-                if ((B == F && A == H) || (B == E && B == D && legacyNotEqual(A, F) && A == I)) { 
+            } else if (A != D && B == C) {
+                if ((B == F && A == H) || (B == E && B == D && A != F && A == I)) { 
                     right_interp = B; 
                 } else { 
                     right_interp = mix(A, B, 0.5f); 
                 }
 
-                if ((C == H && A == F) || (C == G && C == D && legacyNotEqual(A, H) && A == I)) { 
+                if ((C == H && A == F) || (C == G && C == D && A != H && A == I)) { 
                     bottom_interp = C; 
                 } else { 
                     bottom_interp = mix(A, C, 0.5f); 
@@ -109,17 +109,17 @@ auto scale2xSaI(const InputImage& src, int scale_factor = 2)
             } else {
                 bottom_right_interp = bilinearInterpolation(A, B, C, D, 0.5f, 0.5f);
 
-                if (A == C && A == F && legacyNotEqual(B, E) && B == J) { 
+                if (A == C && A == F && B != E && B == J) { 
                     right_interp = A; 
-                } else if (B == E && B == D && legacyNotEqual(A, F) && A == I) { 
+                } else if (B == E && B == D && A != F && A == I) { 
                     right_interp = B; 
                 } else { 
                     right_interp = mix(A, B, 0.5f); 
                 }
 
-                if (A == B && A == H && legacyNotEqual(G, C) && C == M) { 
+                if (A == B && A == H && G != C && C == M) { 
                     bottom_interp = A; 
-                } else if (C == G && C == D && legacyNotEqual(A, H) && A == I) { 
+                } else if (C == G && C == D && A != H && A == I) { 
                     bottom_interp = C; 
                 } else { 
                     bottom_interp = mix(A, C, 0.5f); 

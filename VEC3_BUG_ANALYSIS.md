@@ -1,5 +1,42 @@
 # Vec3 operator!= Bug Analysis
 
+## Update: Original Algorithm Investigation
+
+After examining the original pixel-art-upscaling algorithms from which this code was ported, I discovered:
+
+1. **The original algorithms use GLM library** with `glm::uvec3` type
+2. **The original code uses normal `!=` behavior** - no bug exists in the originals
+3. **The bug was introduced during porting** - when creating the custom `vec3` class
+
+### Evidence from Original Code
+
+The original 2xSaI algorithm (pixel-art-upscaling/src/2xsai.hpp) uses:
+```cpp
+if (A == D && B != C) {  // Normal != behavior expected
+    if ((A == E && B == L) || (A == C && A == F && B != E && B == J)) {
+        // ...
+    }
+}
+```
+
+The original EPX/AdvMAME (pixel-art-upscaling/src/epx.hpp) uses:
+```cpp
+if (C == A && C != D && A != B) { one = A; }  // Normal != behavior
+```
+
+### Conclusion About Bug Origin
+
+The bug appears to be a **copy-paste error** when implementing the vec3 class. The developer likely:
+1. Copied the `operator==` implementation
+2. Forgot to add the negation when creating `operator!=`
+3. The algorithms were then tuned/tested with this buggy behavior
+4. The bug became part of the "expected" behavior through test golden data
+
+This explains why:
+- The algorithms work despite the inverted logic
+- Tests fail when we fix the bug
+- The code produces visually acceptable results even with the bug
+
 ## Bug Description
 
 The `operator!=` in `include/scaler/vec3.hh` has a critical logic error:
@@ -74,21 +111,19 @@ This appears to be a long-standing bug that became part of the algorithm's behav
 
 ## Resolution Implemented
 
-Successfully fixed the vec3 operator!= bug while maintaining backward compatibility:
+Successfully fixed the vec3 operator!= bug properly:
 
 1. **Fixed the operator!=** in `vec3.hh` to have correct behavior
-2. **Created legacyNotEqual()** function in `scaler_common.hh` that preserves the historical inverted behavior
-3. **Updated all algorithms** to use `legacyNotEqual()` instead of `!=` operator:
-   - `2xsai.hh`: 10 replacements
-   - `epx.hh`: 4 replacements  
-   - `xbr.hh`: 4 replacements
-4. **All tests pass** - the algorithms produce identical output as before
+2. **Restored normal != usage** in all algorithms (2xsai, epx, xbr)
+3. **Regenerated golden data** with correct operator behavior
+4. **Updated synthetic tests** to match the correct algorithm behavior
+5. **All tests pass** - algorithms now behave as originally designed
 
 This solution:
-- Fixes the underlying bug in vec3
-- Preserves exact algorithm behavior for compatibility
-- Makes the inverted logic explicit and documented
-- Allows future code to use the correct != operator
+- Fixes the underlying bug permanently
+- Algorithms now match their original implementations
+- No legacy workarounds needed
+- Clean, maintainable code going forward
 
 ## Performance Note
 

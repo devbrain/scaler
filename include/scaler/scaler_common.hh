@@ -1,18 +1,6 @@
 #pragma once
 #include <cstdint>
 #include <scaler/vec3.hh>
-
-/**
- * Legacy comparison function that preserves the historical behavior of the scaling algorithms.
- * Due to a long-standing bug in vec3's operator!=, the algorithms were developed expecting
- * inverted logic. This function maintains that behavior for compatibility.
- * 
- * @return true if vectors are EQUAL (opposite of normal != behavior)
- */
-template<typename T>
-inline bool legacyNotEqual(const T& a, const T& b) noexcept {
-    return a == b;  // Intentionally inverted!
-}
 /**
  * Compute if three or more of the given values are equal/identical
  * 
