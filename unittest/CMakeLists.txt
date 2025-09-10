@@ -15,6 +15,8 @@ add_executable(scaler_unittest
         test_sdl_interface.cc
         # Golden data tests
         test_golden_data.cc
+        # Sliding window buffer tests
+        test_sliding_window_buffer.cc
 )
 
 # Include directories
