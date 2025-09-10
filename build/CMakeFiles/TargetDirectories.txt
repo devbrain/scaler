@@ -1,0 +1,13 @@
+/home/igor/proj/ares/scaler/build/CMakeFiles/scaler.dir
+/home/igor/proj/ares/scaler/build/CMakeFiles/edit_cache.dir
+/home/igor/proj/ares/scaler/build/CMakeFiles/rebuild_cache.dir
+/home/igor/proj/ares/scaler/build/ext/CMakeFiles/edit_cache.dir
+/home/igor/proj/ares/scaler/build/ext/CMakeFiles/rebuild_cache.dir
+/home/igor/proj/ares/scaler/build/ext/doctest/CMakeFiles/edit_cache.dir
+/home/igor/proj/ares/scaler/build/ext/doctest/CMakeFiles/rebuild_cache.dir
+/home/igor/proj/ares/scaler/build/_deps/doctest-build/CMakeFiles/edit_cache.dir
+/home/igor/proj/ares/scaler/build/_deps/doctest-build/CMakeFiles/rebuild_cache.dir
+/home/igor/proj/ares/scaler/build/unittest/CMakeFiles/scaler_unittest.dir
+/home/igor/proj/ares/scaler/build/unittest/CMakeFiles/generate_golden_data.dir
+/home/igor/proj/ares/scaler/build/unittest/CMakeFiles/edit_cache.dir
+/home/igor/proj/ares/scaler/build/unittest/CMakeFiles/rebuild_cache.dir
