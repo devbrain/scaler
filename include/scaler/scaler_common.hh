@@ -40,19 +40,43 @@ inline T bilinearInterpolation(T top_left, T top_right, T bottom_left, T bottom_
 }
 
 inline static uvec3 rgbToYuv(const uvec3& val) noexcept {
-    auto a = static_cast<unsigned int>((0.299f * static_cast <float>(val.x))    + (0.587f * static_cast <float>(val.y))  + (0.114f * static_cast <float>(val.z)));
-    auto b = static_cast<unsigned int>(((-0.169f * static_cast <float>(val.x))  + (-0.331 * static_cast <float>(val.y))  + (0.5f * static_cast <float>(val.z))) + 128.0f);
-    auto c = static_cast<unsigned int>(((0.5f * static_cast <float>(val.x))     + (-0.419f * static_cast <float>(val.y)) + (-0.081f * static_cast <float>(val.z))) + 128.0f);
-    return {a, b, c};
+    // Use integer arithmetic with fixed-point representation (16-bit precision)
+    // Coefficients multiplied by 65536 for precision
+    constexpr int Y_R = 19595;  // 0.299 * 65536
+    constexpr int Y_G = 38470;  // 0.587 * 65536
+    constexpr int Y_B = 7471;   // 0.114 * 65536
+    
+    constexpr int U_R = -11076; // -0.169 * 65536
+    constexpr int U_G = -21692; // -0.331 * 65536
+    constexpr int U_B = 32768;  // 0.5 * 65536
+    
+    constexpr int V_R = 32768;  // 0.5 * 65536
+    constexpr int V_G = -27460; // -0.419 * 65536
+    constexpr int V_B = -5308;  // -0.081 * 65536
+    
+    int r = val.x;
+    int g = val.y;
+    int b = val.z;
+    
+    unsigned int y = (Y_R * r + Y_G * g + Y_B * b) >> 16;
+    unsigned int u = ((U_R * r + U_G * g + U_B * b) >> 16) + 128;
+    unsigned int v = ((V_R * r + V_G * g + V_B * b) >> 16) + 128;
+    
+    return {y, u, v};
 }
 
 [[maybe_unused]] inline static uint32_t rgbToYuv(uint32_t val) noexcept {
+    // Use same integer coefficients as above
+    constexpr int Y_R = 19595, Y_G = 38470, Y_B = 7471;
+    constexpr int U_R = -11076, U_G = -21692, U_B = 32768;
+    constexpr int V_R = 32768, V_G = -27460, V_B = -5308;
+    
     uint32_t r = (val & 0xFF0000) >> 16;
     uint32_t g = (val & 0x00FF00) >> 8;
-    uint32_t b = (val) & 0x0000FF;
+    uint32_t b = val & 0x0000FF;
 
-    auto y = static_cast<unsigned int>((0.299f * static_cast <float>(r)) + (0.587f * static_cast <float>(g)) + (0.114f * static_cast <float>(b)));
-    auto u = static_cast<unsigned int>(((-0.169f * static_cast <float>(r)) + (-0.331 * static_cast <float>(g)) + (0.5f * static_cast <float>(b))) + 128.0f);
-    auto v = static_cast<unsigned int>(((0.5f * static_cast <float>(r)) + (-0.419f * static_cast <float>(g)) + (-0.081f * static_cast <float>(b))) + 128.0f);
-    return (y << 16) + (u << 8) + v;
+    uint32_t y = (Y_R * r + Y_G * g + Y_B * b) >> 16;
+    uint32_t u = ((U_R * r + U_G * g + U_B * b) >> 16) + 128;
+    uint32_t v = ((V_R * r + V_G * g + V_B * b) >> 16) + 128;
+    return (y << 16) | (u << 8) | v;
 }

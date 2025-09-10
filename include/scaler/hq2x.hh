@@ -13,16 +13,18 @@ constexpr uint8_t U_THRESHOLD = 0x07;
 constexpr uint8_t V_THRESHOLD = 0x06;
 
 template<typename T>
-static bool yuvDifference(const T& lhs, const T& rhs) {
+inline static bool yuvDifference(const T& lhs, const T& rhs) noexcept {
     auto lhs_yuv = rgbToYuv(lhs);
     auto rhs_yuv = rgbToYuv(rhs);
-    return (abs(static_cast<int>(lhs_yuv.x) - static_cast<int>(rhs_yuv.x)) > Y_THRESHOLD ||
-            abs(static_cast<int>(lhs_yuv.y) - static_cast<int>(rhs_yuv.y)) > U_THRESHOLD ||
-            abs(static_cast<int>(lhs_yuv.z) - static_cast<int>(rhs_yuv.z)) > V_THRESHOLD);
+    // Use unsigned arithmetic to avoid abs() function call
+    auto dy = (lhs_yuv.x > rhs_yuv.x) ? (lhs_yuv.x - rhs_yuv.x) : (rhs_yuv.x - lhs_yuv.x);
+    auto du = (lhs_yuv.y > rhs_yuv.y) ? (lhs_yuv.y - rhs_yuv.y) : (rhs_yuv.y - lhs_yuv.y);
+    auto dv = (lhs_yuv.z > rhs_yuv.z) ? (lhs_yuv.z - rhs_yuv.z) : (rhs_yuv.z - lhs_yuv.z);
+    return (dy > Y_THRESHOLD || du > U_THRESHOLD || dv > V_THRESHOLD);
 }
 
 template<typename T>
-static T interpolate2Pixels(T c1, int32_t w1, T c2, int32_t w2, int32_t s) {
+inline static T interpolate2Pixels(T c1, int32_t w1, T c2, int32_t w2, int32_t s) noexcept {
     if (c1 == c2) { return c1; }
     return T{
         static_cast<unsigned int>(((c1.x * w1) + (c2.x * w2)) >> s),
@@ -32,7 +34,7 @@ static T interpolate2Pixels(T c1, int32_t w1, T c2, int32_t w2, int32_t s) {
 }
 
 template<typename T>
-static T interpolate3Pixels(T c1, int32_t w1, T c2, int32_t w2, T c3, int32_t w3, int32_t s) {
+inline static T interpolate3Pixels(T c1, int32_t w1, T c2, int32_t w2, T c3, int32_t w3, int32_t s) noexcept {
     return T{
         static_cast<unsigned int>(((c1.x * w1) + (c2.x * w2) + (c3.x * w3)) >> s),
         static_cast<unsigned int>(((c1.y * w1) + (c2.y * w2) + (c3.y * w3)) >> s),
