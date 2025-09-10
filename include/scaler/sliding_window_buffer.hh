@@ -196,6 +196,18 @@ public:
         return this->buffer_[this->rowToBufferIndex(this->current_y_ + 1)][x + this->padding_ + 1];
     }
     
+    // Get all pixels for a 3x3 neighborhood centered at (x, current_y)
+    inline void getNeighborhood(int x, PixelType neighborhood[3][3]) const noexcept {
+        const int xp = x + this->getPadding();
+        const auto& topRow = this->getRow(-1);
+        const auto& midRow = this->getRow(0);
+        const auto& botRow = this->getRow(1);
+        
+        neighborhood[0][0] = topRow[xp - 1]; neighborhood[0][1] = topRow[xp]; neighborhood[0][2] = topRow[xp + 1];
+        neighborhood[1][0] = midRow[xp - 1]; neighborhood[1][1] = midRow[xp]; neighborhood[1][2] = midRow[xp + 1];
+        neighborhood[2][0] = botRow[xp - 1]; neighborhood[2][1] = botRow[xp]; neighborhood[2][2] = botRow[xp + 1];
+    }
+    
 private:
     // Optimized modulo for size 3
     inline int rowToBufferIndex(int src_row) const noexcept {

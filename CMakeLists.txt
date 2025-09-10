@@ -55,6 +55,7 @@ mark_as_advanced(
 
 option(SCALER_BUILD_TEST "Build unittests for scaler" ON)
 option(SCALER_BUILD_BENCHMARK "Build benchmarks for scaler" ON)
+option(SCALER_BUILD_TOOLS "Build command-line tools" ON)
 
 # Set visibility settings for shared libraries
 
@@ -172,6 +173,10 @@ endif()
 
 if (SCALER_BUILD_BENCHMARK)
     add_subdirectory(benchmark)
+endif()
+
+if (SCALER_BUILD_TOOLS)
+    add_subdirectory(tools)
 endif()
 
 

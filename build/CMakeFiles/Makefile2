@@ -66,17 +66,23 @@ CMAKE_BINARY_DIR = /home/igor/proj/ares/scaler/build
 all: CMakeFiles/scaler.dir/all
 all: ext/all
 all: unittest/all
+all: benchmark/all
+all: tools/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
 preinstall: ext/preinstall
 preinstall: unittest/preinstall
+preinstall: benchmark/preinstall
+preinstall: tools/preinstall
 .PHONY : preinstall
 
 # The main recursive "clean" target.
 clean: CMakeFiles/scaler.dir/clean
 clean: ext/clean
 clean: unittest/clean
+clean: benchmark/clean
+clean: tools/clean
 .PHONY : clean
 
 #=============================================================================
@@ -93,6 +99,26 @@ _deps/doctest-build/preinstall:
 # Recursive "clean" directory target.
 _deps/doctest-build/clean:
 .PHONY : _deps/doctest-build/clean
+
+#=============================================================================
+# Directory level rules for directory benchmark
+
+# Recursive "all" directory target.
+benchmark/all: benchmark/CMakeFiles/benchmark_scalers.dir/all
+.PHONY : benchmark/all
+
+# Recursive "preinstall" directory target.
+benchmark/preinstall:
+.PHONY : benchmark/preinstall
+
+# Recursive "clean" directory target.
+benchmark/clean: benchmark/CMakeFiles/benchmark_scalers.dir/clean
+benchmark/clean: benchmark/CMakeFiles/profile-gprof.dir/clean
+benchmark/clean: benchmark/CMakeFiles/profile-valgrind-cache.dir/clean
+benchmark/clean: benchmark/CMakeFiles/profile-valgrind-callgrind.dir/clean
+benchmark/clean: benchmark/CMakeFiles/profile-valgrind-memory.dir/clean
+benchmark/clean: benchmark/CMakeFiles/profile-valgrind-massif.dir/clean
+.PHONY : benchmark/clean
 
 #=============================================================================
 # Directory level rules for directory ext
@@ -123,6 +149,21 @@ ext/doctest/preinstall:
 # Recursive "clean" directory target.
 ext/doctest/clean: _deps/doctest-build/clean
 .PHONY : ext/doctest/clean
+
+#=============================================================================
+# Directory level rules for directory tools
+
+# Recursive "all" directory target.
+tools/all: tools/CMakeFiles/scaler_cli.dir/all
+.PHONY : tools/all
+
+# Recursive "preinstall" directory target.
+tools/preinstall:
+.PHONY : tools/preinstall
+
+# Recursive "clean" directory target.
+tools/clean: tools/CMakeFiles/scaler_cli.dir/clean
+.PHONY : tools/clean
 
 #=============================================================================
 # Directory level rules for directory unittest
@@ -174,12 +215,12 @@ CMakeFiles/scaler.dir/clean:
 unittest/CMakeFiles/scaler_unittest.dir/all: CMakeFiles/scaler.dir/all
 	$(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/depend
 	$(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=3,4,5,6,7,8,9,10 "Built target scaler_unittest"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=12,13,14,15,16,17,18,19,20,21,22 "Built target scaler_unittest"
 .PHONY : unittest/CMakeFiles/scaler_unittest.dir/all
 
 # Build rule for subdir invocation for target.
 unittest/CMakeFiles/scaler_unittest.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 8
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 11
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 unittest/CMakeFiles/scaler_unittest.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 0
 .PHONY : unittest/CMakeFiles/scaler_unittest.dir/rule
@@ -200,7 +241,7 @@ unittest/CMakeFiles/scaler_unittest.dir/clean:
 unittest/CMakeFiles/generate_golden_data.dir/all: CMakeFiles/scaler.dir/all
 	$(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/generate_golden_data.dir/build.make unittest/CMakeFiles/generate_golden_data.dir/depend
 	$(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/generate_golden_data.dir/build.make unittest/CMakeFiles/generate_golden_data.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=1,2 "Built target generate_golden_data"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=3,4 "Built target generate_golden_data"
 .PHONY : unittest/CMakeFiles/generate_golden_data.dir/all
 
 # Build rule for subdir invocation for target.
@@ -218,6 +259,188 @@ generate_golden_data: unittest/CMakeFiles/generate_golden_data.dir/rule
 unittest/CMakeFiles/generate_golden_data.dir/clean:
 	$(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/generate_golden_data.dir/build.make unittest/CMakeFiles/generate_golden_data.dir/clean
 .PHONY : unittest/CMakeFiles/generate_golden_data.dir/clean
+
+#=============================================================================
+# Target rules for target benchmark/CMakeFiles/benchmark_scalers.dir
+
+# All Build rule for target.
+benchmark/CMakeFiles/benchmark_scalers.dir/all: CMakeFiles/scaler.dir/all
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/benchmark_scalers.dir/build.make benchmark/CMakeFiles/benchmark_scalers.dir/depend
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/benchmark_scalers.dir/build.make benchmark/CMakeFiles/benchmark_scalers.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=1,2 "Built target benchmark_scalers"
+.PHONY : benchmark/CMakeFiles/benchmark_scalers.dir/all
+
+# Build rule for subdir invocation for target.
+benchmark/CMakeFiles/benchmark_scalers.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 benchmark/CMakeFiles/benchmark_scalers.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 0
+.PHONY : benchmark/CMakeFiles/benchmark_scalers.dir/rule
+
+# Convenience name for target.
+benchmark_scalers: benchmark/CMakeFiles/benchmark_scalers.dir/rule
+.PHONY : benchmark_scalers
+
+# clean rule for target.
+benchmark/CMakeFiles/benchmark_scalers.dir/clean:
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/benchmark_scalers.dir/build.make benchmark/CMakeFiles/benchmark_scalers.dir/clean
+.PHONY : benchmark/CMakeFiles/benchmark_scalers.dir/clean
+
+#=============================================================================
+# Target rules for target benchmark/CMakeFiles/profile-gprof.dir
+
+# All Build rule for target.
+benchmark/CMakeFiles/profile-gprof.dir/all: benchmark/CMakeFiles/benchmark_scalers.dir/all
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-gprof.dir/build.make benchmark/CMakeFiles/profile-gprof.dir/depend
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-gprof.dir/build.make benchmark/CMakeFiles/profile-gprof.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=5 "Built target profile-gprof"
+.PHONY : benchmark/CMakeFiles/profile-gprof.dir/all
+
+# Build rule for subdir invocation for target.
+benchmark/CMakeFiles/profile-gprof.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 3
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 benchmark/CMakeFiles/profile-gprof.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 0
+.PHONY : benchmark/CMakeFiles/profile-gprof.dir/rule
+
+# Convenience name for target.
+profile-gprof: benchmark/CMakeFiles/profile-gprof.dir/rule
+.PHONY : profile-gprof
+
+# clean rule for target.
+benchmark/CMakeFiles/profile-gprof.dir/clean:
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-gprof.dir/build.make benchmark/CMakeFiles/profile-gprof.dir/clean
+.PHONY : benchmark/CMakeFiles/profile-gprof.dir/clean
+
+#=============================================================================
+# Target rules for target benchmark/CMakeFiles/profile-valgrind-cache.dir
+
+# All Build rule for target.
+benchmark/CMakeFiles/profile-valgrind-cache.dir/all: benchmark/CMakeFiles/benchmark_scalers.dir/all
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-cache.dir/build.make benchmark/CMakeFiles/profile-valgrind-cache.dir/depend
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-cache.dir/build.make benchmark/CMakeFiles/profile-valgrind-cache.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=6 "Built target profile-valgrind-cache"
+.PHONY : benchmark/CMakeFiles/profile-valgrind-cache.dir/all
+
+# Build rule for subdir invocation for target.
+benchmark/CMakeFiles/profile-valgrind-cache.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 3
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 benchmark/CMakeFiles/profile-valgrind-cache.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 0
+.PHONY : benchmark/CMakeFiles/profile-valgrind-cache.dir/rule
+
+# Convenience name for target.
+profile-valgrind-cache: benchmark/CMakeFiles/profile-valgrind-cache.dir/rule
+.PHONY : profile-valgrind-cache
+
+# clean rule for target.
+benchmark/CMakeFiles/profile-valgrind-cache.dir/clean:
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-cache.dir/build.make benchmark/CMakeFiles/profile-valgrind-cache.dir/clean
+.PHONY : benchmark/CMakeFiles/profile-valgrind-cache.dir/clean
+
+#=============================================================================
+# Target rules for target benchmark/CMakeFiles/profile-valgrind-callgrind.dir
+
+# All Build rule for target.
+benchmark/CMakeFiles/profile-valgrind-callgrind.dir/all: benchmark/CMakeFiles/benchmark_scalers.dir/all
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-callgrind.dir/build.make benchmark/CMakeFiles/profile-valgrind-callgrind.dir/depend
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-callgrind.dir/build.make benchmark/CMakeFiles/profile-valgrind-callgrind.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=7 "Built target profile-valgrind-callgrind"
+.PHONY : benchmark/CMakeFiles/profile-valgrind-callgrind.dir/all
+
+# Build rule for subdir invocation for target.
+benchmark/CMakeFiles/profile-valgrind-callgrind.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 3
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 benchmark/CMakeFiles/profile-valgrind-callgrind.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 0
+.PHONY : benchmark/CMakeFiles/profile-valgrind-callgrind.dir/rule
+
+# Convenience name for target.
+profile-valgrind-callgrind: benchmark/CMakeFiles/profile-valgrind-callgrind.dir/rule
+.PHONY : profile-valgrind-callgrind
+
+# clean rule for target.
+benchmark/CMakeFiles/profile-valgrind-callgrind.dir/clean:
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-callgrind.dir/build.make benchmark/CMakeFiles/profile-valgrind-callgrind.dir/clean
+.PHONY : benchmark/CMakeFiles/profile-valgrind-callgrind.dir/clean
+
+#=============================================================================
+# Target rules for target benchmark/CMakeFiles/profile-valgrind-memory.dir
+
+# All Build rule for target.
+benchmark/CMakeFiles/profile-valgrind-memory.dir/all: benchmark/CMakeFiles/benchmark_scalers.dir/all
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-memory.dir/build.make benchmark/CMakeFiles/profile-valgrind-memory.dir/depend
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-memory.dir/build.make benchmark/CMakeFiles/profile-valgrind-memory.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=9 "Built target profile-valgrind-memory"
+.PHONY : benchmark/CMakeFiles/profile-valgrind-memory.dir/all
+
+# Build rule for subdir invocation for target.
+benchmark/CMakeFiles/profile-valgrind-memory.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 3
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 benchmark/CMakeFiles/profile-valgrind-memory.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 0
+.PHONY : benchmark/CMakeFiles/profile-valgrind-memory.dir/rule
+
+# Convenience name for target.
+profile-valgrind-memory: benchmark/CMakeFiles/profile-valgrind-memory.dir/rule
+.PHONY : profile-valgrind-memory
+
+# clean rule for target.
+benchmark/CMakeFiles/profile-valgrind-memory.dir/clean:
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-memory.dir/build.make benchmark/CMakeFiles/profile-valgrind-memory.dir/clean
+.PHONY : benchmark/CMakeFiles/profile-valgrind-memory.dir/clean
+
+#=============================================================================
+# Target rules for target benchmark/CMakeFiles/profile-valgrind-massif.dir
+
+# All Build rule for target.
+benchmark/CMakeFiles/profile-valgrind-massif.dir/all: benchmark/CMakeFiles/benchmark_scalers.dir/all
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-massif.dir/build.make benchmark/CMakeFiles/profile-valgrind-massif.dir/depend
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-massif.dir/build.make benchmark/CMakeFiles/profile-valgrind-massif.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=8 "Built target profile-valgrind-massif"
+.PHONY : benchmark/CMakeFiles/profile-valgrind-massif.dir/all
+
+# Build rule for subdir invocation for target.
+benchmark/CMakeFiles/profile-valgrind-massif.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 3
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 benchmark/CMakeFiles/profile-valgrind-massif.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 0
+.PHONY : benchmark/CMakeFiles/profile-valgrind-massif.dir/rule
+
+# Convenience name for target.
+profile-valgrind-massif: benchmark/CMakeFiles/profile-valgrind-massif.dir/rule
+.PHONY : profile-valgrind-massif
+
+# clean rule for target.
+benchmark/CMakeFiles/profile-valgrind-massif.dir/clean:
+	$(MAKE) $(MAKESILENT) -f benchmark/CMakeFiles/profile-valgrind-massif.dir/build.make benchmark/CMakeFiles/profile-valgrind-massif.dir/clean
+.PHONY : benchmark/CMakeFiles/profile-valgrind-massif.dir/clean
+
+#=============================================================================
+# Target rules for target tools/CMakeFiles/scaler_cli.dir
+
+# All Build rule for target.
+tools/CMakeFiles/scaler_cli.dir/all: CMakeFiles/scaler.dir/all
+	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/scaler_cli.dir/build.make tools/CMakeFiles/scaler_cli.dir/depend
+	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/scaler_cli.dir/build.make tools/CMakeFiles/scaler_cli.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=10,11 "Built target scaler_cli"
+.PHONY : tools/CMakeFiles/scaler_cli.dir/all
+
+# Build rule for subdir invocation for target.
+tools/CMakeFiles/scaler_cli.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tools/CMakeFiles/scaler_cli.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles 0
+.PHONY : tools/CMakeFiles/scaler_cli.dir/rule
+
+# Convenience name for target.
+scaler_cli: tools/CMakeFiles/scaler_cli.dir/rule
+.PHONY : scaler_cli
+
+# clean rule for target.
+tools/CMakeFiles/scaler_cli.dir/clean:
+	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/scaler_cli.dir/build.make tools/CMakeFiles/scaler_cli.dir/clean
+.PHONY : tools/CMakeFiles/scaler_cli.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

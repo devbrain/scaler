@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_GENERATOR "Unix Makefiles")
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
   "/home/igor/proj/ares/scaler/CMakeLists.txt"
+  "/home/igor/proj/ares/scaler/benchmark/CMakeLists.txt"
   "CMakeFiles/3.28.3/CMakeCCompiler.cmake"
   "CMakeFiles/3.28.3/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.28.3/CMakeSystem.cmake"
@@ -15,6 +16,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "_deps/doctest-src/scripts/cmake/Config.cmake.in"
   "/home/igor/proj/ares/scaler/ext/CMakeLists.txt"
   "/home/igor/proj/ares/scaler/ext/doctest/CMakeLists.txt"
+  "/home/igor/proj/ares/scaler/tools/CMakeLists.txt"
   "/home/igor/proj/ares/scaler/unittest/CMakeLists.txt"
   "/usr/lib/x86_64-linux-gnu/cmake/SDL2/sdl2-config-version.cmake"
   "/usr/lib/x86_64-linux-gnu/cmake/SDL2/sdl2-config.cmake"
@@ -65,6 +67,9 @@ set(CMAKE_MAKEFILE_PRODUCTS
   "_deps/doctest-build/generated/doctestConfig.cmake"
   "_deps/doctest-build/CMakeFiles/CMakeDirectoryInformation.cmake"
   "unittest/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "benchmark/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "_deps/stb-subbuild/CMakeLists.txt"
+  "tools/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 
 # Dependency information for all targets:
@@ -72,4 +77,11 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/scaler.dir/DependInfo.cmake"
   "unittest/CMakeFiles/scaler_unittest.dir/DependInfo.cmake"
   "unittest/CMakeFiles/generate_golden_data.dir/DependInfo.cmake"
+  "benchmark/CMakeFiles/benchmark_scalers.dir/DependInfo.cmake"
+  "benchmark/CMakeFiles/profile-gprof.dir/DependInfo.cmake"
+  "benchmark/CMakeFiles/profile-valgrind-cache.dir/DependInfo.cmake"
+  "benchmark/CMakeFiles/profile-valgrind-callgrind.dir/DependInfo.cmake"
+  "benchmark/CMakeFiles/profile-valgrind-memory.dir/DependInfo.cmake"
+  "benchmark/CMakeFiles/profile-valgrind-massif.dir/DependInfo.cmake"
+  "tools/CMakeFiles/scaler_cli.dir/DependInfo.cmake"
   )

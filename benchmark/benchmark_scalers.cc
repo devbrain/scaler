@@ -4,6 +4,10 @@
 #include <scaler/2xsai.hh>
 #include <scaler/xbr.hh>
 #include <scaler/hq2x.hh>
+#include <scaler/scale2x_sfx.hh>
+#include <scaler/scale3x.hh>
+#include <scaler/scale3x_sfx.hh>
+#include <scaler/omniscale.hh>
 #include <scaler/sdl_scalers.hh>
 
 #include <chrono>
@@ -263,11 +267,16 @@ void benchmark_all_algorithms(SDL_Surface* input, const std::string& description
     std::map<std::string, BenchmarkStats> results;
     
     // Benchmark each algorithm
+    results["2xSaI"] = benchmark_algorithm("2xSaI", input, scale2xSaISDL, warmup_runs, bench_runs);
     results["EPX"] = benchmark_algorithm("EPX", input, scaleEpxSDL, warmup_runs, bench_runs);
     results["Eagle"] = benchmark_algorithm("Eagle", input, scaleEagleSDL, warmup_runs, bench_runs);
-    results["2xSaI"] = benchmark_algorithm("2xSaI", input, scale2xSaISDL, warmup_runs, bench_runs);
-    results["XBR"] = benchmark_algorithm("XBR", input, scaleXbrSDL, warmup_runs, bench_runs);
     results["HQ2x"] = benchmark_algorithm("HQ2x", input, scaleHq2xSDL, warmup_runs, bench_runs);
+    results["XBR"] = benchmark_algorithm("XBR", input, scaleXbrSDL, warmup_runs, bench_runs);
+    results["Scale2xSFX"] = benchmark_algorithm("Scale2xSFX", input, scaleScale2xSFXSDL, warmup_runs, bench_runs);
+    results["Scale3x"] = benchmark_algorithm("Scale3x", input, scaleScale3xSDL, warmup_runs, bench_runs);
+    results["Scale3xSFX"] = benchmark_algorithm("Scale3xSFX", input, scaleScale3xSFXSDL, warmup_runs, bench_runs);
+    results["OmniScale2x"] = benchmark_algorithm("OmniScale2x", input, scaleOmniScale2xSDL, warmup_runs, bench_runs);
+    results["OmniScale3x"] = benchmark_algorithm("OmniScale3x", input, scaleOmniScale3xSDL, warmup_runs, bench_runs);
     
     // Print results table
     std::cout << "\nResults:\n";
@@ -703,11 +712,16 @@ int main(int argc, char* argv[]) {
         } else {
             std::cout << "\nBenchmarking: " << config.description << std::endl;
             
+            results["2xSaI"] = benchmark_algorithm("2xSaI", test_image, scale2xSaISDL, warmup_runs, bench_runs, verbose);
             results["EPX"] = benchmark_algorithm("EPX", test_image, scaleEpxSDL, warmup_runs, bench_runs, verbose);
             results["Eagle"] = benchmark_algorithm("Eagle", test_image, scaleEagleSDL, warmup_runs, bench_runs, verbose);
-            results["2xSaI"] = benchmark_algorithm("2xSaI", test_image, scale2xSaISDL, warmup_runs, bench_runs, verbose);
-            results["XBR"] = benchmark_algorithm("XBR", test_image, scaleXbrSDL, warmup_runs, bench_runs, verbose);
             results["HQ2x"] = benchmark_algorithm("HQ2x", test_image, scaleHq2xSDL, warmup_runs, bench_runs, verbose);
+            results["XBR"] = benchmark_algorithm("XBR", test_image, scaleXbrSDL, warmup_runs, bench_runs, verbose);
+            results["Scale2xSFX"] = benchmark_algorithm("Scale2xSFX", test_image, scaleScale2xSFXSDL, warmup_runs, bench_runs, verbose);
+            results["Scale3x"] = benchmark_algorithm("Scale3x", test_image, scaleScale3xSDL, warmup_runs, bench_runs, verbose);
+            results["Scale3xSFX"] = benchmark_algorithm("Scale3xSFX", test_image, scaleScale3xSFXSDL, warmup_runs, bench_runs, verbose);
+            results["OmniScale2x"] = benchmark_algorithm("OmniScale2x", test_image, scaleOmniScale2xSDL, warmup_runs, bench_runs, verbose);
+            results["OmniScale3x"] = benchmark_algorithm("OmniScale3x", test_image, scaleOmniScale3xSDL, warmup_runs, bench_runs, verbose);
             
             // Print summary
             std::cout << "  Results: ";

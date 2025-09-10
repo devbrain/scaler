@@ -6,5 +6,5 @@ CXX_DEFINES = -DSCALER_HAS_SDL2 -DSCALER_SDL_VERSION=2
 
 CXX_INCLUDES = -I/home/igor/proj/ares/scaler/build/_deps/doctest-src -I/home/igor/proj/ares/scaler/include -isystem /usr/include/SDL2
 
-CXX_FLAGS = -g -std=gnu++17
+CXX_FLAGS = -O3 -DNDEBUG -std=gnu++17
 

@@ -17,6 +17,10 @@ add_executable(scaler_unittest
         test_golden_data.cc
         # Sliding window buffer tests
         test_sliding_window_buffer.cc
+        # Scale algorithm tests
+        test_scale_algorithms.cc
+        # OmniScale golden data tests
+        test_omniscale_golden.cc
 )
 
 # Include directories

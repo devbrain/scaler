@@ -85,6 +85,51 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 .PHONY : rebuild_cache/fast
 
+# Special rule for the target list_install_components
+list_install_components:
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Available install components are: \"Unspecified\""
+.PHONY : list_install_components
+
+# Special rule for the target list_install_components
+list_install_components/fast: list_install_components
+.PHONY : list_install_components/fast
+
+# Special rule for the target install
+install: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/usr/bin/cmake -P cmake_install.cmake
+.PHONY : install
+
+# Special rule for the target install
+install/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/usr/bin/cmake -P cmake_install.cmake
+.PHONY : install/fast
+
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
+
+# Special rule for the target install/local
+install/local/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local/fast
+
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
+
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
+
 # The main all target
 all: cmake_check_build_system
 	cd /home/igor/proj/ares/scaler/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/igor/proj/ares/scaler/build/CMakeFiles /home/igor/proj/ares/scaler/build/unittest//CMakeFiles/progress.marks
@@ -264,6 +309,54 @@ test_main.cc.s:
 	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_main.cc.s
 .PHONY : test_main.cc.s
 
+test_omniscale_golden.o: test_omniscale_golden.cc.o
+.PHONY : test_omniscale_golden.o
+
+# target to build an object file
+test_omniscale_golden.cc.o:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.o
+.PHONY : test_omniscale_golden.cc.o
+
+test_omniscale_golden.i: test_omniscale_golden.cc.i
+.PHONY : test_omniscale_golden.i
+
+# target to preprocess a source file
+test_omniscale_golden.cc.i:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.i
+.PHONY : test_omniscale_golden.cc.i
+
+test_omniscale_golden.s: test_omniscale_golden.cc.s
+.PHONY : test_omniscale_golden.s
+
+# target to generate assembly for a file
+test_omniscale_golden.cc.s:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.s
+.PHONY : test_omniscale_golden.cc.s
+
+test_scale_algorithms.o: test_scale_algorithms.cc.o
+.PHONY : test_scale_algorithms.o
+
+# target to build an object file
+test_scale_algorithms.cc.o:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_scale_algorithms.cc.o
+.PHONY : test_scale_algorithms.cc.o
+
+test_scale_algorithms.i: test_scale_algorithms.cc.i
+.PHONY : test_scale_algorithms.i
+
+# target to preprocess a source file
+test_scale_algorithms.cc.i:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_scale_algorithms.cc.i
+.PHONY : test_scale_algorithms.cc.i
+
+test_scale_algorithms.s: test_scale_algorithms.cc.s
+.PHONY : test_scale_algorithms.s
+
+# target to generate assembly for a file
+test_scale_algorithms.cc.s:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_scale_algorithms.cc.s
+.PHONY : test_scale_algorithms.cc.s
+
 test_scalers_comprehensive.o: test_scalers_comprehensive.cc.o
 .PHONY : test_scalers_comprehensive.o
 
@@ -312,6 +405,30 @@ test_sdl_interface.cc.s:
 	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_sdl_interface.cc.s
 .PHONY : test_sdl_interface.cc.s
 
+test_sliding_window_buffer.o: test_sliding_window_buffer.cc.o
+.PHONY : test_sliding_window_buffer.o
+
+# target to build an object file
+test_sliding_window_buffer.cc.o:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_sliding_window_buffer.cc.o
+.PHONY : test_sliding_window_buffer.cc.o
+
+test_sliding_window_buffer.i: test_sliding_window_buffer.cc.i
+.PHONY : test_sliding_window_buffer.i
+
+# target to preprocess a source file
+test_sliding_window_buffer.cc.i:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_sliding_window_buffer.cc.i
+.PHONY : test_sliding_window_buffer.cc.i
+
+test_sliding_window_buffer.s: test_sliding_window_buffer.cc.s
+.PHONY : test_sliding_window_buffer.s
+
+# target to generate assembly for a file
+test_sliding_window_buffer.cc.s:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_sliding_window_buffer.cc.s
+.PHONY : test_sliding_window_buffer.cc.s
+
 test_xbr_hq2x.o: test_xbr_hq2x.cc.o
 .PHONY : test_xbr_hq2x.o
 
@@ -343,6 +460,10 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
+	@echo "... install"
+	@echo "... install/local"
+	@echo "... install/strip"
+	@echo "... list_install_components"
 	@echo "... rebuild_cache"
 	@echo "... generate_golden_data"
 	@echo "... scaler_unittest"
@@ -361,12 +482,21 @@ help:
 	@echo "... test_main.o"
 	@echo "... test_main.i"
 	@echo "... test_main.s"
+	@echo "... test_omniscale_golden.o"
+	@echo "... test_omniscale_golden.i"
+	@echo "... test_omniscale_golden.s"
+	@echo "... test_scale_algorithms.o"
+	@echo "... test_scale_algorithms.i"
+	@echo "... test_scale_algorithms.s"
 	@echo "... test_scalers_comprehensive.o"
 	@echo "... test_scalers_comprehensive.i"
 	@echo "... test_scalers_comprehensive.s"
 	@echo "... test_sdl_interface.o"
 	@echo "... test_sdl_interface.i"
 	@echo "... test_sdl_interface.s"
+	@echo "... test_sliding_window_buffer.o"
+	@echo "... test_sliding_window_buffer.i"
+	@echo "... test_sliding_window_buffer.s"
 	@echo "... test_xbr_hq2x.o"
 	@echo "... test_xbr_hq2x.i"
 	@echo "... test_xbr_hq2x.s"
