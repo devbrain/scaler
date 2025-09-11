@@ -4,5 +4,9 @@
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/build/_deps/doctest-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/build/_deps/stb-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/build_package/_deps/doctest-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/build_package/_deps/stb-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/build_test/_deps/doctest-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/build_test/_deps/stb-src" vcs="Git" />
   </component>
 </project>

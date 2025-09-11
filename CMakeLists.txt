@@ -157,7 +157,13 @@ add_library(scaler INTERFACE
         ${SCALER_PROJECT_ROOT}/include/scaler/scale3x_sfx.hh
 )
 
-target_include_directories(scaler INTERFACE ${SCALER_PROJECT_ROOT}/include)
+# Create alias for consistent usage
+add_library(scaler::scaler ALIAS scaler)
+
+target_include_directories(scaler INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 
 # Add SDL dependency if available
 if(NOT SCALER_NO_SDL)
@@ -181,6 +187,105 @@ endif()
 if (SCALER_BUILD_TOOLS)
     add_subdirectory(tools)
 endif()
+
+# ===========================================================================
+# Installation and Packaging
+# ===========================================================================
+
+# Install headers
+install(DIRECTORY include/scaler
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.hh"
+)
+
+# Install the library target
+install(TARGETS scaler
+    EXPORT scalerTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# Generate and install export file
+install(EXPORT scalerTargets
+    FILE scalerTargets.cmake
+    NAMESPACE scaler::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
+)
+
+# Generate the config file that includes the exports
+include(CMakePackageConfigHelpers)
+
+# Create version file
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/scalerConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+# Configure the config file
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/scalerConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/scalerConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
+)
+
+# Install the config files
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/scalerConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/scalerConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
+)
+
+# Export for build tree
+export(EXPORT scalerTargets
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/scalerTargets.cmake"
+    NAMESPACE scaler::
+)
+
+# Register package in user's package registry
+export(PACKAGE scaler)
+
+# ===========================================================================
+# CPack Configuration
+# ===========================================================================
+
+set(CPACK_PACKAGE_NAME "scaler")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_VENDOR "Scaler Project")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "High-performance pixel art scaling algorithms")
+set(CPACK_PACKAGE_DESCRIPTION "A header-only C++ library providing efficient implementations of popular pixel art scaling algorithms")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+
+# Generator-specific settings
+set(CPACK_GENERATOR "TGZ;ZIP")
+if(UNIX AND NOT APPLE)
+    list(APPEND CPACK_GENERATOR "DEB")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Your Name")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsdl3-dev | libsdl2-dev")
+endif()
+
+if(WIN32)
+    list(APPEND CPACK_GENERATOR "NSIS")
+    set(CPACK_NSIS_DISPLAY_NAME "Scaler Library")
+    set(CPACK_NSIS_PACKAGE_NAME "Scaler")
+endif()
+
+# Source package settings
+set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
+set(CPACK_SOURCE_IGNORE_FILES
+    /.git/
+    /build/
+    /cmake-build-.*/
+    /.idea/
+    /.vscode/
+    /\\\\.DS_Store
+    /.*\\\\.swp
+)
+
+include(CPack)
 
 
 

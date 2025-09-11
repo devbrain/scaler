@@ -1,0 +1,33 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Optional SDL dependency
+set(SCALER_HAS_SDL @NOT SCALER_NO_SDL@)
+if(SCALER_HAS_SDL)
+    if(@SCALER_USE_SDL3@)
+        find_dependency(SDL3)
+    elseif(@SCALER_USE_SDL2@)
+        find_dependency(SDL2)
+    endif()
+endif()
+
+# Include the targets file
+if(NOT TARGET scaler::scaler)
+    include("${CMAKE_CURRENT_LIST_DIR}/scalerTargets.cmake")
+endif()
+
+# Provide variables for downstream projects
+set(scaler_FOUND TRUE)
+set(scaler_VERSION @PROJECT_VERSION@)
+set(scaler_VERSION_STRING "@PROJECT_VERSION@")
+set(scaler_VERSION_MAJOR @PROJECT_VERSION_MAJOR@)
+set(scaler_VERSION_MINOR @PROJECT_VERSION_MINOR@)
+set(scaler_VERSION_PATCH @PROJECT_VERSION_PATCH@)
+
+# Provide include directory variable for backward compatibility
+get_target_property(scaler_INCLUDE_DIRS scaler::scaler INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(scaler_INCLUDE_DIR scaler::scaler INTERFACE_INCLUDE_DIRECTORIES)
+
+# Check required components (for future use)
+check_required_components(scaler)
