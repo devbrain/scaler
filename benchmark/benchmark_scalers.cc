@@ -4,6 +4,7 @@
 #include <scaler/2xsai.hh>
 #include <scaler/xbr.hh>
 #include <scaler/hq2x.hh>
+#include <scaler/hq3x.hh>
 #include <scaler/scale2x_sfx.hh>
 #include <scaler/scale3x.hh>
 #include <scaler/scale3x_sfx.hh>
@@ -23,7 +24,7 @@
 #include <cmath>
 #include <memory>
 #include <ctime>
-#include <iomanip>
+#include <functional>
 #include <unistd.h>  // For isatty
 
 // Include embedded test image
@@ -256,9 +257,30 @@ BenchmarkStats benchmark_algorithm(
     return stats;
 }
 
+// Define all algorithms in one place
+struct AlgorithmEntry {
+    std::string name;
+    std::function<SDL_Surface*(SDL_Surface*)> func;
+};
+
+const std::vector<AlgorithmEntry> ALL_ALGORITHMS = {
+    {"2xSaI", scale2xSaISDL},
+    {"EPX", scaleEpxSDL},
+    {"Eagle", scaleEagleSDL},
+    {"HQ2x", scaleHq2xSDL},
+    {"HQ3x", scaleHq3xSDL},
+    {"XBR", scaleXbrSDL},
+    {"Scale2xSFX", scaleScale2xSFXSDL},
+    {"Scale3x", scaleScale3xSDL},
+    {"Scale3xSFX", scaleScale3xSFXSDL},
+    {"OmniScale2x", scaleOmniScale2xSDL},
+    {"OmniScale3x", scaleOmniScale3xSDL}
+};
+
 // Benchmark all algorithms with a given image
 void benchmark_all_algorithms(SDL_Surface* input, const std::string& description,
-                             int warmup_runs = 5, int bench_runs = 50) {
+                             int warmup_runs = 5, int bench_runs = 50,
+                             const std::string& filter_algorithm = "") {
     std::cout << "\n=== Benchmark: " << description << " ===" << std::endl;
     std::cout << "Image size: " << input->w << "x" << input->h 
               << " (" << (input->w * input->h / 1000000.0) << " MP)" << std::endl;
@@ -266,17 +288,12 @@ void benchmark_all_algorithms(SDL_Surface* input, const std::string& description
     
     std::map<std::string, BenchmarkStats> results;
     
-    // Benchmark each algorithm
-    results["2xSaI"] = benchmark_algorithm("2xSaI", input, scale2xSaISDL, warmup_runs, bench_runs);
-    results["EPX"] = benchmark_algorithm("EPX", input, scaleEpxSDL, warmup_runs, bench_runs);
-    results["Eagle"] = benchmark_algorithm("Eagle", input, scaleEagleSDL, warmup_runs, bench_runs);
-    results["HQ2x"] = benchmark_algorithm("HQ2x", input, scaleHq2xSDL, warmup_runs, bench_runs);
-    results["XBR"] = benchmark_algorithm("XBR", input, scaleXbrSDL, warmup_runs, bench_runs);
-    results["Scale2xSFX"] = benchmark_algorithm("Scale2xSFX", input, scaleScale2xSFXSDL, warmup_runs, bench_runs);
-    results["Scale3x"] = benchmark_algorithm("Scale3x", input, scaleScale3xSDL, warmup_runs, bench_runs);
-    results["Scale3xSFX"] = benchmark_algorithm("Scale3xSFX", input, scaleScale3xSFXSDL, warmup_runs, bench_runs);
-    results["OmniScale2x"] = benchmark_algorithm("OmniScale2x", input, scaleOmniScale2xSDL, warmup_runs, bench_runs);
-    results["OmniScale3x"] = benchmark_algorithm("OmniScale3x", input, scaleOmniScale3xSDL, warmup_runs, bench_runs);
+    // Benchmark each algorithm from the single list
+    for (const auto& algo : ALL_ALGORITHMS) {
+        // Skip if filter is set and doesn't match
+        if (!filter_algorithm.empty() && algo.name != filter_algorithm) continue;
+        results[algo.name] = benchmark_algorithm(algo.name, input, algo.func, warmup_runs, bench_runs);
+    }
     
     // Print results table
     std::cout << "\nResults:\n";
@@ -374,13 +391,9 @@ void save_baseline_json(const std::string& filename,
     // Add benchmark results
     writer.begin_object("benchmarks");
     
-    bool first_config = true;
     for (const auto& [pattern, width, height, results] : all_results) {
         std::string config_key = pattern + "_" + std::to_string(width) + "x" + std::to_string(height);
         
-        if (!first_config) {
-            writer.json << ",";
-        }
         writer.begin_nested_object(config_key);
         
         for (const auto& [algo, stats] : results) {
@@ -390,7 +403,6 @@ void save_baseline_json(const std::string& filename,
         }
         
         writer.end_nested_object();
-        first_config = false;
     }
     
     writer.end_object();
@@ -617,6 +629,7 @@ int main(int argc, char* argv[]) {
     bool save_baseline = false;
     bool compare_baseline = false;
     std::string baseline_file = "benchmark/baseline.json";
+    std::string filter_algorithm = "";
     
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -629,12 +642,16 @@ int main(int argc, char* argv[]) {
         else if (arg == "--baseline-file" && i + 1 < argc) {
             baseline_file = argv[++i];
         }
+        else if ((arg == "-f" || arg == "--filter") && i + 1 < argc) {
+            filter_algorithm = argv[++i];
+        }
         else if (arg == "-h" || arg == "--help") {
             std::cout << "Usage: " << argv[0] << " [options]\n"
                       << "Options:\n"
                       << "  -v, --verbose         Verbose output\n"
                       << "  -q, --quick           Quick benchmark (fewer runs)\n"
                       << "  -m, --memory          Include memory analysis\n"
+                      << "  -f, --filter ALGO     Run only specified algorithm (e.g., HQ3x)\n"
                       << "  --csv                 Save results to CSV file\n"
                       << "  --save-baseline       Save results as baseline\n"
                       << "  --compare-baseline    Compare with baseline\n"
@@ -708,20 +725,16 @@ int main(int argc, char* argv[]) {
         std::map<std::string, BenchmarkStats> results;
         
         if (verbose) {
-            benchmark_all_algorithms(test_image, config.description, warmup_runs, bench_runs);
+            benchmark_all_algorithms(test_image, config.description, warmup_runs, bench_runs, filter_algorithm);
         } else {
             std::cout << "\nBenchmarking: " << config.description << std::endl;
             
-            results["2xSaI"] = benchmark_algorithm("2xSaI", test_image, scale2xSaISDL, warmup_runs, bench_runs, verbose);
-            results["EPX"] = benchmark_algorithm("EPX", test_image, scaleEpxSDL, warmup_runs, bench_runs, verbose);
-            results["Eagle"] = benchmark_algorithm("Eagle", test_image, scaleEagleSDL, warmup_runs, bench_runs, verbose);
-            results["HQ2x"] = benchmark_algorithm("HQ2x", test_image, scaleHq2xSDL, warmup_runs, bench_runs, verbose);
-            results["XBR"] = benchmark_algorithm("XBR", test_image, scaleXbrSDL, warmup_runs, bench_runs, verbose);
-            results["Scale2xSFX"] = benchmark_algorithm("Scale2xSFX", test_image, scaleScale2xSFXSDL, warmup_runs, bench_runs, verbose);
-            results["Scale3x"] = benchmark_algorithm("Scale3x", test_image, scaleScale3xSDL, warmup_runs, bench_runs, verbose);
-            results["Scale3xSFX"] = benchmark_algorithm("Scale3xSFX", test_image, scaleScale3xSFXSDL, warmup_runs, bench_runs, verbose);
-            results["OmniScale2x"] = benchmark_algorithm("OmniScale2x", test_image, scaleOmniScale2xSDL, warmup_runs, bench_runs, verbose);
-            results["OmniScale3x"] = benchmark_algorithm("OmniScale3x", test_image, scaleOmniScale3xSDL, warmup_runs, bench_runs, verbose);
+            // Use the same single algorithm list
+            for (const auto& algo : ALL_ALGORITHMS) {
+                // Skip if filter is set and doesn't match
+                if (!filter_algorithm.empty() && algo.name != filter_algorithm) continue;
+                results[algo.name] = benchmark_algorithm(algo.name, test_image, algo.func, warmup_runs, bench_runs, verbose);
+            }
             
             // Print summary
             std::cout << "  Results: ";
