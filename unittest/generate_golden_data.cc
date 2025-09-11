@@ -1,6 +1,6 @@
 // Program to generate golden data for all scaling algorithms
-#include <scaler/sdl_compat.hh>
-#include <scaler/sdl_image.hh>
+#include <scaler/sdl/sdl_compat.hh>
+#include <scaler/sdl/sdl_image.hh>
 #include <scaler/epx.hh>
 #include <scaler/eagle.hh>
 #include <scaler/2xsai.hh>
@@ -13,6 +13,8 @@
 #include <iomanip>
 
 #include "rotozoom_bmp.h"
+
+using namespace scaler;
 
 struct PixelData {
     uint8_t r, g, b, a;

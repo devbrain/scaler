@@ -1,4 +1,4 @@
-#include <scaler/sdl_image.hh>
+#include <scaler/sdl/sdl_image.hh>
 #include <scaler/epx.hh>
 #include <scaler/eagle.hh>
 #include <scaler/2xsai.hh>
@@ -8,7 +8,7 @@
 #include <scaler/scale3x.hh>
 #include <scaler/scale3x_sfx.hh>
 #include <scaler/omniscale.hh>
-#include <scaler/sdl_scalers.hh>
+#include <scaler/sdl/sdl_scalers.hh>
 
 #include <chrono>
 #include <iostream>
@@ -28,7 +28,7 @@
 
 // Include embedded test image
 #include "../unittest/rotozoom_bmp.h"
-
+using namespace scaler;
 // Simple JSON writer for baseline
 class BaselineWriter {
 public:

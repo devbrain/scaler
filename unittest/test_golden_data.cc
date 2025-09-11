@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include <scaler/sdl_image.hh>
+#include <../include/scaler/sdl/sdl_image.hh>
 #include <scaler/epx.hh>
 #include <scaler/eagle.hh>
 #include <scaler/2xsai.hh>
@@ -19,7 +19,7 @@
 #include "golden_test_pattern_2xsai.h"
 #include "golden_test_pattern_xbr.h"
 #include "golden_test_pattern_hq2x.h"
-
+using namespace scaler;
 // Helper to create SDL surface from raw RGBA data
 std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> 
 createSurfaceFromData(const unsigned char* data, int width, int height) {
@@ -31,7 +31,7 @@ createSurfaceFromData(const unsigned char* data, int width, int height) {
     if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
     
     // Copy pixel data
-    Uint32* pixels = (Uint32*)surface->pixels;
+    Uint32* pixels = static_cast<Uint32*>(surface->pixels);
     for (int i = 0; i < width * height; ++i) {
         Uint8 r = data[i * 4 + 0];
         Uint8 g = data[i * 4 + 1];
@@ -56,7 +56,7 @@ bool compareSurfaceWithGolden(SDL_Surface* surface,
     if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
     
     bool matches = true;
-    Uint32* pixels = (Uint32*)surface->pixels;
+    Uint32* pixels = static_cast<Uint32*>(surface->pixels);
     
     for (int i = 0; i < expected_width * expected_height && matches; ++i) {
         Uint8 r, g, b, a;
@@ -78,10 +78,10 @@ bool compareSurfaceWithGolden(SDL_Surface* surface,
                 INFO("Pixel mismatch at index " << i 
                      << " (x=" << (i % expected_width) 
                      << ", y=" << (i / expected_width) << ")");
-                INFO("Expected RGBA: (" << (int)expected_r << ", " << (int)expected_g 
-                     << ", " << (int)expected_b << ", " << (int)expected_a << ")");
-                INFO("Got RGBA: (" << (int)r << ", " << (int)g 
-                     << ", " << (int)b << ", " << (int)a << ")");
+                INFO("Expected RGBA: (" << static_cast<int>(expected_r) << ", " << static_cast<int>(expected_g) 
+                     << ", " << static_cast<int>(expected_b) << ", " << static_cast<int>(expected_a) << ")");
+                INFO("Got RGBA: (" << static_cast<int>(r) << ", " << static_cast<int>(g) 
+                     << ", " << static_cast<int>(b) << ", " << static_cast<int>(a) << ")");
             }
             matches = false;
         }
@@ -207,7 +207,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
                           int width, int height, 
                           const std::vector<int>& indices) {
         if (SDL_MUSTLOCK(surf)) SDL_LockSurface(surf);
-        Uint32* pixels = (Uint32*)surf->pixels;
+        Uint32* pixels = static_cast<Uint32*>(surf->pixels);
         
         bool all_match = true;
         for (int idx : indices) {
@@ -223,10 +223,10 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
             
             if (r != expected_r || g != expected_g || b != expected_b || a != expected_a) {
                 INFO("Pixel mismatch at index " << idx);
-                INFO("Expected: (" << (int)expected_r << ", " << (int)expected_g 
-                     << ", " << (int)expected_b << ", " << (int)expected_a << ")");
-                INFO("Got: (" << (int)r << ", " << (int)g 
-                     << ", " << (int)b << ", " << (int)a << ")");
+                INFO("Expected: (" << static_cast<int>(expected_r) << ", " << static_cast<int>(expected_g) 
+                     << ", " << static_cast<int>(expected_b) << ", " << static_cast<int>(expected_a) << ")");
+                INFO("Got: (" << static_cast<int>(r) << ", " << static_cast<int>(g) 
+                     << ", " << static_cast<int>(b) << ", " << static_cast<int>(a) << ")");
                 all_match = false;
             }
         }

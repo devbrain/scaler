@@ -24,4 +24,4 @@ const unsigned char GOLDEN_TEST_PATTERN_HQ2X_DATA[] = {
     0x1f, 0xdf, 0xff, 0xff, 0x1f, 0xff, 0xff, 0xff, 0x9f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
-const size_t GOLDEN_TEST_PATTERN_HQ2X_SIZE = sizeof(GOLDEN_TEST_PATTERN_HQ2X_DATA);
+[[maybe_unused]] const size_t GOLDEN_TEST_PATTERN_HQ2X_SIZE = sizeof(GOLDEN_TEST_PATTERN_HQ2X_DATA);

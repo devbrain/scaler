@@ -3,13 +3,13 @@
 #include <scaler/xbr.hh>
 #include <scaler/hq2x.hh>
 #include <vector>
-
+using namespace scaler;
 // Test image implementation for XBR/HQ2x tests
 class TestImageXBR : public InputImageBase<TestImageXBR, uvec3>,
                      public OutputImageBase<TestImageXBR, uvec3> {
 public:
     TestImageXBR(int w, int h) 
-        : m_width(w), m_height(h), m_data(w * h, {0, 0, 0}) {}
+        : m_width(w), m_height(h), m_data(static_cast<size_t>(w * h), {0, 0, 0}) {}
     
     TestImageXBR(int w, int h, const TestImageXBR&)
         : TestImageXBR(w, h) {}
@@ -26,14 +26,14 @@ public:
     
     [[nodiscard]] uvec3 get_pixel_impl(int x, int y) const {
         if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            return m_data[y * m_width + x];
+            return m_data[static_cast<size_t>(y * m_width + x)];
         }
         return {0, 0, 0};
     }
     
     void set_pixel_impl(int x, int y, const uvec3& pixel) {
         if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            m_data[y * m_width + x] = pixel;
+            m_data[static_cast<size_t>(y * m_width + x)] = pixel;
         }
     }
     
@@ -43,14 +43,14 @@ public:
     
     void fillPattern(const std::vector<std::vector<uvec3>>& pattern) {
         for (int y = 0; y < std::min(static_cast<int>(pattern.size()), m_height); ++y) {
-            for (int x = 0; x < std::min(static_cast<int>(pattern[y].size()), m_width); ++x) {
-                set_pixel(x, y, pattern[y][x]);
+            for (int x = 0; x < std::min(static_cast<int>(pattern[static_cast<size_t>(y)].size()), m_width); ++x) {
+                set_pixel(x, y, pattern[static_cast<size_t>(y)][static_cast<size_t>(x)]);
             }
         }
     }
     
     [[nodiscard]] size_t countPixelsOfColor(const uvec3& color) const {
-        return std::count(m_data.begin(), m_data.end(), color);
+        return static_cast<size_t>(std::count(m_data.begin(), m_data.end(), color));
     }
     
 private:

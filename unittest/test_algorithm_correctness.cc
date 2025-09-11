@@ -9,13 +9,13 @@
 #include <numeric>
 #include <set>
 #include <cmath>
-
+using namespace scaler;
 // Enhanced test image with more analysis capabilities
 class AnalysisImage : public InputImageBase<AnalysisImage, uvec3>,
                        public OutputImageBase<AnalysisImage, uvec3> {
 public:
     AnalysisImage(int w, int h) 
-        : m_width(w), m_height(h), m_data(w * h, {0, 0, 0}) {}
+        : m_width(w), m_height(h), m_data(static_cast<size_t>(w * h), {0, 0, 0}) {}
     
     AnalysisImage(int w, int h, const AnalysisImage&)
         : AnalysisImage(w, h) {}
@@ -32,14 +32,14 @@ public:
     
     [[nodiscard]] uvec3 get_pixel_impl(int x, int y) const {
         if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            return m_data[y * m_width + x];
+            return m_data[static_cast<size_t>(y * m_width + x)];
         }
         return {0, 0, 0};
     }
     
     void set_pixel_impl(int x, int y, const uvec3& pixel) {
         if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            m_data[y * m_width + x] = pixel;
+            m_data[static_cast<size_t>(y * m_width + x)] = pixel;
         }
     }
     
@@ -49,7 +49,7 @@ public:
         for (const auto& pixel : m_data) {
             sum += (pixel.x + pixel.y + pixel.z) / 3.0;
         }
-        return sum / m_data.size();
+        return sum / static_cast<double>(m_data.size());
     }
     
     [[nodiscard]] double calculateColorVariance() const {
@@ -59,7 +59,7 @@ public:
             double val = (pixel.x + pixel.y + pixel.z) / 3.0;
             variance += (val - mean) * (val - mean);
         }
-        return variance / m_data.size();
+        return variance / static_cast<double>(m_data.size());
     }
     
     [[nodiscard]] size_t countUniqueColors() const {
@@ -125,9 +125,9 @@ public:
     void generateGradient(bool horizontal = true) {
         for (int y = 0; y < m_height; ++y) {
             for (int x = 0; x < m_width; ++x) {
-                unsigned int val = horizontal 
+                unsigned int val = static_cast<unsigned int>(horizontal 
                     ? (x * 255 / (m_width - 1))
-                    : (y * 255 / (m_height - 1));
+                    : (y * 255 / (m_height - 1)));
                 set_pixel(x, y, {val, val, val});
             }
         }
@@ -151,10 +151,10 @@ TEST_CASE("Algorithm Correctness - Color Preservation") {
         auto sai_output = scale2xSaI<AnalysisImage, AnalysisImage>(input);
         
         // Color average should be preserved within reasonable tolerance
-        CHECK(abs(epx_output.calculateAverageColor() - original_avg) < 5.0);
-        CHECK(abs(eagle_output.calculateAverageColor() - original_avg) < 5.0);
-        CHECK(abs(advmame_output.calculateAverageColor() - original_avg) < 5.0);
-        CHECK(abs(sai_output.calculateAverageColor() - original_avg) < 5.0);
+        CHECK(std::abs(epx_output.calculateAverageColor() - original_avg) < 5.0);
+        CHECK(std::abs(eagle_output.calculateAverageColor() - original_avg) < 5.0);
+        CHECK(std::abs(advmame_output.calculateAverageColor() - original_avg) < 5.0);
+        CHECK(std::abs(sai_output.calculateAverageColor() - original_avg) < 5.0);
     }
     
     SUBCASE("Color variance preservation") {
@@ -182,7 +182,7 @@ TEST_CASE("Algorithm Correctness - Edge Preservation") {
             }
         }
         
-        double original_sharpness = input.calculateSharpness();
+        [[maybe_unused]] double original_sharpness = input.calculateSharpness();
         
         auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
         auto eagle_output = scaleEagle<AnalysisImage, AnalysisImage>(input);
@@ -324,7 +324,7 @@ TEST_CASE("Algorithm Correctness - Symmetry Tests") {
         
         // Both should have same color distribution
         CHECK(output1.countUniqueColors() == output2.countUniqueColors());
-        CHECK(abs(output1.calculateAverageColor() - output2.calculateAverageColor()) < 1.0);
+        CHECK(std::abs(output1.calculateAverageColor() - output2.calculateAverageColor()) < 1.0);
     }
 }
 
@@ -333,7 +333,7 @@ TEST_CASE("Algorithm Correctness - Interpolation Quality") {
         AnalysisImage input(8, 1);
         // Create smooth horizontal gradient
         for (int x = 0; x < 8; ++x) {
-            unsigned int val = x * 36;
+            unsigned int val = static_cast<unsigned int>(x * 36);
             input.set_pixel(x, 0, {val, val, val});
         }
         
@@ -391,7 +391,7 @@ TEST_CASE("Algorithm Performance Characteristics") {
         
         for (int size : sizes) {
             AnalysisImage input(size, size);
-            input.generateRandomNoise(size);
+            input.generateRandomNoise(static_cast<unsigned int>(size));
             
             auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
             auto eagle_output = scaleEagle<AnalysisImage, AnalysisImage>(input);
@@ -404,8 +404,8 @@ TEST_CASE("Algorithm Performance Characteristics") {
             
             // Color preservation should be consistent
             double input_avg = input.calculateAverageColor();
-            CHECK(abs(epx_output.calculateAverageColor() - input_avg) < 10.0);
-            CHECK(abs(eagle_output.calculateAverageColor() - input_avg) < 10.0);
+            CHECK(std::abs(epx_output.calculateAverageColor() - input_avg) < 10.0);
+            CHECK(std::abs(eagle_output.calculateAverageColor() - input_avg) < 10.0);
         }
     }
     

@@ -3,6 +3,7 @@
 #include <scaler/vec3.hh>
 #include <type_traits>
 
+using namespace scaler;
 // Mock image accessor for testing
 template<typename T>
 class TestImageAccessor {
@@ -15,17 +16,17 @@ private:
 public:
     TestImageAccessor(int width, int height, T boundary = T{})
         : width_(width), height_(height), boundary_value_(boundary) {
-        data_.resize(height);
+        data_.resize(static_cast<size_t>(height));
         for (int y = 0; y < height; ++y) {
-            data_[y].resize(width);
+            data_[static_cast<size_t>(y)].resize(static_cast<size_t>(width));
             for (int x = 0; x < width; ++x) {
                 // Fill with test pattern: value = y * 100 + x
                 if constexpr (std::is_integral_v<T>) {
-                    data_[y][x] = T(y * 100 + x);
+                    data_[static_cast<size_t>(y)][static_cast<size_t>(x)] = T(y * 100 + x);
                 } else {
                     // For vec3 or other complex types
                     auto val = static_cast<unsigned int>(y * 100 + x);
-                    data_[y][x] = T{val, val, val};
+                    data_[static_cast<size_t>(y)][static_cast<size_t>(x)] = T{val, val, val};
                 }
             }
         }
@@ -35,7 +36,7 @@ public:
         if (x < 0 || x >= width_ || y < 0 || y >= height_) {
             return boundary_value_;
         }
-        return data_[y][x];
+        return data_[static_cast<size_t>(y)][static_cast<size_t>(x)];
     }
     
     int width() const { return width_; }

@@ -24,4 +24,4 @@ const unsigned char GOLDEN_TEST_PATTERN_XBR_DATA[] = {
     0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
-const size_t GOLDEN_TEST_PATTERN_XBR_SIZE = sizeof(GOLDEN_TEST_PATTERN_XBR_DATA);
+[[maybe_unused]] const size_t GOLDEN_TEST_PATTERN_XBR_SIZE = sizeof(GOLDEN_TEST_PATTERN_XBR_DATA);

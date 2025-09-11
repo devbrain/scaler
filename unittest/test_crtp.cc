@@ -2,13 +2,13 @@
 #include <scaler/image_base.hh>
 #include <scaler/epx.hh>
 #include <vector>
-
+using namespace scaler;
 // Simple test image implementation - combined input/output
 class TestImage : public InputImageBase<TestImage, uvec3>,
                   public OutputImageBase<TestImage, uvec3> {
 public:
     TestImage(int w, int h) 
-        : m_width(w), m_height(h), m_data(w * h) {}
+        : m_width(w), m_height(h), m_data(static_cast<size_t>(w * h)) {}
     
     TestImage(int w, int h, const TestImage&)
         : TestImage(w, h) {}
@@ -25,19 +25,19 @@ public:
     
     [[nodiscard]] uvec3 get_pixel_impl(int x, int y) const {
         if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            return m_data[y * m_width + x];
+            return m_data[static_cast<size_t>(y * m_width + x)];
         }
         return {0, 0, 0};
     }
     
     void set_pixel_impl(int x, int y, const uvec3& pixel) {
         if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            m_data[y * m_width + x] = pixel;
+            m_data[static_cast<size_t>(y * m_width + x)] = pixel;
         }
     }
     
     [[nodiscard]] const uvec3& at(int x, int y) const {
-        return m_data[y * m_width + x];
+        return m_data[static_cast<size_t>(y * m_width + x)];
     }
     
 private:

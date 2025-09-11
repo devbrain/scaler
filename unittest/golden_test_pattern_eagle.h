@@ -24,4 +24,4 @@ const unsigned char GOLDEN_TEST_PATTERN_EAGLE_DATA[] = {
     0x00, 0xff, 0xff, 0xff, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
-const size_t GOLDEN_TEST_PATTERN_EAGLE_SIZE = sizeof(GOLDEN_TEST_PATTERN_EAGLE_DATA);
+[[maybe_unused]] const size_t GOLDEN_TEST_PATTERN_EAGLE_SIZE = sizeof(GOLDEN_TEST_PATTERN_EAGLE_DATA);

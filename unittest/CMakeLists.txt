@@ -25,19 +25,21 @@ add_executable(scaler_unittest
 
 # Include directories
 
-    # Use internal static library for testing internals
-    target_link_libraries(scaler_unittest
-            PRIVATE
-            doctest::doctest
-            scaler
-    )
+# Use internal static library for testing internals
+target_link_libraries(scaler_unittest
+        PRIVATE
+        doctest::doctest
+        scaler
+)
+
+target_compile_options(scaler_unittest PRIVATE ${SCALER_WARNING_FLAGS})
 
 # Golden data generator executable
 add_executable(generate_golden_data
-    generate_golden_data.cc
+        generate_golden_data.cc
 )
 
 target_link_libraries(generate_golden_data
-    PRIVATE
-    scaler
+        PRIVATE
+        scaler
 )

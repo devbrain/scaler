@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
-#include <scaler/sdl_image.hh>
-#include <scaler/sdl_scalers.hh>
+#include <scaler/sdl/sdl_image.hh>
+#include <scaler/sdl/sdl_scalers.hh>
 #include <scaler/epx.hh>
 #include <scaler/eagle.hh>
 #include <scaler/2xsai.hh>
@@ -11,7 +11,7 @@
 
 // Include embedded BMP data
 #include "rotozoom_bmp.h"
-
+using namespace scaler;
 // Helper to load test image from memory
 std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> loadTestImage() {
     SDL_IOStream* io = SDL_IOFromConstMem(data_rotozoom_bmp, data_rotozoom_bmp_len);
@@ -37,8 +37,8 @@ bool compareSurfaces(SDL_Surface* surf1, SDL_Surface* surf2) {
             Uint8 r1, g1, b1, a1;
             Uint8 r2, g2, b2, a2;
             
-            Uint32* pixels1 = (Uint32*)surf1->pixels;
-            Uint32* pixels2 = (Uint32*)surf2->pixels;
+            Uint32* pixels1 = static_cast<Uint32*>(surf1->pixels);
+            Uint32* pixels2 = static_cast<Uint32*>(surf2->pixels);
             
             Uint32 pixel1 = pixels1[y * surf1->w + x];
             Uint32 pixel2 = pixels2[y * surf2->w + x];
@@ -148,7 +148,7 @@ TEST_CASE("SDL Interface Tests") {
         // Fill with a pattern
         if (SDL_MUSTLOCK(small_input)) SDL_LockSurface(small_input);
         
-        Uint32* pixels = (Uint32*)small_input->pixels;
+        Uint32* pixels = static_cast<Uint32*>(small_input->pixels);
         pixels[0] = SDL_MapRGBA(small_input->format, 255, 0, 0, 255);   // Red
         pixels[1] = SDL_MapRGBA(small_input->format, 0, 255, 0, 255);   // Green
         pixels[2] = SDL_MapRGBA(small_input->format, 0, 0, 255, 255);   // Blue
