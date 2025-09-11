@@ -285,6 +285,54 @@ test_golden_data.cc.s:
 	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_golden_data.cc.s
 .PHONY : test_golden_data.cc.s
 
+test_hq3x_exact_golden.o: test_hq3x_exact_golden.cc.o
+.PHONY : test_hq3x_exact_golden.o
+
+# target to build an object file
+test_hq3x_exact_golden.cc.o:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o
+.PHONY : test_hq3x_exact_golden.cc.o
+
+test_hq3x_exact_golden.i: test_hq3x_exact_golden.cc.i
+.PHONY : test_hq3x_exact_golden.i
+
+# target to preprocess a source file
+test_hq3x_exact_golden.cc.i:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.i
+.PHONY : test_hq3x_exact_golden.cc.i
+
+test_hq3x_exact_golden.s: test_hq3x_exact_golden.cc.s
+.PHONY : test_hq3x_exact_golden.s
+
+# target to generate assembly for a file
+test_hq3x_exact_golden.cc.s:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.s
+.PHONY : test_hq3x_exact_golden.cc.s
+
+test_hq3x_golden.o: test_hq3x_golden.cc.o
+.PHONY : test_hq3x_golden.o
+
+# target to build an object file
+test_hq3x_golden.cc.o:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o
+.PHONY : test_hq3x_golden.cc.o
+
+test_hq3x_golden.i: test_hq3x_golden.cc.i
+.PHONY : test_hq3x_golden.i
+
+# target to preprocess a source file
+test_hq3x_golden.cc.i:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.i
+.PHONY : test_hq3x_golden.cc.i
+
+test_hq3x_golden.s: test_hq3x_golden.cc.s
+.PHONY : test_hq3x_golden.s
+
+# target to generate assembly for a file
+test_hq3x_golden.cc.s:
+	cd /home/igor/proj/ares/scaler/build && $(MAKE) $(MAKESILENT) -f unittest/CMakeFiles/scaler_unittest.dir/build.make unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.s
+.PHONY : test_hq3x_golden.cc.s
+
 test_main.o: test_main.cc.o
 .PHONY : test_main.o
 
@@ -479,6 +527,12 @@ help:
 	@echo "... test_golden_data.o"
 	@echo "... test_golden_data.i"
 	@echo "... test_golden_data.s"
+	@echo "... test_hq3x_exact_golden.o"
+	@echo "... test_hq3x_exact_golden.i"
+	@echo "... test_hq3x_exact_golden.s"
+	@echo "... test_hq3x_golden.o"
+	@echo "... test_hq3x_golden.i"
+	@echo "... test_hq3x_golden.s"
 	@echo "... test_main.o"
 	@echo "... test_main.i"
 	@echo "... test_main.s"

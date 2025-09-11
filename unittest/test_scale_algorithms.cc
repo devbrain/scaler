@@ -9,30 +9,33 @@ using namespace scaler;
 template<typename PixelType>
 class TestInputImage : public InputImageBase<TestInputImage<PixelType>, PixelType> {
 private:
-    int width_;
-    int height_;
+    size_t width_;
+    size_t height_;
     std::vector<PixelType> data_;
     
 public:
-    TestInputImage(int w, int h) : width_(w), height_(h), data_(static_cast<size_t>(w * h)) {}
+    TestInputImage(size_t w, size_t h) : width_(w), height_(h), data_(w * h) {}
     
-    int width_impl() const { return width_; }
-    int height_impl() const { return height_; }
+    size_t width_impl() const { return width_; }
+    size_t height_impl() const { return height_; }
     
-    PixelType get_pixel_impl(int x, int y) const {
-        if (x < 0 || x >= width_ || y < 0 || y >= height_) {
+    PixelType get_pixel_impl(size_t x, size_t y) const {
+        if (x >= width_ || y >= height_) {
             return data_[0]; // Return first pixel for out of bounds
         }
-        return data_[static_cast<size_t>(y * width_ + x)];
+        return data_[y * width_ + x];
     }
     
     PixelType safeAccess(int x, int y) const {
-        return get_pixel_impl(x, y);
+        if (x < 0 || y < 0) {
+            return data_[0]; // Return first pixel for out of bounds
+        }
+        return get_pixel_impl(static_cast<size_t>(x), static_cast<size_t>(y));
     }
     
-    void setData(int x, int y, PixelType pixel) {
-        if (x >= 0 && x < width_ && y >= 0 && y < height_) {
-            data_[static_cast<size_t>(y * width_ + x)] = pixel;
+    void setData(size_t x, size_t y, PixelType pixel) {
+        if (x < width_ && y < height_) {
+            data_[y * width_ + x] = pixel;
         }
     }
 };
@@ -40,33 +43,33 @@ public:
 template<typename PixelType>
 class TestOutputImage : public OutputImageBase<TestOutputImage<PixelType>, PixelType> {
 private:
-    int width_;
-    int height_;
+    size_t width_;
+    size_t height_;
     std::vector<PixelType> data_;
     
 public:
-    TestOutputImage(int w, int h) : width_(w), height_(h), data_(static_cast<size_t>(w * h)) {}
+    TestOutputImage(size_t w, size_t h) : width_(w), height_(h), data_(w * h) {}
     
     template<typename OtherImage>
-    TestOutputImage(int w, int h, const OtherImage&) : width_(w), height_(h), data_(static_cast<size_t>(w * h)) {}
+    TestOutputImage(size_t w, size_t h, const OtherImage&) : width_(w), height_(h), data_(w * h) {}
     
-    int width_impl() const { return width_; }
-    int height_impl() const { return height_; }
+    size_t width_impl() const { return width_; }
+    size_t height_impl() const { return height_; }
     
-    PixelType get_pixel_impl(int x, int y) const {
-        if (x < 0 || x >= width_ || y < 0 || y >= height_) {
+    PixelType get_pixel_impl(size_t x, size_t y) const {
+        if (x >= width_ || y >= height_) {
             return PixelType{};
         }
-        return data_[static_cast<size_t>(y * width_ + x)];
+        return data_[y * width_ + x];
     }
     
-    void set_pixel_impl(int x, int y, PixelType pixel) {
-        if (x >= 0 && x < width_ && y >= 0 && y < height_) {
-            data_[static_cast<size_t>(y * width_ + x)] = pixel;
+    void set_pixel_impl(size_t x, size_t y, PixelType pixel) {
+        if (x < width_ && y < height_) {
+            data_[y * width_ + x] = pixel;
         }
     }
     
-    PixelType get_pixel(int x, int y) const {
+    PixelType get_pixel(size_t x, size_t y) const {
         return get_pixel_impl(x, y);
     }
 };
@@ -151,8 +154,8 @@ TEST_CASE("Scale algorithms preserve single pixel") {
         CHECK(result.height() == 2);
         
         // All pixels should be the same as input
-        for (int y = 0; y < 2; y++) {
-            for (int x = 0; x < 2; x++) {
+        for (size_t y = 0; y < 2; y++) {
+            for (size_t x = 0; x < 2; x++) {
                 auto pixel = result.get_pixel(x, y);
                 CHECK(pixel.x == 128);
                 CHECK(pixel.y == 64);
@@ -167,8 +170,8 @@ TEST_CASE("Scale algorithms preserve single pixel") {
         CHECK(result.height() == 3);
         
         // All pixels should be the same as input
-        for (int y = 0; y < 3; y++) {
-            for (int x = 0; x < 3; x++) {
+        for (size_t y = 0; y < 3; y++) {
+            for (size_t x = 0; x < 3; x++) {
                 auto pixel = result.get_pixel(x, y);
                 CHECK(pixel.x == 128);
                 CHECK(pixel.y == 64);

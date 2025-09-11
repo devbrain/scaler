@@ -11,6 +11,8 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/igor/proj/ares/scaler/unittest/test_algorithm_correctness.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_algorithm_correctness.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_algorithm_correctness.cc.o.d"
   "/home/igor/proj/ares/scaler/unittest/test_crtp.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_crtp.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_crtp.cc.o.d"
   "/home/igor/proj/ares/scaler/unittest/test_golden_data.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_golden_data.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_golden_data.cc.o.d"
+  "/home/igor/proj/ares/scaler/unittest/test_hq3x_exact_golden.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o.d"
+  "/home/igor/proj/ares/scaler/unittest/test_hq3x_golden.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o.d"
   "/home/igor/proj/ares/scaler/unittest/test_main.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_main.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_main.cc.o.d"
   "/home/igor/proj/ares/scaler/unittest/test_omniscale_golden.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.o.d"
   "/home/igor/proj/ares/scaler/unittest/test_scale_algorithms.cc" "unittest/CMakeFiles/scaler_unittest.dir/test_scale_algorithms.cc.o" "gcc" "unittest/CMakeFiles/scaler_unittest.dir/test_scale_algorithms.cc.o.d"

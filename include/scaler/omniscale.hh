@@ -366,7 +366,7 @@ namespace scaler {
     // OmniScale 2x implementation with pattern caching
     template<typename InputImage, typename OutputImage>
     SCALER_HOT
-    auto scaleOmniScale2x(const InputImage& src, [[maybe_unused]] int scale_factor = 2)
+    auto scaleOmniScale2x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 2)
         -> OutputImage {
         OutputImage result(src.width() * 2, src.height() * 2, src);
 
@@ -379,7 +379,7 @@ namespace scaler {
         // Pre-compute position values
         constexpr float POS_QUARTER = 0.25f;
 
-        for (int y = 0; y < src.height(); y++) {
+        for (size_t y = 0; y < src.height(); y++) {
             if (y > 0) {
                 window.advance(src);
             }
@@ -390,13 +390,13 @@ namespace scaler {
             const auto& botRow = window.getRow(1);
             const int pad = window.getPadding();
 
-            for (int x = 0; x < src.width(); x++) {
-                const size_t xp = static_cast<size_t>(x + pad);
+            for (size_t x = 0; x < src.width(); x++) {
+                const int xp = static_cast<int>(x) + pad;
 
                 // Load 3x3 neighborhood once
-                PixelType n0 = topRow[xp - 1], n1 = topRow[xp], n2 = topRow[xp + 1];
-                PixelType n3 = midRow[xp - 1], n4 = midRow[xp], n5 = midRow[xp + 1];
-                PixelType n6 = botRow[xp - 1], n7 = botRow[xp], n8 = botRow[xp + 1];
+                PixelType n0 = topRow[static_cast<size_t>(xp - 1)], n1 = topRow[static_cast<size_t>(xp)], n2 = topRow[static_cast<size_t>(xp + 1)];
+                PixelType n3 = midRow[static_cast<size_t>(xp - 1)], n4 = midRow[static_cast<size_t>(xp)], n5 = midRow[static_cast<size_t>(xp + 1)];
+                PixelType n6 = botRow[static_cast<size_t>(xp - 1)], n7 = botRow[static_cast<size_t>(xp)], n8 = botRow[static_cast<size_t>(xp + 1)];
 
                 // Build all patterns at once
                 PatternCache <PixelType> cache;
@@ -425,8 +425,8 @@ namespace scaler {
                 auto e3 = core.interpolateCorner(POS_QUARTER, POS_QUARTER);
 
                 // Write 2x2 output block
-                int dst_x = x * 2;
-                int dst_y = y * 2;
+                size_t dst_x = x * 2;
+                size_t dst_y = y * 2;
                 result.set_pixel(dst_x, dst_y, e0);
                 result.set_pixel(dst_x + 1, dst_y, e1);
                 result.set_pixel(dst_x, dst_y + 1, e2);
@@ -440,7 +440,7 @@ namespace scaler {
     // OmniScale 3x implementation with pattern caching
     template<typename InputImage, typename OutputImage>
     SCALER_HOT
-    auto scaleOmniScale3x(const InputImage& src, [[maybe_unused]] int scale_factor = 3)
+    auto scaleOmniScale3x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 3)
         -> OutputImage {
         OutputImage result(src.width() * 3, src.height() * 3, src);
 
@@ -464,7 +464,7 @@ namespace scaler {
             2, 2, 3 // Bot row: flipY, flipY, flipXY
         };
 
-        for (int y = 0; y < src.height(); y++) {
+        for (size_t y = 0; y < src.height(); y++) {
             if (y > 0) {
                 window.advance(src);
             }
@@ -475,13 +475,13 @@ namespace scaler {
             const auto& botRow = window.getRow(1);
             const int pad = window.getPadding();
 
-            for (int x = 0; x < src.width(); x++) {
-                const size_t xp = static_cast<size_t>(x + pad);
+            for (size_t x = 0; x < src.width(); x++) {
+                const int xp = static_cast<int>(x) + pad;
 
                 // Load 3x3 neighborhood once
-                PixelType n0 = topRow[xp - 1], n1 = topRow[xp], n2 = topRow[xp + 1];
-                PixelType n3 = midRow[xp - 1], n4 = midRow[xp], n5 = midRow[xp + 1];
-                PixelType n6 = botRow[xp - 1], n7 = botRow[xp], n8 = botRow[xp + 1];
+                PixelType n0 = topRow[static_cast<size_t>(xp - 1)], n1 = topRow[static_cast<size_t>(xp)], n2 = topRow[static_cast<size_t>(xp + 1)];
+                PixelType n3 = midRow[static_cast<size_t>(xp - 1)], n4 = midRow[static_cast<size_t>(xp)], n5 = midRow[static_cast<size_t>(xp + 1)];
+                PixelType n6 = botRow[static_cast<size_t>(xp - 1)], n7 = botRow[static_cast<size_t>(xp)], n8 = botRow[static_cast<size_t>(xp + 1)];
 
                 // Build all patterns at once
                 PatternCache <PixelType> cache;
@@ -513,11 +513,11 @@ namespace scaler {
                 }
 
                 // Write 3x3 output block
-                int dst_x = x * 3;
-                int dst_y = y * 3;
+                size_t dst_x = x * 3;
+                size_t dst_y = y * 3;
 
-                for (int dy = 0; dy < 3; dy++) {
-                    for (int dx = 0; dx < 3; dx++) {
+                for (size_t dy = 0; dy < 3; dy++) {
+                    for (size_t dx = 0; dx < 3; dx++) {
                         result.set_pixel(dst_x + dx, dst_y + dy, pixels[dy * 3 + dx]);
                     }
                 }

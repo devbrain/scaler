@@ -8,7 +8,7 @@ namespace scaler {
     // Scale3x algorithm - 3x magnification version of Scale2x
     // http://www.scale2x.it/algorithm
     template<typename InputImage, typename OutputImage>
-    auto scaleScale3x(const InputImage& src, int scale_factor = 3)
+    auto scaleScale3x(const InputImage& src, size_t scale_factor = 3)
         -> OutputImage {
         OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
 
@@ -17,7 +17,7 @@ namespace scaler {
         SlidingWindow3x3<PixelType> window(src.width());
         window.initialize(src, 0);
 
-        for (int y = 0; y < src.height(); y++) {
+        for (size_t y = 0; y < src.height(); y++) {
             // Advance sliding window for next row
             if (y > 0) {
                 window.advance(src);
@@ -29,20 +29,20 @@ namespace scaler {
             const auto& botRow = window.getRow(1);
             const int pad = window.getPadding();
 
-            for (int x = 0; x < src.width(); x++) {
+            for (size_t x = 0; x < src.width(); x++) {
                 // Get 3x3 neighborhood from cached row references
-                const size_t xp = static_cast<size_t>(x + pad);
-                auto A = topRow[xp - 1];
-                auto B = topRow[xp];
-                auto C = topRow[xp + 1];
+                const int xp = static_cast<int>(x) + pad;
+                auto A = topRow[static_cast<size_t>(xp - 1)];
+                auto B = topRow[static_cast<size_t>(xp)];
+                auto C = topRow[static_cast<size_t>(xp + 1)];
 
-                auto D = midRow[xp - 1];
-                auto E = midRow[xp];
-                auto F = midRow[xp + 1];
+                auto D = midRow[static_cast<size_t>(xp - 1)];
+                auto E = midRow[static_cast<size_t>(xp)];
+                auto F = midRow[static_cast<size_t>(xp + 1)];
 
-                auto G = botRow[xp - 1];
-                auto H = botRow[xp];
-                auto I = botRow[xp + 1];
+                auto G = botRow[static_cast<size_t>(xp - 1)];
+                auto H = botRow[static_cast<size_t>(xp)];
+                auto I = botRow[static_cast<size_t>(xp + 1)];
 
                 // Scale3x algorithm rules
                 auto E0 = E;
@@ -67,8 +67,8 @@ namespace scaler {
                     E8 = H == F ? F : E;
                 }
 
-                int dst_x = scale_factor * x;
-                int dst_y = scale_factor * y;
+                size_t dst_x = scale_factor * x;
+                size_t dst_y = scale_factor * y;
 
                 // Write 3x3 output block
                 result.set_pixel(dst_x, dst_y, E0);

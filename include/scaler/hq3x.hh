@@ -3,6 +3,7 @@
 #include "compiler_compat.hh"
 #include <scaler/vec3.hh>
 #include <scaler/image_base.hh>
+#include <scaler/buffer_policy.hh>
 #include <array>
 #include <vector>
 #include <cstdint>
@@ -3046,8 +3047,8 @@ namespace scaler {
     // Main HQ3x function - optimized with row caching
     template<typename InputImage, typename OutputImage>
     SCALER_HOT auto scaleHq3x(const InputImage& src) -> OutputImage {
-        const int src_width = src.width();
-        const int src_height = src.height();
+        const auto src_width = src.width();
+        const auto src_height = src.height();
 
         OutputImage result(src_width * 3, src_height * 3, src);
 
@@ -3066,32 +3067,57 @@ namespace scaler {
         curr_row.reserve(src_width + 2);
         next_row.reserve(src_width + 2);
 
-        for (int y = 0; y < src_height; ++y) {
+        for (size_t y = 0; y < src_height; ++y) {
             // Load rows with padding for edges
             prev_row.clear();
             curr_row.clear();
             next_row.clear();
             
             // Load previous row (or edge)
-            for (int x = -1; x <= src_width; ++x) {
-                prev_row.push_back(src.safeAccess(x, y - 1));
+            if (y == 0) {
+                // First row - use safeAccess for all
+                prev_row.push_back(src.safeAccess(-1, -1));
+                for (size_t x = 0; x < src_width; ++x) {
+                    prev_row.push_back(src.safeAccess(static_cast<int>(x), -1));
+                }
+                prev_row.push_back(src.safeAccess(static_cast<int>(src_width), -1));
+            } else {
+                // Middle rows - only edges need safeAccess
+                prev_row.push_back(src.safeAccess(-1, static_cast<int>(y) - 1));
+                for (size_t x = 0; x < src_width; ++x) {
+                    prev_row.push_back(src.get_pixel(x, y - 1));
+                }
+                prev_row.push_back(src.safeAccess(static_cast<int>(src_width), static_cast<int>(y) - 1));
             }
             
             // Load current row
-            for (int x = -1; x <= src_width; ++x) {
-                if (x == -1 || x == src_width) {
-                    curr_row.push_back(src.safeAccess(x, y));
-                } else {
-                    curr_row.push_back(src.get_pixel(x, y));
-                }
+            // Handle left edge
+            curr_row.push_back(src.safeAccess(-1, static_cast<int>(y)));
+            // Handle main pixels
+            for (size_t x = 0; x < src_width; ++x) {
+                curr_row.push_back(src.get_pixel(x, y));
             }
+            // Handle right edge
+            curr_row.push_back(src.safeAccess(static_cast<int>(src_width), static_cast<int>(y)));
             
             // Load next row (or edge)
-            for (int x = -1; x <= src_width; ++x) {
-                next_row.push_back(src.safeAccess(x, y + 1));
+            if (y == src_height - 1) {
+                // Last row - use safeAccess for all
+                next_row.push_back(src.safeAccess(-1, static_cast<int>(y) + 1));
+                for (size_t x = 0; x < src_width; ++x) {
+                    next_row.push_back(src.safeAccess(static_cast<int>(x), static_cast<int>(y) + 1));
+                }
+                next_row.push_back(src.safeAccess(static_cast<int>(src_width), static_cast<int>(y) + 1));
+            } else {
+                // Middle rows - only edges need safeAccess
+                next_row.push_back(src.safeAccess(-1, static_cast<int>(y) + 1));
+                for (size_t x = 0; x < src_width; ++x) {
+                    next_row.push_back(src.get_pixel(x, y + 1));
+                }
+                next_row.push_back(src.safeAccess(static_cast<int>(src_width), static_cast<int>(y) + 1));
             }
             
-            for (int x = 0; x < src_width; ++x) {
+            for (size_t x = 0; x < src_width; ++x) {
                 // Get 3x3 window from cached rows (index offset by 1 for padding)
                 std::array <PixelType, 9> w;
                 w[0] = prev_row[x];      // x-1, y-1
@@ -3124,8 +3150,8 @@ namespace scaler {
                 hq3x_detail::processPattern(w, output.data(), pattern);
 
                 // Write 3x3 block
-                int out_x = x * 3;
-                int out_y = y * 3;
+                size_t out_x = x * 3;
+                size_t out_y = y * 3;
 
                 result.set_pixel(out_x, out_y, output[0]);
                 result.set_pixel(out_x + 1, out_y, output[1]);
@@ -3141,4 +3167,121 @@ namespace scaler {
 
         return result;
     }
+    // Optimized HQ3x for 24-bit RGB - bypasses SDL and uses fixed arrays
+    template<typename InputImage, typename OutputImage>
+    SCALER_HOT auto scaleHq3xFast(const InputImage& src) -> OutputImage {
+        const auto src_width = src.width();
+        const auto src_height = src.height();
+
+        OutputImage result(src_width * 3, src_height * 3, src);
+
+        if (SCALER_UNLIKELY(src_width == 0 || src_height == 0)) {
+            return result;
+        }
+
+        using PixelType = decltype(src.get_pixel(0, 0));
+        
+        // Use fixed-size arrays with max reasonable size (up to 4K width)
+        constexpr size_t MAX_WIDTH = 4096;
+        if (src_width > MAX_WIDTH) {
+            // Fall back to regular version for very wide images
+            return scaleHq3x<InputImage, OutputImage>(src);
+        }
+        
+        // Fixed-size row buffers - no allocation overhead
+        alignas(64) PixelType prev_row[MAX_WIDTH + 2];
+        alignas(64) PixelType curr_row[MAX_WIDTH + 2];
+        alignas(64) PixelType next_row[MAX_WIDTH + 2];
+
+        for (size_t y = 0; y < src_height; ++y) {
+            // Load rows into fixed buffers
+            // Previous row
+            if (y == 0) {
+                // First row - use safeAccess
+                for (size_t x = 0; x <= src_width + 1; ++x) {
+                    prev_row[x] = src.safeAccess(static_cast<int>(x) - 1, -1);
+                }
+            } else {
+                // Middle rows - optimize inner pixels
+                prev_row[0] = src.safeAccess(-1, static_cast<int>(y) - 1);
+                for (size_t x = 0; x < src_width; ++x) {
+                    prev_row[x + 1] = src.get_pixel(x, y - 1);
+                }
+                prev_row[src_width + 1] = src.safeAccess(static_cast<int>(src_width), static_cast<int>(y) - 1);
+            }
+            
+            // Current row - optimize center pixels
+            curr_row[0] = src.safeAccess(-1, static_cast<int>(y));
+            for (size_t x = 0; x < src_width; ++x) {
+                curr_row[x + 1] = src.get_pixel(x, y);
+            }
+            curr_row[src_width + 1] = src.safeAccess(static_cast<int>(src_width), static_cast<int>(y));
+            
+            // Next row
+            if (y == src_height - 1) {
+                // Last row - use safeAccess
+                for (size_t x = 0; x <= src_width + 1; ++x) {
+                    next_row[x] = src.safeAccess(static_cast<int>(x) - 1, static_cast<int>(y) + 1);
+                }
+            } else {
+                // Middle rows - optimize inner pixels
+                next_row[0] = src.safeAccess(-1, static_cast<int>(y) + 1);
+                for (size_t x = 0; x < src_width; ++x) {
+                    next_row[x + 1] = src.get_pixel(x, y + 1);
+                }
+                next_row[src_width + 1] = src.safeAccess(static_cast<int>(src_width), static_cast<int>(y) + 1);
+            }
+            
+            // Process each pixel
+            for (size_t x = 0; x < src_width; ++x) {
+                const size_t idx = x + 1;
+                
+                // Get 3x3 window from fixed buffers
+                std::array<PixelType, 9> w;
+                w[0] = prev_row[idx - 1];
+                w[1] = prev_row[idx];
+                w[2] = prev_row[idx + 1];
+                w[3] = curr_row[idx - 1];
+                w[4] = curr_row[idx];
+                w[5] = curr_row[idx + 1];
+                w[6] = next_row[idx - 1];
+                w[7] = next_row[idx];
+                w[8] = next_row[idx + 1];
+
+                // Compute pattern - unrolled
+                int pattern = 0;
+                const PixelType& center = w[4];
+                
+                if (w[0] != center && hq3x_detail::yuvDifference(center, w[0])) pattern |= 1;
+                if (w[1] != center && hq3x_detail::yuvDifference(center, w[1])) pattern |= 2;
+                if (w[2] != center && hq3x_detail::yuvDifference(center, w[2])) pattern |= 4;
+                if (w[3] != center && hq3x_detail::yuvDifference(center, w[3])) pattern |= 8;
+                if (w[5] != center && hq3x_detail::yuvDifference(center, w[5])) pattern |= 32;
+                if (w[6] != center && hq3x_detail::yuvDifference(center, w[6])) pattern |= 64;
+                if (w[7] != center && hq3x_detail::yuvDifference(center, w[7])) pattern |= 128;
+                if (w[8] != center && hq3x_detail::yuvDifference(center, w[8])) pattern |= 256;
+
+                // Process pattern
+                std::array<PixelType, 9> output;
+                hq3x_detail::processPattern(w, output.data(), pattern);
+
+                // Write 3x3 block
+                const size_t out_x = x * 3;
+                const size_t out_y = y * 3;
+                
+                result.set_pixel(out_x,     out_y,     output[0]);
+                result.set_pixel(out_x + 1, out_y,     output[1]);
+                result.set_pixel(out_x + 2, out_y,     output[2]);
+                result.set_pixel(out_x,     out_y + 1, output[3]);
+                result.set_pixel(out_x + 1, out_y + 1, output[4]);
+                result.set_pixel(out_x + 2, out_y + 1, output[5]);
+                result.set_pixel(out_x,     out_y + 2, output[6]);
+                result.set_pixel(out_x + 1, out_y + 2, output[7]);
+                result.set_pixel(out_x + 2, out_y + 2, output[8]);
+            }
+        }
+
+        return result;
+    }
+
 } // namespace scaler

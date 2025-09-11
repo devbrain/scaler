@@ -10,7 +10,7 @@
 #include <string>
 
 // Include embedded BMP data
-#include "rotozoom_bmp.h"
+#include "data/rotozoom_bmp.h"
 using namespace scaler;
 // Helper to load test image from memory
 std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> loadTestImage() {

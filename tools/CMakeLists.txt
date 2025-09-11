@@ -46,3 +46,11 @@ set_target_properties(scaler_cli PROPERTIES
 install(TARGETS scaler_cli
     RUNTIME DESTINATION bin
 )
+
+# Pattern analyzer tool (commented out - missing source file)
+# add_executable(analyze_patterns analyze_patterns.cc)
+# target_compile_features(analyze_patterns PRIVATE cxx_std_17)
+# target_link_libraries(analyze_patterns PRIVATE scaler stb)
+# set_target_properties(analyze_patterns PROPERTIES
+#     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+# )

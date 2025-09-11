@@ -9,6 +9,7 @@
 #include <scaler/2xsai.hh>
 #include <scaler/xbr.hh>
 #include <scaler/hq2x.hh>
+#include <scaler/hq3x.hh>
 #include <scaler/scale2x_sfx.hh>
 #include <scaler/scale3x.hh>
 #include <scaler/scale3x_sfx.hh>
@@ -16,6 +17,9 @@
 
 namespace scaler {
     // Convenience functions for SDL users - works with both SDL2 and SDL3
+    // NOTE: HQ3x uses an optimized fast path for images <= 4096 pixels wide.
+    // For best performance with other algorithms, consider implementing similar
+    // optimizations using fixed-size arrays instead of dynamic vectors.
 
     inline SDL_Surface* scaleEpxSDL(SDL_Surface* src) {
         SDLInputImage input(src);
@@ -49,7 +53,15 @@ namespace scaler {
 
     inline SDL_Surface* scaleHq2xSDL(SDL_Surface* src) {
         SDLInputImage input(src);
+        // Automatically uses optimized fixed buffers for images <= 4096 pixels wide
         auto output = scaleHq2x<SDLInputImage, SDLOutputImage>(input);
+        return output.release();
+    }
+
+    inline SDL_Surface* scaleHq3xSDL(SDL_Surface* src) {
+        SDLInputImage input(src);
+        // Automatically uses optimized fixed buffers for images <= 4096 pixels wide
+        auto output = scaleHq3x<SDLInputImage, SDLOutputImage>(input);
         return output.release();
     }
 

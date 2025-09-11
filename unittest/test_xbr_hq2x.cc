@@ -2,16 +2,17 @@
 #include <scaler/image_base.hh>
 #include <scaler/xbr.hh>
 #include <scaler/hq2x.hh>
+#include <scaler/hq3x.hh>
 #include <vector>
 using namespace scaler;
 // Test image implementation for XBR/HQ2x tests
 class TestImageXBR : public InputImageBase<TestImageXBR, uvec3>,
                      public OutputImageBase<TestImageXBR, uvec3> {
 public:
-    TestImageXBR(int w, int h) 
-        : m_width(w), m_height(h), m_data(static_cast<size_t>(w * h), {0, 0, 0}) {}
+    TestImageXBR(size_t w, size_t h) 
+        : m_width(w), m_height(h), m_data(w * h, {0, 0, 0}) {}
     
-    TestImageXBR(int w, int h, const TestImageXBR&)
+    TestImageXBR(size_t w, size_t h, const TestImageXBR&)
         : TestImageXBR(w, h) {}
     
     // Resolve ambiguity
@@ -21,19 +22,19 @@ public:
     using InputImageBase<TestImageXBR, uvec3>::safeAccess;
     using OutputImageBase<TestImageXBR, uvec3>::set_pixel;
     
-    [[nodiscard]] int width_impl() const { return m_width; }
-    [[nodiscard]] int height_impl() const { return m_height; }
+    [[nodiscard]] size_t width_impl() const { return m_width; }
+    [[nodiscard]] size_t height_impl() const { return m_height; }
     
-    [[nodiscard]] uvec3 get_pixel_impl(int x, int y) const {
-        if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            return m_data[static_cast<size_t>(y * m_width + x)];
+    [[nodiscard]] uvec3 get_pixel_impl(size_t x, size_t y) const {
+        if (x < m_width && y < m_height) {
+            return m_data[y * m_width + x];
         }
         return {0, 0, 0};
     }
     
-    void set_pixel_impl(int x, int y, const uvec3& pixel) {
-        if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            m_data[static_cast<size_t>(y * m_width + x)] = pixel;
+    void set_pixel_impl(size_t x, size_t y, const uvec3& pixel) {
+        if (x < m_width && y < m_height) {
+            m_data[y * m_width + x] = pixel;
         }
     }
     
@@ -42,9 +43,9 @@ public:
     }
     
     void fillPattern(const std::vector<std::vector<uvec3>>& pattern) {
-        for (int y = 0; y < std::min(static_cast<int>(pattern.size()), m_height); ++y) {
-            for (int x = 0; x < std::min(static_cast<int>(pattern[static_cast<size_t>(y)].size()), m_width); ++x) {
-                set_pixel(x, y, pattern[static_cast<size_t>(y)][static_cast<size_t>(x)]);
+        for (size_t y = 0; y < std::min(pattern.size(), m_height); ++y) {
+            for (size_t x = 0; x < std::min(pattern[y].size(), m_width); ++x) {
+                set_pixel(x, y, pattern[y][x]);
             }
         }
     }
@@ -54,7 +55,7 @@ public:
     }
     
 private:
-    int m_width, m_height;
+    size_t m_width, m_height;
     std::vector<uvec3> m_data;
 };
 
@@ -84,8 +85,8 @@ TEST_CASE("XBR Scaler Tests") {
     SUBCASE("Edge detection - vertical line") {
         TestImageXBR input(4, 4);
         // Create vertical edge
-        for (int y = 0; y < 4; ++y) {
-            for (int x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            for (size_t x = 0; x < 4; ++x) {
                 input.set_pixel(x, y, (x < 2) ? BLACK : WHITE);
             }
         }
@@ -163,8 +164,8 @@ TEST_CASE("HQ2x Scaler Tests") {
     SUBCASE("Pattern preservation - checkerboard") {
         TestImageXBR input(4, 4);
         // Create checkerboard
-        for (int y = 0; y < 4; ++y) {
-            for (int x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            for (size_t x = 0; x < 4; ++x) {
                 input.set_pixel(x, y, ((x + y) % 2 == 0) ? BLACK : WHITE);
             }
         }
@@ -193,8 +194,8 @@ TEST_CASE("HQ2x Scaler Tests") {
         CHECK(output.height() == 6);
         // HQ2x may interpolate center pixel
         bool has_yellow = false;
-        for (int y = 1; y < 4; ++y) {
-            for (int x = 1; x < 4; ++x) {
+        for (size_t y = 1; y < 4; ++y) {
+            for (size_t x = 1; x < 4; ++x) {
                 if (output.get_pixel(x, y) == YELLOW) {
                     has_yellow = true;
                     break;
@@ -296,8 +297,8 @@ TEST_CASE("XBR vs HQ2x Comparison") {
         CHECK(xbr_center_valid); // Accept interpolated values
         // HQ2x might interpolate center area
         bool has_gray = false;
-        for (int y = 3; y < 6; ++y) {
-            for (int x = 3; x < 6; ++x) {
+        for (size_t y = 3; y < 6; ++y) {
+            for (size_t x = 3; x < 6; ++x) {
                 if (hq2x_output.get_pixel(x, y) == GRAY) {
                     has_gray = true;
                     break;
@@ -305,5 +306,91 @@ TEST_CASE("XBR vs HQ2x Comparison") {
             }
         }
         CHECK(has_gray);
+    }
+}
+
+TEST_CASE("HQ3x Algorithm Tests") {
+    const uvec3 BLACK{0, 0, 0};
+    const uvec3 WHITE{255, 255, 255};
+    const uvec3 RED{255, 0, 0};
+    const uvec3 GREEN{0, 255, 0};
+    const uvec3 BLUE{0, 0, 255};
+    
+    SUBCASE("Basic 3x scaling") {
+        TestImageXBR input(2, 2);
+        // Set pixels individually
+        input.set_pixel(0, 0, BLACK);
+        input.set_pixel(1, 0, WHITE);
+        input.set_pixel(0, 1, WHITE);
+        input.set_pixel(1, 1, BLACK);
+        
+        auto output = scaleHq3x<TestImageXBR, TestImageXBR>(input);
+        
+        CHECK(output.width() == 6);
+        CHECK(output.height() == 6);
+        
+        // Check that corners maintain their values
+        CHECK(output.get_pixel(0, 0) == BLACK);
+        CHECK(output.get_pixel(5, 0) == WHITE);
+        CHECK(output.get_pixel(0, 5) == WHITE);
+        CHECK(output.get_pixel(5, 5) == BLACK);
+    }
+    
+    SUBCASE("Edge interpolation") {
+        TestImageXBR input(3, 3);
+        // Set horizontal stripes
+        for (size_t x = 0; x < 3; ++x) {
+            input.set_pixel(x, 0, RED);
+            input.set_pixel(x, 1, GREEN);
+            input.set_pixel(x, 2, BLUE);
+        }
+        
+        auto output = scaleHq3x<TestImageXBR, TestImageXBR>(input);
+        
+        CHECK(output.width() == 9);
+        CHECK(output.height() == 9);
+        
+        // Top row should be red
+        CHECK(output.get_pixel(0, 0) == RED);
+        CHECK(output.get_pixel(4, 0) == RED);
+        CHECK(output.get_pixel(8, 0) == RED);
+        
+        // Middle row should be green
+        CHECK(output.get_pixel(0, 4) == GREEN);
+        CHECK(output.get_pixel(4, 4) == GREEN);
+        CHECK(output.get_pixel(8, 4) == GREEN);
+        
+        // Bottom row should be blue
+        CHECK(output.get_pixel(0, 8) == BLUE);
+        CHECK(output.get_pixel(4, 8) == BLUE);
+        CHECK(output.get_pixel(8, 8) == BLUE);
+    }
+    
+    SUBCASE("Diagonal pattern") {
+        TestImageXBR input(3, 3);
+        // Set checkerboard pattern
+        input.set_pixel(0, 0, BLACK);
+        input.set_pixel(1, 0, WHITE);
+        input.set_pixel(2, 0, BLACK);
+        input.set_pixel(0, 1, WHITE);
+        input.set_pixel(1, 1, BLACK);
+        input.set_pixel(2, 1, WHITE);
+        input.set_pixel(0, 2, BLACK);
+        input.set_pixel(1, 2, WHITE);
+        input.set_pixel(2, 2, BLACK);
+        
+        auto output = scaleHq3x<TestImageXBR, TestImageXBR>(input);
+        
+        CHECK(output.width() == 9);
+        CHECK(output.height() == 9);
+        
+        // Center should be black
+        CHECK(output.get_pixel(4, 4) == BLACK);
+        
+        // Corners should maintain their values
+        CHECK(output.get_pixel(0, 0) == BLACK);
+        CHECK(output.get_pixel(8, 0) == BLACK);
+        CHECK(output.get_pixel(0, 8) == BLACK);
+        CHECK(output.get_pixel(8, 8) == BLACK);
     }
 }

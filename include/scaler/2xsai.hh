@@ -27,7 +27,7 @@ namespace scaler {
 
     // Generic 2xSaI scaler using CRTP - works with any image implementation
     template<typename InputImage, typename OutputImage>
-    auto scale2xSaI(const InputImage& src, int scale_factor = 2)
+    auto scale2xSaI(const InputImage& src, size_t scale_factor = 2)
         -> OutputImage {
         OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
 
@@ -36,13 +36,13 @@ namespace scaler {
         SlidingWindow4x4<PixelType> window(src.width());
         window.initialize(src, 0);
 
-        for (int y = 0; y < src.height(); y++) {
+        for (size_t y = 0; y < src.height(); y++) {
             // Advance sliding window for next row
             if (y > 0) {
                 window.advance(src);
             }
 
-            for (int x = 0; x < src.width(); x++) {
+            for (size_t x = 0; x < src.width(); x++) {
                 // Get 4x4 grid from cache-friendly buffer
                 PixelType grid[4][4];
                 window.get4x4(x, grid);
@@ -141,8 +141,8 @@ namespace scaler {
                     }
                 }
 
-                int dst_x = scale_factor * x;
-                int dst_y = scale_factor * y;
+                size_t dst_x = scale_factor * x;
+                size_t dst_y = scale_factor * y;
                 result.set_pixel(dst_x, dst_y, A);
                 result.set_pixel(dst_x + 1, dst_y, right_interp);
                 result.set_pixel(dst_x, dst_y + 1, bottom_interp);

@@ -7,10 +7,10 @@ using namespace scaler;
 class TestImage : public InputImageBase<TestImage, uvec3>,
                   public OutputImageBase<TestImage, uvec3> {
 public:
-    TestImage(int w, int h) 
-        : m_width(w), m_height(h), m_data(static_cast<size_t>(w * h)) {}
+    TestImage(size_t w, size_t h) 
+        : m_width(w), m_height(h), m_data(w * h) {}
     
-    TestImage(int w, int h, const TestImage&)
+    TestImage(size_t w, size_t h, const TestImage&)
         : TestImage(w, h) {}
     
     // Resolve ambiguity by providing unified implementations
@@ -20,28 +20,28 @@ public:
     using InputImageBase<TestImage, uvec3>::safeAccess;
     using OutputImageBase<TestImage, uvec3>::set_pixel;
     
-    [[nodiscard]] int width_impl() const { return m_width; }
-    [[nodiscard]] int height_impl() const { return m_height; }
+    [[nodiscard]] size_t width_impl() const { return m_width; }
+    [[nodiscard]] size_t height_impl() const { return m_height; }
     
-    [[nodiscard]] uvec3 get_pixel_impl(int x, int y) const {
-        if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            return m_data[static_cast<size_t>(y * m_width + x)];
+    [[nodiscard]] uvec3 get_pixel_impl(size_t x, size_t y) const {
+        if (x < m_width && y < m_height) {
+            return m_data[y * m_width + x];
         }
         return {0, 0, 0};
     }
     
-    void set_pixel_impl(int x, int y, const uvec3& pixel) {
-        if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            m_data[static_cast<size_t>(y * m_width + x)] = pixel;
+    void set_pixel_impl(size_t x, size_t y, const uvec3& pixel) {
+        if (x < m_width && y < m_height) {
+            m_data[y * m_width + x] = pixel;
         }
     }
     
-    [[nodiscard]] const uvec3& at(int x, int y) const {
-        return m_data[static_cast<size_t>(y * m_width + x)];
+    [[nodiscard]] const uvec3& at(size_t x, size_t y) const {
+        return m_data[y * m_width + x];
     }
     
 private:
-    int m_width, m_height;
+    size_t m_width, m_height;
     std::vector<uvec3> m_data;
 };
 
@@ -125,8 +125,8 @@ TEST_CASE("EPX Scaling with CRTP") {
         CHECK(output.height() == 2);
         
         // All pixels should be the same color
-        for (int y = 0; y < 2; ++y) {
-            for (int x = 0; x < 2; ++x) {
+        for (size_t y = 0; y < 2; ++y) {
+            for (size_t x = 0; x < 2; ++x) {
                 auto pixel = output.get_pixel(x, y);
                 CHECK(pixel.x == red.x);
                 CHECK(pixel.y == red.y);

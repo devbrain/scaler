@@ -32,6 +32,7 @@ function print_usage {
     echo "Options:"
     echo "  --quick            Use quick benchmark mode"
     echo "  --verbose          Verbose output"
+    echo "  --filter ALGO      Profile only specified algorithm (e.g., HQ3x)"
     echo "  --help             Show this help"
 }
 
@@ -222,6 +223,7 @@ function clean_outputs {
 COMMAND=""
 BENCH_ARGS=""
 VERBOSE=false
+FILTER_ALGO=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -237,6 +239,16 @@ while [[ $# -gt 0 ]]; do
             BENCH_ARGS="$BENCH_ARGS -v"
             VERBOSE=true
             shift
+            ;;
+        --filter)
+            if [[ $# -gt 1 ]]; then
+                FILTER_ALGO=$2
+                BENCH_ARGS="$BENCH_ARGS --filter $2"
+                shift 2
+            else
+                echo -e "${RED}--filter requires an algorithm name${NC}"
+                exit 1
+            fi
             ;;
         --help|-h)
             print_usage

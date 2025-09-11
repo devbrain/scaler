@@ -8,7 +8,7 @@ namespace scaler {
     // Improved Scale2x algorithm by Sp00kyFox
     // https://web.archive.org/web/20160527015550/https://libretro.com/forums/archive/index.php?t-1655.html
     template<typename InputImage, typename OutputImage>
-    auto scaleScale2xSFX(const InputImage& src, int scale_factor = 2)
+    auto scaleScale2xSFX(const InputImage& src, size_t scale_factor = 2)
         -> OutputImage {
         OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
 
@@ -17,13 +17,13 @@ namespace scaler {
         SlidingWindow5x5<PixelType> window(src.width());
         window.initialize(src, 0);
 
-        for (int y = 0; y < src.height(); y++) {
+        for (size_t y = 0; y < src.height(); y++) {
             // Advance sliding window for next row
             if (y > 0) {
                 window.advance(src);
             }
 
-            for (int x = 0; x < src.width(); x++) {
+            for (size_t x = 0; x < src.width(); x++) {
                 // Get 5x5 neighborhood from cache-friendly buffer
                 PixelType neighborhood[5][5];
                 window.getNeighborhood(x, neighborhood);
@@ -58,8 +58,8 @@ namespace scaler {
                 auto E2 = (D == H && B != D && F != H && (E != G || E == A || E == I || G == K || G == M)) ? D : E;
                 auto E3 = (F == H && B != F && D != H && (E != I || E == C || E == G || I == L || I == M)) ? F : E;
 
-                int dst_x = scale_factor * x;
-                int dst_y = scale_factor * y;
+                size_t dst_x = scale_factor * x;
+                size_t dst_y = scale_factor * y;
 
                 // Write 2x2 output block
                 result.set_pixel(dst_x, dst_y, E0);

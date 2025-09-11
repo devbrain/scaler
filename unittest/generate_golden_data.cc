@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <iomanip>
 
-#include "rotozoom_bmp.h"
+#include "data/rotozoom_bmp.h"
 
 using namespace scaler;
 

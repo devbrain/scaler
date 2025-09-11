@@ -6,9 +6,9 @@
 #include <cstring>
 
 // Include embedded test images
-#include "rotozoom_bmp.h"
-#include "rotozoom_omniscale_2x_bmp.h"
-#include "rotozoom_omniscale_3x_bmp.h"
+#include "data/rotozoom_bmp.h"
+#include "data/rotozoom_omniscale_2x_bmp.h"
+#include "data/rotozoom_omniscale_3x_bmp.h"
 using namespace scaler;
 // Helper to load BMP from embedded data
 std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> 

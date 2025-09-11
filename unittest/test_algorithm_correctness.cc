@@ -3,6 +3,8 @@
 #include <scaler/epx.hh>
 #include <scaler/eagle.hh>
 #include <scaler/2xsai.hh>
+#include <scaler/hq2x.hh>
+#include <scaler/hq3x.hh>
 #include <vector>
 #include <random>
 #include <chrono>
@@ -14,10 +16,10 @@ using namespace scaler;
 class AnalysisImage : public InputImageBase<AnalysisImage, uvec3>,
                        public OutputImageBase<AnalysisImage, uvec3> {
 public:
-    AnalysisImage(int w, int h) 
-        : m_width(w), m_height(h), m_data(static_cast<size_t>(w * h), {0, 0, 0}) {}
+    AnalysisImage(size_t w, size_t h) 
+        : m_width(w), m_height(h), m_data(w * h, {0, 0, 0}) {}
     
-    AnalysisImage(int w, int h, const AnalysisImage&)
+    AnalysisImage(size_t w, size_t h, const AnalysisImage&)
         : AnalysisImage(w, h) {}
     
     // Resolve ambiguity
@@ -27,19 +29,19 @@ public:
     using InputImageBase<AnalysisImage, uvec3>::safeAccess;
     using OutputImageBase<AnalysisImage, uvec3>::set_pixel;
     
-    [[nodiscard]] int width_impl() const { return m_width; }
-    [[nodiscard]] int height_impl() const { return m_height; }
+    [[nodiscard]] size_t width_impl() const { return m_width; }
+    [[nodiscard]] size_t height_impl() const { return m_height; }
     
-    [[nodiscard]] uvec3 get_pixel_impl(int x, int y) const {
-        if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            return m_data[static_cast<size_t>(y * m_width + x)];
+    [[nodiscard]] uvec3 get_pixel_impl(size_t x, size_t y) const {
+        if (x < m_width && y < m_height) {
+            return m_data[y * m_width + x];
         }
         return {0, 0, 0};
     }
     
-    void set_pixel_impl(int x, int y, const uvec3& pixel) {
-        if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            m_data[static_cast<size_t>(y * m_width + x)] = pixel;
+    void set_pixel_impl(size_t x, size_t y, const uvec3& pixel) {
+        if (x < m_width && y < m_height) {
+            m_data[y * m_width + x] = pixel;
         }
     }
     
@@ -91,8 +93,8 @@ public:
     [[nodiscard]] double calculateSharpness() const {
         // Simple edge detection metric
         double edges = 0;
-        for (int y = 0; y < m_height - 1; ++y) {
-            for (int x = 0; x < m_width - 1; ++x) {
+        for (size_t y = 0; y + 1 < m_height; ++y) {
+            for (size_t x = 0; x + 1 < m_width; ++x) {
                 auto current = get_pixel(x, y);
                 auto right = get_pixel(x + 1, y);
                 auto down = get_pixel(x, y + 1);
@@ -108,7 +110,7 @@ public:
                 edges += std::sqrt(dx * dx + dy * dy);
             }
         }
-        return edges / ((m_width - 1) * (m_height - 1));
+        return edges / static_cast<double>((m_width - 1) * (m_height - 1));
     }
     
     void generateRandomNoise(unsigned int seed = 42) {
@@ -123,8 +125,8 @@ public:
     }
     
     void generateGradient(bool horizontal = true) {
-        for (int y = 0; y < m_height; ++y) {
-            for (int x = 0; x < m_width; ++x) {
+        for (size_t y = 0; y < static_cast<size_t>(m_height); ++y) {
+            for (size_t x = 0; x < static_cast<size_t>(m_width); ++x) {
                 unsigned int val = static_cast<unsigned int>(horizontal 
                     ? (x * 255 / (m_width - 1))
                     : (y * 255 / (m_height - 1)));
@@ -134,7 +136,7 @@ public:
     }
     
 private:
-    int m_width, m_height;
+    size_t m_width, m_height;
     std::vector<uvec3> m_data;
 };
 
@@ -176,8 +178,8 @@ TEST_CASE("Algorithm Correctness - Edge Preservation") {
     SUBCASE("Sharp edge preservation") {
         AnalysisImage input(8, 8);
         // Create sharp vertical edge
-        for (int y = 0; y < 8; ++y) {
-            for (int x = 0; x < 8; ++x) {
+        for (size_t y = 0; y < 8; ++y) {
+            for (size_t x = 0; x < 8; ++x) {
                 input.set_pixel(x, y, (x < 4) ? uvec3{0, 0, 0} : uvec3{255, 255, 255});
             }
         }
@@ -206,8 +208,8 @@ TEST_CASE("Algorithm Correctness - Edge Preservation") {
     SUBCASE("Diagonal edge handling") {
         AnalysisImage input(8, 8);
         // Create diagonal edge
-        for (int y = 0; y < 8; ++y) {
-            for (int x = 0; x < 8; ++x) {
+        for (size_t y = 0; y < 8; ++y) {
+            for (size_t x = 0; x < 8; ++x) {
                 input.set_pixel(x, y, (x > y) ? uvec3{255, 0, 0} : uvec3{0, 0, 255});
             }
         }
@@ -230,8 +232,8 @@ TEST_CASE("Algorithm Correctness - Artifact Detection") {
     SUBCASE("No color bleeding in solid areas") {
         AnalysisImage input(6, 6);
         // Create distinct color regions
-        for (int y = 0; y < 6; ++y) {
-            for (int x = 0; x < 6; ++x) {
+        for (size_t y = 0; y < 6; ++y) {
+            for (size_t x = 0; x < 6; ++x) {
                 if (x < 3 && y < 3) {
                     input.set_pixel(x, y, {255, 0, 0}); // Red
                 } else if (x >= 3 && y < 3) {
@@ -256,8 +258,8 @@ TEST_CASE("Algorithm Correctness - Artifact Detection") {
     SUBCASE("No spurious pixels in uniform areas") {
         AnalysisImage input(5, 5);
         uvec3 solid_color{128, 64, 192};
-        for (int y = 0; y < 5; ++y) {
-            for (int x = 0; x < 5; ++x) {
+        for (size_t y = 0; y < 5; ++y) {
+            for (size_t x = 0; x < 5; ++x) {
                 input.set_pixel(x, y, solid_color);
             }
         }
@@ -269,8 +271,8 @@ TEST_CASE("Algorithm Correctness - Artifact Detection") {
         CHECK(eagle_output.countUniqueColors() == 1);
         CHECK(advmame_output.countUniqueColors() == 1);
         
-        for (int y = 0; y < 10; ++y) {
-            for (int x = 0; x < 10; ++x) {
+        for (size_t y = 0; y < 10; ++y) {
+            for (size_t x = 0; x < 10; ++x) {
                 CHECK(eagle_output.get_pixel(x, y) == solid_color);
                 CHECK(advmame_output.get_pixel(x, y) == solid_color);
             }
@@ -282,8 +284,8 @@ TEST_CASE("Algorithm Correctness - Symmetry Tests") {
     SUBCASE("Horizontal symmetry preservation") {
         AnalysisImage input(6, 6);
         // Create horizontally symmetric pattern
-        for (int y = 0; y < 6; ++y) {
-            for (int x = 0; x < 3; ++x) {
+        for (size_t y = 0; y < 6; ++y) {
+            for (size_t x = 0; x < 3; ++x) {
                 uvec3 color = {static_cast<unsigned int>(x * 85), 
                               static_cast<unsigned int>(y * 42), 128};
                 input.set_pixel(x, y, color);
@@ -294,8 +296,8 @@ TEST_CASE("Algorithm Correctness - Symmetry Tests") {
         auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
         
         // Check horizontal symmetry is preserved
-        for (int y = 0; y < 12; ++y) {
-            for (int x = 0; x < 6; ++x) {
+        for (size_t y = 0; y < 12; ++y) {
+            for (size_t x = 0; x < 6; ++x) {
                 auto left = epx_output.get_pixel(x, y);
                 auto right = epx_output.get_pixel(11 - x, y);
                 CHECK(left == right);
@@ -332,7 +334,7 @@ TEST_CASE("Algorithm Correctness - Interpolation Quality") {
     SUBCASE("Smooth gradient interpolation") {
         AnalysisImage input(8, 1);
         // Create smooth horizontal gradient
-        for (int x = 0; x < 8; ++x) {
+        for (size_t x = 0; x < 8; ++x) {
             unsigned int val = static_cast<unsigned int>(x * 36);
             input.set_pixel(x, 0, {val, val, val});
         }
@@ -342,7 +344,7 @@ TEST_CASE("Algorithm Correctness - Interpolation Quality") {
         // Check that interpolation creates reasonable transitions
         // 2xSaI is designed for pixel art, not perfect gradients
         int discontinuities = 0;
-        for (int x = 1; x < 15; ++x) {
+        for (size_t x = 1; x < 15; ++x) {
             auto prev = sai_output.get_pixel(x - 1, 0);
             auto curr = sai_output.get_pixel(x, 0);
             auto next = sai_output.get_pixel(x + 1, 0);
@@ -387,9 +389,9 @@ TEST_CASE("Algorithm Correctness - Interpolation Quality") {
 
 TEST_CASE("Algorithm Performance Characteristics") {
     SUBCASE("Scaling consistency across sizes") {
-        std::vector<int> sizes = {2, 4, 8, 16, 32};
+        std::vector<size_t> sizes = {2, 4, 8, 16, 32};
         
-        for (int size : sizes) {
+        for (size_t size : sizes) {
             AnalysisImage input(size, size);
             input.generateRandomNoise(static_cast<unsigned int>(size));
             
@@ -412,8 +414,8 @@ TEST_CASE("Algorithm Performance Characteristics") {
     SUBCASE("Algorithm stability with extreme values") {
         AnalysisImage input(4, 4);
         // Test with extreme values
-        for (int y = 0; y < 4; ++y) {
-            for (int x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            for (size_t x = 0; x < 4; ++x) {
                 if ((x + y) % 2 == 0) {
                     input.set_pixel(x, y, {0, 0, 0});      // Minimum
                 } else {
@@ -426,8 +428,8 @@ TEST_CASE("Algorithm Performance Characteristics") {
         auto advmame_output = scaleAdvMame<AnalysisImage, AnalysisImage>(input);
         
         // Check no overflow or underflow
-        for (int y = 0; y < 8; ++y) {
-            for (int x = 0; x < 8; ++x) {
+        for (size_t y = 0; y < 8; ++y) {
+            for (size_t x = 0; x < 8; ++x) {
                 auto epx_pixel = epx_output.get_pixel(x, y);
                 auto advmame_pixel = advmame_output.get_pixel(x, y);
                 

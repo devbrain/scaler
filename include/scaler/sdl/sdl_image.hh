@@ -12,25 +12,25 @@ namespace scaler {
             explicit SDLInputImage(SDL_Surface* surface)
                 : m_surface(surface),
         #ifdef SCALER_HAS_SDL3
-                  m_bpp(SDL_BYTESPERPIXEL(surface->format)),
+                  m_bpp(static_cast<unsigned int>(SDL_BYTESPERPIXEL(surface->format))),
                   m_details(SDL_GetPixelFormatDetails(surface->format)),
         #else
-                  m_bpp(surface->format->BytesPerPixel),
+                  m_bpp(static_cast<unsigned int>(surface->format->BytesPerPixel)),
                   m_details(surface->format),
         #endif
                   m_palette(SDL_GetSurfacePalette(surface)) {}
 
-            [[nodiscard]] int width_impl() const {
-                return m_surface->w;
+            [[nodiscard]] size_t width_impl() const {
+                return static_cast<size_t>(m_surface->w);
             }
 
-            [[nodiscard]] int height_impl() const {
-                return m_surface->h;
+            [[nodiscard]] size_t height_impl() const {
+                return static_cast<size_t>(m_surface->h);
             }
 
-            [[nodiscard]] uvec3 get_pixel_impl(int x, int y) const {
+            [[nodiscard]] uvec3 get_pixel_impl(size_t x, size_t y) const {
                 const Uint8* const src_pixel = static_cast<const Uint8*>(m_surface->pixels)
-                                               + y * m_surface->pitch
+                                               + y * static_cast<size_t>(m_surface->pitch)
                                                + x * m_bpp;
 
                 Uint32 pixel;
@@ -42,7 +42,7 @@ namespace scaler {
                         pixel = *reinterpret_cast<const Uint16*>(src_pixel);
                         break;
                     case 3:
-                        if (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
+                        if constexpr (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
                             pixel = src_pixel[0] << 16 | src_pixel[1] << 8 | src_pixel[2];
                         } else {
                             pixel = src_pixel[0] | src_pixel[1] << 8 | src_pixel[2] << 16;
@@ -64,7 +64,7 @@ namespace scaler {
 
         private:
             SDL_Surface* m_surface;
-            int m_bpp;
+            unsigned int m_bpp;
             const SDL_PixelFormatDetails* m_details;
             SDL_Palette* m_palette;
     };
@@ -72,18 +72,18 @@ namespace scaler {
     class SDLOutputImage : public OutputImageBase<SDLOutputImage, uvec3> {
         public:
             // Constructor with SDL_Surface template
-            SDLOutputImage(int width, int height, const SDL_Surface* template_surface)
+            SDLOutputImage(size_t width, size_t height, const SDL_Surface* template_surface)
                 : m_surface(nullptr),
                   m_palette(nullptr),
                   m_details(nullptr),
         #ifdef SCALER_HAS_SDL3
-                  m_bpp(SDL_BYTESPERPIXEL(template_surface->format)) {
+                  m_bpp(static_cast<unsigned int>(SDL_BYTESPERPIXEL(template_surface->format))) {
 
-                m_surface = SDL_CreateSurface(width, height, template_surface->format);
+                m_surface = SDL_CreateSurface(static_cast<int>(width), static_cast<int>(height), template_surface->format);
 #else
-            m_bpp(template_surface->format->BytesPerPixel) {
+            m_bpp(static_cast<unsigned int>(template_surface->format->BytesPerPixel)) {
 
-                m_surface = SDL_CreateRGBSurfaceWithFormat(0, width, height,
+                m_surface = SDL_CreateRGBSurfaceWithFormat(0, static_cast<int>(width), static_cast<int>(height),
                                                            template_surface->format->BitsPerPixel,
                                                            template_surface->format->format);
 #endif
@@ -109,7 +109,7 @@ namespace scaler {
             }
 
             // Constructor with SDLInputImage template
-            SDLOutputImage(int width, int height, const SDLInputImage& template_img)
+            SDLOutputImage(size_t width, size_t height, const SDLInputImage& template_img)
                 : SDLOutputImage(width, height, template_img.m_surface) {}
 
             ~SDLOutputImage() {
@@ -146,22 +146,22 @@ namespace scaler {
             SDLOutputImage(const SDLOutputImage&) = delete;
             SDLOutputImage& operator=(const SDLOutputImage&) = delete;
 
-            [[nodiscard]] int width_impl() const {
-                return m_surface ? m_surface->w : 0;
+            [[nodiscard]] size_t width_impl() const {
+                return m_surface ? static_cast<size_t>(m_surface->w) : 0;
             }
 
-            [[nodiscard]] int height_impl() const {
-                return m_surface ? m_surface->h : 0;
+            [[nodiscard]] size_t height_impl() const {
+                return m_surface ? static_cast<size_t>(m_surface->h) : 0;
             }
 
-            void set_pixel_impl(int x, int y, const uvec3& pixel) {
+            void set_pixel_impl(size_t x, size_t y, const uvec3& pixel) {
                 Uint32 color = SDL_MapRGB(m_details, m_palette,
                                           static_cast<Uint8>(pixel.x),
                                           static_cast<Uint8>(pixel.y),
                                           static_cast<Uint8>(pixel.z));
 
                 Uint8* const target_pixel = static_cast<Uint8*>(m_surface->pixels)
-                                           + y * m_surface->pitch
+                                           + y * static_cast<size_t>(m_surface->pitch)
                                            + x * m_bpp;
 
                 switch (m_bpp) {
@@ -172,7 +172,7 @@ namespace scaler {
                         *reinterpret_cast<Uint16*>(target_pixel) = static_cast<Uint16>(color);
                         break;
                     case 3:
-                        if (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
+                        if constexpr (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
                             target_pixel[0] = (color >> 16) & 0xff;
                             target_pixel[1] = (color >> 8) & 0xff;
                             target_pixel[2] = color & 0xff;
@@ -184,6 +184,9 @@ namespace scaler {
                         break;
                     case 4:
                         *reinterpret_cast<Uint32*>(target_pixel) = color;
+                        break;
+                    default:
+                        // Should not happen with valid SDL surfaces
                         break;
                 }
             }
@@ -202,6 +205,6 @@ namespace scaler {
             SDL_Surface* m_surface;
             SDL_Palette* m_palette;
             const SDL_PixelFormatDetails* m_details;
-            int m_bpp;
+            unsigned int m_bpp;
     };
 }

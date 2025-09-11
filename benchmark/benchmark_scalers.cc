@@ -28,7 +28,7 @@
 #include <unistd.h>  // For isatty
 
 // Include embedded test image
-#include "../unittest/rotozoom_bmp.h"
+#include "../unittest/data/rotozoom_bmp.h"
 using namespace scaler;
 // Simple JSON writer for baseline
 class BaselineWriter {

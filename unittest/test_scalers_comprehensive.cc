@@ -6,15 +6,16 @@
 #include <vector>
 #include <array>
 #include <cmath>
+#include <algorithm>
 using namespace scaler;
 // Test image implementation with additional utilities
 class TestImage : public InputImageBase<TestImage, uvec3>,
                   public OutputImageBase<TestImage, uvec3> {
 public:
-    TestImage(int w, int h) 
-        : m_width(w), m_height(h), m_data(static_cast<size_t>(w * h), {0, 0, 0}) {}
+    TestImage(size_t w, size_t h) 
+        : m_width(w), m_height(h), m_data(w * h, {0, 0, 0}) {}
     
-    TestImage(int w, int h, const TestImage&)
+    TestImage(size_t w, size_t h, const TestImage&)
         : TestImage(w, h) {}
     
     // Resolve ambiguity
@@ -24,19 +25,19 @@ public:
     using InputImageBase<TestImage, uvec3>::safeAccess;
     using OutputImageBase<TestImage, uvec3>::set_pixel;
     
-    [[nodiscard]] int width_impl() const { return m_width; }
-    [[nodiscard]] int height_impl() const { return m_height; }
+    [[nodiscard]] size_t width_impl() const { return m_width; }
+    [[nodiscard]] size_t height_impl() const { return m_height; }
     
-    [[nodiscard]] uvec3 get_pixel_impl(int x, int y) const {
-        if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            return m_data[static_cast<size_t>(y * m_width + x)];
+    [[nodiscard]] uvec3 get_pixel_impl(size_t x, size_t y) const {
+        if (x < m_width && y < m_height) {
+            return m_data[y * m_width + x];
         }
         return {0, 0, 0};
     }
     
-    void set_pixel_impl(int x, int y, const uvec3& pixel) {
-        if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-            m_data[static_cast<size_t>(y * m_width + x)] = pixel;
+    void set_pixel_impl(size_t x, size_t y, const uvec3& pixel) {
+        if (x < m_width && y < m_height) {
+            m_data[y * m_width + x] = pixel;
         }
     }
     
@@ -46,16 +47,16 @@ public:
     }
     
     void fillPattern(const std::vector<std::vector<uvec3>>& pattern) {
-        for (int y = 0; y < std::min(static_cast<int>(pattern.size()), m_height); ++y) {
-            for (int x = 0; x < std::min(static_cast<int>(pattern[static_cast<size_t>(y)].size()), m_width); ++x) {
-                set_pixel(x, y, pattern[static_cast<size_t>(y)][static_cast<size_t>(x)]);
+        for (size_t y = 0; y < std::min(pattern.size(), m_height); ++y) {
+            for (size_t x = 0; x < std::min(pattern[y].size(), m_width); ++x) {
+                set_pixel(x, y, pattern[y][x]);
             }
         }
     }
     
-    [[nodiscard]] bool compareRegion(int x, int y, int w, int h, const uvec3& expectedColor) const {
-        for (int dy = 0; dy < h; ++dy) {
-            for (int dx = 0; dx < w; ++dx) {
+    [[nodiscard]] bool compareRegion(size_t x, size_t y, size_t w, size_t h, const uvec3& expectedColor) const {
+        for (size_t dy = 0; dy < h; ++dy) {
+            for (size_t dx = 0; dx < w; ++dx) {
                 auto pixel = get_pixel(x + dx, y + dy);
                 if (pixel.x != expectedColor.x || 
                     pixel.y != expectedColor.y || 
@@ -72,7 +73,7 @@ public:
     }
     
 private:
-    int m_width, m_height;
+    size_t m_width, m_height;
     std::vector<uvec3> m_data;
 };
 
@@ -103,8 +104,8 @@ TEST_CASE("EPX Scaler Comprehensive Tests") {
     
     SUBCASE("Checkerboard pattern") {
         TestImage input(4, 4);
-        for (int y = 0; y < 4; ++y) {
-            for (int x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            for (size_t x = 0; x < 4; ++x) {
                 input.set_pixel(x, y, ((x + y) % 2 == 0) ? Colors::BLACK : Colors::WHITE);
             }
         }
@@ -122,7 +123,7 @@ TEST_CASE("EPX Scaler Comprehensive Tests") {
         TestImage input(5, 5);
         input.fill(Colors::WHITE);
         // Create diagonal line
-        for (int i = 0; i < 5; ++i) {
+        for (size_t i = 0; i < 5; ++i) {
             input.set_pixel(i, i, Colors::BLACK);
         }
         
@@ -131,7 +132,7 @@ TEST_CASE("EPX Scaler Comprehensive Tests") {
         CHECK(output.width() == 10);
         CHECK(output.height() == 10);
         // Check that diagonal is preserved (at least one pixel in each 2x2 block)
-        for (int i = 0; i < 5; ++i) {
+        for (size_t i = 0; i < 5; ++i) {
             bool has_black = (output.get_pixel(i * 2, i * 2) == Colors::BLACK) ||
                             (output.get_pixel(i * 2 + 1, i * 2) == Colors::BLACK) ||
                             (output.get_pixel(i * 2, i * 2 + 1) == Colors::BLACK) ||
@@ -191,8 +192,8 @@ TEST_CASE("AdvMAME Scaler Comprehensive Tests") {
     
     SUBCASE("Vertical line pattern") {
         TestImage input(4, 4);
-        for (int y = 0; y < 4; ++y) {
-            for (int x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            for (size_t x = 0; x < 4; ++x) {
                 input.set_pixel(x, y, (x % 2 == 0) ? Colors::GREEN : Colors::RED);
             }
         }
@@ -202,7 +203,7 @@ TEST_CASE("AdvMAME Scaler Comprehensive Tests") {
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
         // AdvMAME should preserve vertical lines
-        for (int y = 0; y < 8; ++y) {
+        for (size_t y = 0; y < 8; ++y) {
             CHECK(output.get_pixel(0, y) == Colors::GREEN);
             CHECK(output.get_pixel(2, y) == Colors::RED);
             CHECK(output.get_pixel(4, y) == Colors::GREEN);
@@ -212,8 +213,8 @@ TEST_CASE("AdvMAME Scaler Comprehensive Tests") {
     
     SUBCASE("Horizontal line pattern") {
         TestImage input(4, 4);
-        for (int y = 0; y < 4; ++y) {
-            for (int x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            for (size_t x = 0; x < 4; ++x) {
                 input.set_pixel(x, y, (y % 2 == 0) ? Colors::CYAN : Colors::YELLOW);
             }
         }
@@ -223,7 +224,7 @@ TEST_CASE("AdvMAME Scaler Comprehensive Tests") {
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
         // AdvMAME should preserve horizontal lines
-        for (int x = 0; x < 8; ++x) {
+        for (size_t x = 0; x < 8; ++x) {
             CHECK(output.get_pixel(x, 0) == Colors::CYAN);
             CHECK(output.get_pixel(x, 2) == Colors::YELLOW);
             CHECK(output.get_pixel(x, 4) == Colors::CYAN);
@@ -301,8 +302,8 @@ TEST_CASE("Eagle Scaler Comprehensive Tests") {
         CHECK(output.get_pixel(0, 6) == Colors::BLACK);
         CHECK(output.get_pixel(2, 6) == Colors::BLACK);
         // Check that bottom row has substantial black pixels
-        int black_count = 0;
-        for (int x = 0; x < 8; ++x) {
+        size_t black_count = 0;
+        for (size_t x = 0; x < 8; ++x) {
             if (output.get_pixel(x, 6) == Colors::BLACK) black_count++;
         }
         CHECK(black_count >= 3); // At least 3 black pixels in bottom row
@@ -324,8 +325,8 @@ TEST_CASE("2xSaI Scaler Comprehensive Tests") {
     SUBCASE("Gradient pattern") {
         TestImage input(4, 4);
         // Create a simple gradient
-        for (int y = 0; y < 4; ++y) {
-            for (int x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            for (size_t x = 0; x < 4; ++x) {
                 unsigned int val = static_cast<unsigned int>((x + y) * 36);
                 input.set_pixel(x, y, {val, val, val});
             }
@@ -337,8 +338,8 @@ TEST_CASE("2xSaI Scaler Comprehensive Tests") {
         CHECK(output.height() == 8);
         // 2xSaI should create smooth transitions
         // Check that no extreme jumps occur
-        for (int y = 0; y < 7; ++y) {
-            for (int x = 0; x < 7; ++x) {
+        for (size_t y = 0; y < 7; ++y) {
+            for (size_t x = 0; x < 7; ++x) {
                 auto current = output.get_pixel(x, y);
                 auto next_x = output.get_pixel(x + 1, y);
                 auto next_y = output.get_pixel(x, y + 1);
@@ -355,8 +356,8 @@ TEST_CASE("2xSaI Scaler Comprehensive Tests") {
     SUBCASE("Edge detection - sharp edge") {
         TestImage input(4, 4);
         // Left half black, right half white
-        for (int y = 0; y < 4; ++y) {
-            for (int x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            for (size_t x = 0; x < 4; ++x) {
                 input.set_pixel(x, y, (x < 2) ? Colors::BLACK : Colors::WHITE);
             }
         }
@@ -366,7 +367,7 @@ TEST_CASE("2xSaI Scaler Comprehensive Tests") {
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
         // Edge should be preserved
-        for (int y = 0; y < 8; ++y) {
+        for (size_t y = 0; y < 8; ++y) {
             CHECK(output.get_pixel(0, y) == Colors::BLACK);
             CHECK(output.get_pixel(1, y) == Colors::BLACK);
             CHECK(output.get_pixel(2, y) == Colors::BLACK);
@@ -379,7 +380,7 @@ TEST_CASE("2xSaI Scaler Comprehensive Tests") {
         TestImage input(5, 5);
         input.fill(Colors::BLACK);
         // Create anti-aliased diagonal
-        for (int i = 0; i < 5; ++i) {
+        for (size_t i = 0; i < 5; ++i) {
             input.set_pixel(i, i, Colors::WHITE);
             if (i > 0) input.set_pixel(i - 1, i, Colors::GRAY);
             if (i < 4) input.set_pixel(i + 1, i, Colors::GRAY);
@@ -458,8 +459,8 @@ TEST_CASE("Edge Cases and Boundary Tests") {
     SUBCASE("Large uniform areas") {
         TestImage input(10, 10);
         // Create large uniform areas
-        for (int y = 0; y < 10; ++y) {
-            for (int x = 0; x < 10; ++x) {
+        for (size_t y = 0; y < 10; ++y) {
+            for (size_t x = 0; x < 10; ++x) {
                 if (x < 5 && y < 5) {
                     input.set_pixel(x, y, Colors::RED);
                 } else if (x >= 5 && y < 5) {
@@ -528,7 +529,7 @@ TEST_CASE("Pattern Recognition Tests") {
         CHECK(output.width() == 6);
         CHECK(output.height() == 10);
         // The 'I' shape should be preserved
-        for (int y = 0; y < 10; ++y) {
+        for (size_t y = 0; y < 10; ++y) {
             bool has_black = (output.get_pixel(2, y) == Colors::BLACK) || 
                             (output.get_pixel(3, y) == Colors::BLACK);
             CHECK(has_black);

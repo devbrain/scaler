@@ -209,6 +209,34 @@ unittest/CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.s"
 	cd /home/igor/proj/ares/scaler/build/unittest && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/igor/proj/ares/scaler/unittest/test_omniscale_golden.cc -o CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.s
 
+unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o: unittest/CMakeFiles/scaler_unittest.dir/flags.make
+unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o: /home/igor/proj/ares/scaler/unittest/test_hq3x_golden.cc
+unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o: unittest/CMakeFiles/scaler_unittest.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o"
+	cd /home/igor/proj/ares/scaler/build/unittest && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o -MF CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o.d -o CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o -c /home/igor/proj/ares/scaler/unittest/test_hq3x_golden.cc
+
+unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.i"
+	cd /home/igor/proj/ares/scaler/build/unittest && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/igor/proj/ares/scaler/unittest/test_hq3x_golden.cc > CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.i
+
+unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.s"
+	cd /home/igor/proj/ares/scaler/build/unittest && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/igor/proj/ares/scaler/unittest/test_hq3x_golden.cc -o CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.s
+
+unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o: unittest/CMakeFiles/scaler_unittest.dir/flags.make
+unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o: /home/igor/proj/ares/scaler/unittest/test_hq3x_exact_golden.cc
+unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o: unittest/CMakeFiles/scaler_unittest.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o"
+	cd /home/igor/proj/ares/scaler/build/unittest && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o -MF CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o.d -o CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o -c /home/igor/proj/ares/scaler/unittest/test_hq3x_exact_golden.cc
+
+unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.i"
+	cd /home/igor/proj/ares/scaler/build/unittest && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/igor/proj/ares/scaler/unittest/test_hq3x_exact_golden.cc > CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.i
+
+unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.s"
+	cd /home/igor/proj/ares/scaler/build/unittest && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/igor/proj/ares/scaler/unittest/test_hq3x_exact_golden.cc -o CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.s
+
 # Object files for target scaler_unittest
 scaler_unittest_OBJECTS = \
 "CMakeFiles/scaler_unittest.dir/test_main.cc.o" \
@@ -220,7 +248,9 @@ scaler_unittest_OBJECTS = \
 "CMakeFiles/scaler_unittest.dir/test_golden_data.cc.o" \
 "CMakeFiles/scaler_unittest.dir/test_sliding_window_buffer.cc.o" \
 "CMakeFiles/scaler_unittest.dir/test_scale_algorithms.cc.o" \
-"CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.o"
+"CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.o" \
+"CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o" \
+"CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o"
 
 # External object files for target scaler_unittest
 scaler_unittest_EXTERNAL_OBJECTS =
@@ -235,10 +265,12 @@ bin/scaler_unittest: unittest/CMakeFiles/scaler_unittest.dir/test_golden_data.cc
 bin/scaler_unittest: unittest/CMakeFiles/scaler_unittest.dir/test_sliding_window_buffer.cc.o
 bin/scaler_unittest: unittest/CMakeFiles/scaler_unittest.dir/test_scale_algorithms.cc.o
 bin/scaler_unittest: unittest/CMakeFiles/scaler_unittest.dir/test_omniscale_golden.cc.o
+bin/scaler_unittest: unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_golden.cc.o
+bin/scaler_unittest: unittest/CMakeFiles/scaler_unittest.dir/test_hq3x_exact_golden.cc.o
 bin/scaler_unittest: unittest/CMakeFiles/scaler_unittest.dir/build.make
 bin/scaler_unittest: /usr/lib/x86_64-linux-gnu/libSDL2.so
 bin/scaler_unittest: unittest/CMakeFiles/scaler_unittest.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking CXX executable ../bin/scaler_unittest"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/igor/proj/ares/scaler/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Linking CXX executable ../bin/scaler_unittest"
 	cd /home/igor/proj/ares/scaler/build/unittest && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/scaler_unittest.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

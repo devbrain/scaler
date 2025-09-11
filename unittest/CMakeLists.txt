@@ -21,6 +21,10 @@ add_executable(scaler_unittest
         test_scale_algorithms.cc
         # OmniScale golden data tests
         test_omniscale_golden.cc
+        # HQ3x golden data tests
+        test_hq3x_golden.cc
+        # HQ3x exact implementation golden data tests
+        test_hq3x_exact_golden.cc
 )
 
 # Include directories

@@ -6,5 +6,5 @@ CXX_DEFINES = -DSCALER_HAS_SDL2 -DSCALER_SDL_VERSION=2
 
 CXX_INCLUDES = -I/home/igor/proj/ares/scaler/build/_deps/doctest-src -I/home/igor/proj/ares/scaler/include -isystem /usr/include/SDL2
 
-CXX_FLAGS = -O3 -DNDEBUG -std=gnu++17
+CXX_FLAGS = -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -Wpedantic -Wcast-align -Wcast-qual -Wconversion -Wdouble-promotion -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wundef -Wunused -Wzero-as-null-pointer-constant -Wstringop-overflow -Wlogical-op -Wuseless-cast
 

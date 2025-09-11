@@ -2,11 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/SameBoy" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/build/_deps/doctest-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/build/_deps/stb-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build_clang/_deps/doctest-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/pixel-art-upscaling" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/pixelscalers" vcs="Git" />
   </component>
 </project>

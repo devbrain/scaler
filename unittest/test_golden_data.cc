@@ -10,15 +10,15 @@
 #include <cstring>
 
 // Include embedded test image
-#include "rotozoom_bmp.h"
+#include "data/rotozoom_bmp.h"
 
 // Include golden data for test patterns (smaller, faster tests)
-#include "golden_test_pattern_source.h"
-#include "golden_test_pattern_epx.h"
-#include "golden_test_pattern_eagle.h"
-#include "golden_test_pattern_2xsai.h"
-#include "golden_test_pattern_xbr.h"
-#include "golden_test_pattern_hq2x.h"
+#include "data/golden_test_pattern_source.h"
+#include "data/golden_test_pattern_epx.h"
+#include "data/golden_test_pattern_eagle.h"
+#include "data/golden_test_pattern_2xsai.h"
+#include "data/golden_test_pattern_xbr.h"
+#include "data/golden_test_pattern_hq2x.h"
 using namespace scaler;
 // Helper to create SDL surface from raw RGBA data
 std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> 
@@ -240,7 +240,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     
     SUBCASE("EPX full image spot check") {
         // Include the full golden data for spot checks
-        #include "golden_epx.h"
+        #include "data/golden_epx.h"
         
         SDLInputImage input(source.get());
         auto output = scaleEpx<SDLInputImage, SDLOutputImage>(input);
@@ -262,7 +262,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     }
     
     SUBCASE("Eagle full image spot check") {
-        #include "golden_eagle.h"
+        #include "data/golden_eagle.h"
         
         SDLInputImage input(source.get());
         auto output = scaleEagle<SDLInputImage, SDLOutputImage>(input);
@@ -283,7 +283,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     }
     
     SUBCASE("2xSaI full image spot check") {
-        #include "golden_2xsai.h"
+        #include "data/golden_2xsai.h"
         
         SDLInputImage input(source.get());
         auto output = scale2xSaI<SDLInputImage, SDLOutputImage>(input);
@@ -304,7 +304,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     }
     
     SUBCASE("XBR full image spot check") {
-        #include "golden_xbr.h"
+        #include "data/golden_xbr.h"
         
         SDLInputImage input(source.get());
         auto output = scaleXbr<SDLInputImage, SDLOutputImage>(input);
@@ -325,7 +325,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     }
     
     SUBCASE("HQ2x full image spot check") {
-        #include "golden_hq2x.h"
+        #include "data/golden_hq2x.h"
         
         SDLInputImage input(source.get());
         auto output = scaleHq2x<SDLInputImage, SDLOutputImage>(input);

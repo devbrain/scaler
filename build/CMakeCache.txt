@@ -20,8 +20,7 @@ CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 //Path to a program.
 CMAKE_AR:FILEPATH=/usr/bin/ar
 
-//Choose the type of build, options are: None Debug Release RelWithDebInfo
-// MinSizeRel ...
+//Choose the type of build.
 CMAKE_BUILD_TYPE:STRING=Release
 
 //Enable/Disable color output during build.
@@ -337,7 +336,7 @@ SCALER_BUILD_TEST:BOOL=ON
 SCALER_BUILD_TOOLS:BOOL=ON
 
 //Enable profiling with gprof
-SCALER_ENABLE_PROFILING:BOOL=ON
+SCALER_ENABLE_PROFILING:BOOL=OFF
 
 //Enable valgrind-friendly build
 SCALER_ENABLE_VALGRIND:BOOL=OFF
@@ -379,7 +378,7 @@ CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
 CMAKE_AR-ADVANCED:INTERNAL=1
 //STRINGS property for variable: CMAKE_BUILD_TYPE
-CMAKE_BUILD_TYPE-STRINGS:INTERNAL=Debug;Release;MinSizeRel;RelWithDebInfo
+CMAKE_BUILD_TYPE-STRINGS:INTERNAL=Debug;Release;MinSizeRel;RelWithDebInfo;Performance
 //This is the directory where this CMakeCache.txt was created
 CMAKE_CACHEFILE_DIR:INTERNAL=/home/igor/proj/ares/scaler/build
 //Major version of cmake used to create the current loaded cache

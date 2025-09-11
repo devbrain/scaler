@@ -3,6 +3,7 @@
 #include <scaler/image_base.hh>
 #include <scaler/scaler_common.hh>
 #include <scaler/vec3.hh>
+#include <scaler/buffer_policy.hh>
 #include <array>
 #include <scaler/sliding_window_buffer.hh>
 
@@ -113,42 +114,26 @@ namespace scaler {
                (w5_diff << 4) | (w6_diff << 5) | (w7_diff << 6) | (w8_diff << 7);
     }
 
-    // Generic HQ2x scaler using CRTP - works with any image implementation
-    template<typename InputImage, typename OutputImage>
-    auto scaleHq2x(const InputImage& src, int scale_factor = 2)
+    // Generic HQ2x scaler with buffer policy
+    template<typename InputImage, typename OutputImage, typename BufferPolicy>
+    auto scaleHq2xWithPolicy(const InputImage& src, size_t scale_factor = 2)
         -> OutputImage {
         OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
 
-        // Use cache-friendly sliding window buffer for 3x3 neighborhood
         using PixelType = decltype(src.get_pixel(0, 0));
-        SlidingWindow3x3<PixelType> window(src.width());
-        window.initialize(src, 0);
-
-        for (int y = 0; y < src.height(); y++) {
-            // Advance sliding window for next row
-            if (y > 0) {
-                window.advance(src);
-            }
-
-            // Get row references once per scanline for better performance
-            const auto& topRow = window.getRow(-1);
-            const auto& midRow = window.getRow(0);
-            const auto& botRow = window.getRow(1);
-            const int pad = window.getPadding();
-
-            for (int x = 0; x < src.width(); x++) {
-                // Acquire neighbour pixel values from cached row references
+        RowBufferManager<PixelType, BufferPolicy> buffers(src.width());
+        
+        // Initialize first rows
+        buffers.initializeRows(src, 0);
+        
+        for (size_t y = 0; y < src.height(); y++) {
+            // Load next row
+            buffers.loadNextRow(src, static_cast<int>(y));
+            
+            for (size_t x = 0; x < src.width(); x++) {
+                // Get 3x3 neighborhood
                 std::array<PixelType, 9> w;
-                const size_t xp = static_cast<size_t>(x + pad);
-                w[0] = topRow[xp - 1];  // top-left
-                w[1] = topRow[xp];      // top
-                w[2] = topRow[xp + 1];  // top-right
-                w[3] = midRow[xp - 1];  // left
-                w[4] = midRow[xp];      // center
-                w[5] = midRow[xp + 1];  // right
-                w[6] = botRow[xp - 1];  // bottom-left
-                w[7] = botRow[xp];      // bottom
-                w[8] = botRow[xp + 1];  // bottom-right
+                buffers.getNeighborhood(static_cast<int>(x), w.data());
 
                 // Compute conditions corresponding to each set of 2x2 interpolation rules
                 uint8_t diffs = compute_differences(w);
@@ -298,16 +283,46 @@ namespace scaler {
                 else
                     dst11 = interpolate3Pixels(w[4], 2, w[5], 1, w[7], 1, 2);
 
-                int dst_x = scale_factor * x;
-                int dst_y = scale_factor * y;
+                size_t dst_x = scale_factor * x;
+                size_t dst_y = scale_factor * y;
                 result.set_pixel(dst_x, dst_y, dst00);
                 result.set_pixel(dst_x + 1, dst_y, dst01);
                 result.set_pixel(dst_x, dst_y + 1, dst10);
                 result.set_pixel(dst_x + 1, dst_y + 1, dst11);
             }
+            
+            // Rotate rows for next iteration
+            buffers.rotateRows();
         }
         return result;
     }
+    
+    // Main HQ2x scaler - automatically selects best buffer policy
+    template<typename InputImage, typename OutputImage>
+    auto scaleHq2x(const InputImage& src, size_t scale_factor = 2)
+        -> OutputImage {
+        using PixelType = decltype(src.get_pixel(0, 0));
+        
+        // Use fixed buffer for images up to 4096 pixels wide
+        if (src.width() <= 4096) {
+            using Policy = FixedBufferPolicy<PixelType, 4096>;
+            return scaleHq2xWithPolicy<InputImage, OutputImage, Policy>(src, scale_factor);
+        } else {
+            // Fall back to dynamic buffer for very wide images
+            using Policy = DynamicBufferPolicy<PixelType>;
+            return scaleHq2xWithPolicy<InputImage, OutputImage, Policy>(src, scale_factor);
+        }
+    }
+    
+    // Fast version explicitly uses fixed buffers
+    template<typename InputImage, typename OutputImage>
+    auto scaleHq2xFast(const InputImage& src, size_t scale_factor = 2)
+        -> OutputImage {
+        using PixelType = decltype(src.get_pixel(0, 0));
+        using Policy = FixedBufferPolicy<PixelType, 4096>;
+        return scaleHq2xWithPolicy<InputImage, OutputImage, Policy>(src, scale_factor);
+    }
+
 
 #undef P
 #undef WDIFF

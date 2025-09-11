@@ -20,6 +20,7 @@
 #include <scaler/2xsai.hh>
 #include <scaler/xbr.hh>
 #include <scaler/hq2x.hh>
+#include <scaler/hq3x.hh>
 #include <scaler/omniscale.hh>
 #include <scaler/scale2x_sfx.hh>
 #include <scaler/scale3x.hh>
@@ -103,10 +104,12 @@ public:
 // Algorithm registry
 enum class Algorithm {
     EPX,
+    AdvMAME,
     Eagle,
     TwoXSaI,
     XBR,
     HQ2x,
+    HQ3x,
     OmniScale2x,
     OmniScale3x,
     Scale2xSFX,
@@ -122,10 +125,12 @@ struct AlgorithmInfo {
 
 static const std::map<std::string, AlgorithmInfo> algorithms = {
     {"epx", {Algorithm::EPX, 2, "EPX/Scale2x - Fast and simple"}},
+    {"advmame", {Algorithm::AdvMAME, 2, "AdvMAME - Optimized EPX variant"}},
     {"eagle", {Algorithm::Eagle, 2, "Eagle - Good for low-res pixel art"}},
     {"2xsai", {Algorithm::TwoXSaI, 2, "2xSaI - Smooth diagonal lines"}},
     {"xbr", {Algorithm::XBR, 2, "XBR - Advanced edge detection"}},
-    {"hq2x", {Algorithm::HQ2x, 2, "HQ2x - High quality, slower"}},
+    {"hq2x", {Algorithm::HQ2x, 2, "HQ2x - High quality 2x scaling"}},
+    {"hq3x", {Algorithm::HQ3x, 3, "HQ3x - High quality 3x scaling"}},
     {"omniscale2x", {Algorithm::OmniScale2x, 2, "OmniScale 2x - Modern pattern-based"}},
     {"omniscale3x", {Algorithm::OmniScale3x, 3, "OmniScale 3x - Modern pattern-based"}},
     {"scale2xsfx", {Algorithm::Scale2xSFX, 2, "Scale2x SFX - Enhanced Scale2x"}},
@@ -137,6 +142,8 @@ STBOutputImage applyAlgorithm(const STBInputImage& input, Algorithm algo) {
     switch (algo) {
         case Algorithm::EPX:
             return scaleEpx<STBInputImage, STBOutputImage>(input);
+        case Algorithm::AdvMAME:
+            return scaleAdvMame<STBInputImage, STBOutputImage>(input);
         case Algorithm::Eagle:
             return scaleEagle<STBInputImage, STBOutputImage>(input);
         case Algorithm::TwoXSaI:
@@ -145,6 +152,8 @@ STBOutputImage applyAlgorithm(const STBInputImage& input, Algorithm algo) {
             return scaleXbr<STBInputImage, STBOutputImage>(input);
         case Algorithm::HQ2x:
             return scaleHq2x<STBInputImage, STBOutputImage>(input);
+        case Algorithm::HQ3x:
+            return scaleHq3x<STBInputImage, STBOutputImage>(input);
         case Algorithm::OmniScale2x:
             return scaleOmniScale2x<STBInputImage, STBOutputImage>(input);
         case Algorithm::OmniScale3x:

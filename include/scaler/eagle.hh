@@ -7,7 +7,7 @@
 namespace scaler {
     // Generic Eagle scaler using CRTP - works with any image implementation
     template<typename InputImage, typename OutputImage>
-    auto scaleEagle(const InputImage& src, int scale_factor = 2)
+    auto scaleEagle(const InputImage& src, size_t scale_factor = 2)
         -> OutputImage {
         OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
 
@@ -16,7 +16,7 @@ namespace scaler {
         SlidingWindow3x3<PixelType> window(src.width());
         window.initialize(src, 0);
 
-        for (int y = 0; y < src.height(); y++) {
+        for (size_t y = 0; y < src.height(); y++) {
             // Advance sliding window for next row
             if (y > 0) {
                 window.advance(src);
@@ -28,20 +28,20 @@ namespace scaler {
             const auto& botRow = window.getRow(1);
             const int pad = window.getPadding();
 
-            for (int x = 0; x < src.width(); x++) {
+            for (size_t x = 0; x < src.width(); x++) {
                 // Acquire neighbour pixel values from cached row references
-                const size_t xp = static_cast<size_t>(x + pad);
-                auto top_left = topRow[xp - 1];
-                auto top = topRow[xp];
-                auto top_right = topRow[xp + 1];
+                const int xp = static_cast<int>(x) + pad;
+                auto top_left = topRow[static_cast<size_t>(xp - 1)];
+                auto top = topRow[static_cast<size_t>(xp)];
+                auto top_right = topRow[static_cast<size_t>(xp + 1)];
 
-                auto left = midRow[xp - 1];
-                auto original_pixel = midRow[xp];
-                auto right = midRow[xp + 1];
+                auto left = midRow[static_cast<size_t>(xp - 1)];
+                auto original_pixel = midRow[static_cast<size_t>(xp)];
+                auto right = midRow[static_cast<size_t>(xp + 1)];
 
-                auto bottom_left = botRow[xp - 1];
-                auto bottom = botRow[xp];
-                auto bottom_right = botRow[xp + 1];
+                auto bottom_left = botRow[static_cast<size_t>(xp - 1)];
+                auto bottom = botRow[static_cast<size_t>(xp)];
+                auto bottom_right = botRow[static_cast<size_t>(xp + 1)];
 
                 // Initial expanded pixel value assignments
                 auto one = original_pixel;
@@ -55,8 +55,8 @@ namespace scaler {
                 if (left == bottom_left && bottom_left == bottom) { three = bottom_left; }
                 if (right == bottom_right && bottom_right == bottom) { four = bottom_right; }
 
-                int dst_x = scale_factor * x;
-                int dst_y = scale_factor * y;
+                size_t dst_x = scale_factor * x;
+                size_t dst_y = scale_factor * y;
                 result.set_pixel(dst_x, dst_y, one);
                 result.set_pixel(dst_x + 1, dst_y, two);
                 result.set_pixel(dst_x, dst_y + 1, three);
