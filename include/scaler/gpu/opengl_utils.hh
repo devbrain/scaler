@@ -4,6 +4,7 @@
 #include <string>
 #include <stdexcept>
 #include <functional>
+#include <cstring>  // For strstr
 
 namespace scaler::gpu::detail {
 

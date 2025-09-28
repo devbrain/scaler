@@ -18,6 +18,43 @@ namespace scaler::gpu::shader_source {
         }
     )";
 
+    // Nearest neighbor fragment shader
+    static constexpr const char* nearest_fragment_shader = R"(
+        #version 330 core
+        in vec2 v_texCoord;
+        out vec4 FragColor;
+        uniform sampler2D u_texture;
+
+        void main() {
+            FragColor = texture(u_texture, v_texCoord);
+        }
+    )";
+
+    // Bilinear fragment shader
+    static constexpr const char* bilinear_fragment_shader = R"(
+        #version 330 core
+        in vec2 v_texCoord;
+        out vec4 FragColor;
+        uniform sampler2D u_texture;
+        uniform vec2 u_texture_size;
+
+        void main() {
+            vec2 texel = 1.0 / u_texture_size;
+            vec2 coord = v_texCoord * u_texture_size - 0.5;
+            vec2 frac = fract(coord);
+            coord = floor(coord) + 0.5;
+
+            vec4 tl = texture(u_texture, (coord + vec2(0, 0)) / u_texture_size);
+            vec4 tr = texture(u_texture, (coord + vec2(1, 0)) / u_texture_size);
+            vec4 bl = texture(u_texture, (coord + vec2(0, 1)) / u_texture_size);
+            vec4 br = texture(u_texture, (coord + vec2(1, 1)) / u_texture_size);
+
+            vec4 top = mix(tl, tr, frac.x);
+            vec4 bottom = mix(bl, br, frac.x);
+            FragColor = mix(top, bottom, frac.y);
+        }
+    )";
+
     // Default passthrough fragment shader
     static constexpr const char* default_fragment_shader = R"(
         #version 330 core
@@ -864,6 +901,76 @@ namespace scaler::gpu::shader_source {
                 } else {
                     result = E3;  // bottom-right
                 }
+            }
+
+            FragColor = result;
+        }
+    )";
+
+    // Scale3xSFX shader - Improved Scale3x algorithm by Sp00kyFox
+    static constexpr const char* scale3x_sfx_fragment_shader = R"(
+        #version 330 core
+        in vec2 v_texCoord;
+        out vec4 FragColor;
+        uniform sampler2D u_texture;
+        uniform vec2 u_texture_size;
+        uniform vec2 u_output_size;
+
+        vec4 sampleTexture(vec2 pos) {
+            vec2 clamped = clamp(pos, vec2(0.0), vec2(1.0));
+            return texture(u_texture, clamped);
+        }
+
+        void main() {
+            // For now, use regular Scale3x - SFX variant would need more complex logic
+            vec2 texel = 1.0 / u_texture_size;
+            vec2 output_pixel = v_texCoord * u_output_size;
+            vec2 src_pixel = floor(output_pixel / 3.0);
+            vec2 block_pos = fract(output_pixel / 3.0);
+            vec2 src_tex_coord = (src_pixel + 0.5) / u_texture_size;
+
+            // Sample the 3x3 neighborhood
+            vec4 A = sampleTexture(src_tex_coord + vec2(-texel.x, -texel.y));
+            vec4 B = sampleTexture(src_tex_coord + vec2(0.0, -texel.y));
+            vec4 C = sampleTexture(src_tex_coord + vec2(texel.x, -texel.y));
+            vec4 D = sampleTexture(src_tex_coord + vec2(-texel.x, 0.0));
+            vec4 E = sampleTexture(src_tex_coord);
+            vec4 F = sampleTexture(src_tex_coord + vec2(texel.x, 0.0));
+            vec4 G = sampleTexture(src_tex_coord + vec2(-texel.x, texel.y));
+            vec4 H = sampleTexture(src_tex_coord + vec2(0.0, texel.y));
+            vec4 I = sampleTexture(src_tex_coord + vec2(texel.x, texel.y));
+
+            // Scale3x algorithm rules
+            vec4 E0 = E, E1 = E, E2 = E, E3 = E, E4 = E, E5 = E, E6 = E, E7 = E, E8 = E;
+
+            if (B != H && D != F) {
+                E0 = (D == B) ? D : E;
+                E1 = ((D == B && E != C) || (B == F && E != A)) ? B : E;
+                E2 = (B == F) ? F : E;
+                E3 = ((D == B && E != G) || (D == H && E != A)) ? D : E;
+                E4 = E;
+                E5 = ((B == F && E != I) || (H == F && E != C)) ? F : E;
+                E6 = (D == H) ? D : E;
+                E7 = ((D == H && E != I) || (H == F && E != G)) ? H : E;
+                E8 = (H == F) ? F : E;
+            }
+
+            vec4 result;
+            int block_x = clamp(int(block_pos.x * 3.0), 0, 2);
+            int block_y = clamp(int(block_pos.y * 3.0), 0, 2);
+
+            if (block_y == 0) {
+                if (block_x == 0) result = E0;
+                else if (block_x == 1) result = E1;
+                else result = E2;
+            } else if (block_y == 1) {
+                if (block_x == 0) result = E3;
+                else if (block_x == 1) result = E4;
+                else result = E5;
+            } else {
+                if (block_x == 0) result = E6;
+                else if (block_x == 1) result = E7;
+                else result = E8;
             }
 
             FragColor = result;

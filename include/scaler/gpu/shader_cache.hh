@@ -4,6 +4,7 @@
 #include <scaler/algorithm.hh>
 #include <unordered_map>
 #include <mutex>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -41,8 +42,9 @@ namespace scaler::gpu {
      */
     class shader_cache {
     private:
-        mutable std::mutex mutex_;
-        std::unordered_map<algorithm, shader_program> cache_;
+        mutable std::unique_ptr<std::mutex> mutex_;
+        std::unordered_map<algorithm, shader_program> algo_cache_;
+        std::unordered_map<std::string, shader_program> string_cache_;
 
         // Currently active shader
         algorithm current_algorithm_ = algorithm::Nearest;
@@ -129,7 +131,30 @@ namespace scaler::gpu {
         }
 
     public:
-        shader_cache() = default;
+        shader_cache() : mutex_(std::make_unique<std::mutex>()) {}
+
+        // Move constructor
+        shader_cache(shader_cache&& other) noexcept
+            : mutex_(std::make_unique<std::mutex>())
+            , algo_cache_(std::move(other.algo_cache_))
+            , string_cache_(std::move(other.string_cache_))
+            , current_algorithm_(other.current_algorithm_)
+            , current_shader_(nullptr) {}
+
+        // Move assignment
+        shader_cache& operator=(shader_cache&& other) noexcept {
+            if (this != &other) {
+                algo_cache_ = std::move(other.algo_cache_);
+                string_cache_ = std::move(other.string_cache_);
+                current_algorithm_ = other.current_algorithm_;
+                current_shader_ = nullptr;
+            }
+            return *this;
+        }
+
+        // Delete copy operations
+        shader_cache(const shader_cache&) = delete;
+        shader_cache& operator=(const shader_cache&) = delete;
 
         /**
          * Compile shader program from source
@@ -144,23 +169,43 @@ namespace scaler::gpu {
         }
 
         /**
+         * Get or compile shader with string key
+         */
+        const shader_program& get_or_compile(const std::string& key,
+                                            const char* vertex_source,
+                                            const char* fragment_source) {
+            std::lock_guard<std::mutex> lock(*mutex_);
+
+            // Check if already cached
+            auto it = string_cache_.find(key);
+            if (it != string_cache_.end()) {
+                return it->second;
+            }
+
+            // Compile and cache
+            shader_program program = compile(vertex_source, fragment_source);
+            auto [inserted_it, success] = string_cache_.emplace(key, std::move(program));
+            return inserted_it->second;
+        }
+
+        /**
          * Get or compile shader for algorithm
          */
         shader_program* get_or_compile(algorithm algo,
                                       const char* vertex_source,
                                       const char* fragment_source) {
-            std::lock_guard<std::mutex> lock(mutex_);
+            std::lock_guard<std::mutex> lock(*mutex_);
 
             // Check if already cached
-            auto it = cache_.find(algo);
-            if (it != cache_.end()) {
+            auto it = algo_cache_.find(algo);
+            if (it != algo_cache_.end()) {
                 return &it->second;
             }
 
             // Compile and cache
             try {
                 shader_program program = compile(vertex_source, fragment_source);
-                auto [inserted_it, success] = cache_.emplace(algo, std::move(program));
+                auto [inserted_it, success] = algo_cache_.emplace(algo, std::move(program));
                 return &inserted_it->second;
             } catch (const std::exception& e) {
                 // Log error and return nullptr
@@ -173,10 +218,10 @@ namespace scaler::gpu {
          * Use shader for algorithm
          */
         bool use(algorithm algo) {
-            std::lock_guard<std::mutex> lock(mutex_);
+            std::lock_guard<std::mutex> lock(*mutex_);
 
-            auto it = cache_.find(algo);
-            if (it != cache_.end() && it->second.is_valid()) {
+            auto it = algo_cache_.find(algo);
+            if (it != algo_cache_.end() && it->second.is_valid()) {
                 it->second.use();
                 current_algorithm_ = algo;
                 current_shader_ = &it->second;
@@ -190,7 +235,7 @@ namespace scaler::gpu {
          * Get current active shader
          */
         const shader_program* get_current() const {
-            std::lock_guard<std::mutex> lock(mutex_);
+            std::lock_guard<std::mutex> lock(*mutex_);
             return current_shader_;
         }
 
@@ -198,7 +243,7 @@ namespace scaler::gpu {
          * Get current algorithm
          */
         algorithm get_current_algorithm() const {
-            std::lock_guard<std::mutex> lock(mutex_);
+            std::lock_guard<std::mutex> lock(*mutex_);
             return current_algorithm_;
         }
 
@@ -206,8 +251,9 @@ namespace scaler::gpu {
          * Clear all cached shaders
          */
         void clear() {
-            std::lock_guard<std::mutex> lock(mutex_);
-            cache_.clear();
+            std::lock_guard<std::mutex> lock(*mutex_);
+            algo_cache_.clear();
+            string_cache_.clear();
             current_shader_ = nullptr;
             current_algorithm_ = algorithm::Nearest;
         }
@@ -225,16 +271,16 @@ namespace scaler::gpu {
          * Check if shader is cached
          */
         bool is_cached(algorithm algo) const {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return cache_.find(algo) != cache_.end();
+            std::lock_guard<std::mutex> lock(*mutex_);
+            return algo_cache_.find(algo) != algo_cache_.end();
         }
 
         /**
          * Get number of cached shaders
          */
         size_t size() const {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return cache_.size();
+            std::lock_guard<std::mutex> lock(*mutex_);
+            return algo_cache_.size() + string_cache_.size();
         }
 
         /**

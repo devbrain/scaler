@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include <scaler/gpu/sdl_opengl_multi_scaler.hh>
+#include "sdl_opengl_multi_scaler_compat.hh"
 #include <../include/scaler/cpu/epx.hh>
 #include <scaler/sdl/sdl_image.hh>
 #include <SDL.h>
@@ -10,7 +10,7 @@ using namespace scaler;
 using namespace scaler::gpu;
 
 // Create simple test pattern
-SDL_Surface* createTestPattern(int size = 8) {
+static SDL_Surface* createTestPattern(int size = 8) {
     SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(
         0, size, size, 32, SDL_PIXELFORMAT_RGBA8888);
 
@@ -41,7 +41,7 @@ SDL_Surface* createTestPattern(int size = 8) {
 }
 
 // Simple comparison function
-bool compareSurfacesSimple(SDL_Surface* surf1, SDL_Surface* surf2, int tolerance = 2) {
+static bool compareSurfacesSimple(SDL_Surface* surf1, SDL_Surface* surf2, int tolerance = 2) {
     if (!surf1 || !surf2) return false;
     if (surf1->w != surf2->w || surf1->h != surf2->h) return false;
 

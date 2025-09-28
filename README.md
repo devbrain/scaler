@@ -2,6 +2,14 @@
 
 A high-performance, header-only C++ library for pixel art scaling algorithms.
 
+## 🆕 GPU Scaler Now Available!
+The GPU scaler has been completely refactored with a cleaner, modular architecture:
+- **Pure OpenGL core** with optional SDL integration
+- **Preallocated texture pattern** for game engines (no runtime allocations)
+- **Unified algorithm system** shared between CPU and GPU
+- **Batch processing** for multiple textures
+- See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for migration details
+
 ## Overview
 
 Scaler provides efficient implementations of popular pixel art scaling algorithms including 2xSAI, Eagle, EPX, HQ2x, HQ3x, XBR, and Omniscale. The library features a framework-agnostic design using CRTP (Curiously Recurring Template Pattern) with zero runtime overhead.

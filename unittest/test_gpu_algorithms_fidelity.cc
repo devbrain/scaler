@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include <scaler/gpu/sdl_opengl_multi_scaler.hh>
+#include "sdl_opengl_multi_scaler_compat.hh"
 #include <scaler/cpu/epx.hh>
 #include <scaler/cpu/eagle.hh>
 #include <scaler/cpu/scale2x_sfx.hh>

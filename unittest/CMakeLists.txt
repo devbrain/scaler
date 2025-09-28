@@ -35,6 +35,7 @@ add_executable(scaler_unittest
 if(OpenGL_FOUND)
     target_sources(scaler_unittest PRIVATE
         test_gpu_simple.cc
+        test_gpu_epx.cc
         test_gpu_algorithms_fidelity.cc
     )
 endif()

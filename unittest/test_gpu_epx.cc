@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include <scaler/gpu/sdl_opengl_multi_scaler.hh>
+#include "sdl_opengl_multi_scaler_compat.hh"
 #include <../include/scaler/cpu/epx.hh>
 #include <scaler/sdl/sdl_image.hh>
 #include <SDL.h>
@@ -14,7 +14,7 @@ using namespace scaler;
 using namespace scaler::gpu;
 
 // Helper to create surface from raw data
-SDL_Surface* createSurfaceFromRawData(const unsigned char* data, int width, int height) {
+static SDL_Surface* createSurfaceFromRawData(const unsigned char* data, int width, int height) {
     SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(
         0, width, height, 32, SDL_PIXELFORMAT_RGBA8888);
 
@@ -37,7 +37,7 @@ SDL_Surface* createSurfaceFromRawData(const unsigned char* data, int width, int 
 }
 
 // Compare two surfaces pixel by pixel
-bool compareSurfaces(SDL_Surface* surf1, SDL_Surface* surf2, int tolerance = 1) {
+static bool compareSurfaces(SDL_Surface* surf1, SDL_Surface* surf2, int tolerance = 1) {
     if (!surf1 || !surf2) return false;
     if (surf1->w != surf2->w || surf1->h != surf2->h) return false;
 
@@ -107,7 +107,7 @@ TEST_CASE("GPU EPX Implementation") {
     SUBCASE("GPU EPX vs CPU EPX - Golden Data") {
         // Create test surface from golden data
         SDL_Surface* input = createSurfaceFromRawData(
-            golden_test_pattern_source,
+            GOLDEN_TEST_PATTERN_SOURCE_DATA,
             GOLDEN_TEST_PATTERN_SOURCE_WIDTH,
             GOLDEN_TEST_PATTERN_SOURCE_HEIGHT
         );
@@ -115,15 +115,15 @@ TEST_CASE("GPU EPX Implementation") {
 
         // CPU EPX scaling
         SDLInputImage input_img(input);
-        auto cpu_result = scaleEpx<SDLInputImage, SDLOutputImage>(input_img);
+        auto cpu_result = scale_epx<SDLInputImage, SDLOutputImage>(input_img);
         SDL_Surface* cpu_surface = cpu_result.get_surface();
         REQUIRE(cpu_surface != nullptr);
 
         // GPU EPX scaling
-        SDLOpenGLMultiScaler gpu_scaler;
+        sdl_opengl_multi_scaler gpu_scaler;
         REQUIRE(gpu_scaler.initialize(window));
 
-        SDL_Surface* gpu_surface = gpu_scaler.scaleSurface(input, 2.0f, SDLOpenGLMultiScaler::EPX);
+        SDL_Surface* gpu_surface = gpu_scaler.scale_surface(input, 2.0f, sdl_opengl_multi_scaler::EPX);
         REQUIRE(gpu_surface != nullptr);
 
         // Compare dimensions
@@ -138,7 +138,7 @@ TEST_CASE("GPU EPX Implementation") {
 
         // Compare GPU result against golden data
         SDL_Surface* golden = createSurfaceFromRawData(
-            golden_test_pattern_epx,
+            GOLDEN_TEST_PATTERN_EPX_DATA,
             GOLDEN_TEST_PATTERN_EPX_WIDTH,
             GOLDEN_TEST_PATTERN_EPX_HEIGHT
         );
@@ -178,18 +178,18 @@ TEST_CASE("GPU EPX Implementation") {
         Uint64 cpu_start = SDL_GetPerformanceCounter();
         for (int i = 0; i < iterations; ++i) {
             SDLInputImage input_img(input);
-            auto result = scaleEpx<SDLInputImage, SDLOutputImage>(input_img);
+            auto result = scale_epx<SDLInputImage, SDLOutputImage>(input_img);
         }
         Uint64 cpu_end = SDL_GetPerformanceCounter();
         double cpu_ms = ((cpu_end - cpu_start) * 1000.0) / SDL_GetPerformanceFrequency();
 
         // GPU timing
-        SDLOpenGLMultiScaler gpu_scaler;
+        sdl_opengl_multi_scaler gpu_scaler;
         REQUIRE(gpu_scaler.initialize(window));
 
         Uint64 gpu_start = SDL_GetPerformanceCounter();
         for (int i = 0; i < iterations; ++i) {
-            SDL_Surface* result = gpu_scaler.scaleSurface(input, 2.0f, SDLOpenGLMultiScaler::EPX);
+            SDL_Surface* result = gpu_scaler.scale_surface(input, 2.0f, sdl_opengl_multi_scaler::EPX);
             SDL_FreeSurface(result);
         }
         Uint64 gpu_end = SDL_GetPerformanceCounter();

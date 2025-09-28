@@ -144,6 +144,7 @@ add_subdirectory(ext)
 add_library(scaler INTERFACE
         # Core utilities
         ${SCALER_PROJECT_ROOT}/include/scaler/algorithm.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/algorithm_capabilities.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scaler_common.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/vec3.hh
         # CRTP framework-agnostic interface
@@ -163,6 +164,11 @@ add_library(scaler INTERFACE
         # GPU utilities (new)
         ${SCALER_PROJECT_ROOT}/include/scaler/gpu/opengl_utils.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/gpu/shader_cache.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/algorithm_traits.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/algorithm_traits_impl.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/shader_source.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/opengl_texture_scaler.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/sdl/sdl_texture_adapter.hh
 )
 
 # Create alias for consistent usage
