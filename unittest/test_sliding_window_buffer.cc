@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
-#include <scaler/sliding_window_buffer.hh>
-#include <scaler/vec3.hh>
+#include <../include/scaler/cpu/sliding_window_buffer.hh>
+#include <../include/scaler/vec3.hh>
 #include <type_traits>
 
 using namespace scaler;
@@ -32,15 +32,15 @@ public:
         }
     }
     
-    T safeAccess(int x, int y) const {
+    [[nodiscard]] T safe_access(int x, int y) const {
         if (x < 0 || x >= width_ || y < 0 || y >= height_) {
             return boundary_value_;
         }
         return data_[static_cast<size_t>(y)][static_cast<size_t>(x)];
     }
     
-    int width() const { return width_; }
-    int height() const { return height_; }
+    [[nodiscard]] int width() const { return width_; }
+    [[nodiscard]] int height() const { return height_; }
 };
 
 TEST_CASE("SlidingWindowBuffer basic functionality") {
@@ -48,7 +48,7 @@ TEST_CASE("SlidingWindowBuffer basic functionality") {
     TestImageAccessor<PixelType> image(10, 10, -1);
     
     SUBCASE("3x3 window initialization and access") {
-        SlidingWindowBuffer<PixelType> buffer(3, 10, 1, -1);
+        sliding_window_buffer<PixelType> buffer(3, 10, 1, -1);
         buffer.initialize(image, 0);
         
         // At y=0, x=0, the buffer has padding=1, so:
@@ -67,11 +67,11 @@ TEST_CASE("SlidingWindowBuffer basic functionality") {
         CHECK(buffer.get(1, 1) == 101);   // x=1 at next row
         
         // Note: To access padded values (x=-1), the buffer handles this internally
-        // through safeAccess when loading rows
+        // through safe_access when loading rows
     }
     
     SUBCASE("Sliding window advancement") {
-        SlidingWindowBuffer<PixelType> buffer(3, 10, 1, -1);
+        sliding_window_buffer<PixelType> buffer(3, 10, 1, -1);
         buffer.initialize(image, 0);
         
         // Advance to y=1
@@ -96,7 +96,7 @@ TEST_CASE("SlidingWindowBuffer basic functionality") {
     }
     
     SUBCASE("Multiple advances") {
-        SlidingWindowBuffer<PixelType> buffer(3, 10, 1, -1);
+        sliding_window_buffer<PixelType> buffer(3, 10, 1, -1);
         buffer.initialize(image, 0);
         
         // Advance to y=5
@@ -104,7 +104,7 @@ TEST_CASE("SlidingWindowBuffer basic functionality") {
             buffer.advance(image);
         }
         
-        CHECK(buffer.getCurrentY() == 5);
+        CHECK(buffer.get_current_y() == 5);
         
         // At y=5, x=3, center pixel should be 503
         CHECK(buffer.get(3, 0) == 503);
@@ -117,31 +117,31 @@ TEST_CASE("SlidingWindow3x3 specialized class") {
     using PixelType = int;
     TestImageAccessor<PixelType> image(10, 10, -1);
     
-    SlidingWindow3x3<PixelType> window(10);
+    sliding_window_3x3<PixelType> window(10);
     window.initialize(image, 1);
     
     // At y=1, x=1
-    CHECK(window.getTopLeft(1) == 0);
-    CHECK(window.getTop(1) == 1);
-    CHECK(window.getTopRight(1) == 2);
-    CHECK(window.getLeft(1) == 100);
-    CHECK(window.getCenter(1) == 101);
-    CHECK(window.getRight(1) == 102);
-    CHECK(window.getBottomLeft(1) == 200);
-    CHECK(window.getBottom(1) == 201);
-    CHECK(window.getBottomRight(1) == 202);
+    CHECK(window.get_top_left(1) == 0);
+    CHECK(window.get_top(1) == 1);
+    CHECK(window.get_top_right(1) == 2);
+    CHECK(window.get_left(1) == 100);
+    CHECK(window.get_center(1) == 101);
+    CHECK(window.get_right(1) == 102);
+    CHECK(window.get_bottom_left(1) == 200);
+    CHECK(window.get_bottom(1) == 201);
+    CHECK(window.get_bottom_right(1) == 202);
 }
 
 TEST_CASE("SlidingWindow5x5 specialized class") {
     using PixelType = int;
     TestImageAccessor<PixelType> image(10, 10, -1);
     
-    SlidingWindow5x5<PixelType> window(10);
+    sliding_window_5x5<PixelType> window(10);
     window.initialize(image, 2);
     
     // At y=2, x=2, get 5x5 neighborhood
     PixelType neighborhood[5][5];
-    window.getNeighborhood(2, neighborhood);
+    window.get_neighborhood(2, neighborhood);
     
     // Check the center 3x3
     CHECK(neighborhood[1][1] == 101);  // (-1, -1) relative to (2,2)
@@ -162,7 +162,7 @@ TEST_CASE("Buffer circular indexing stress test") {
     TestImageAccessor<PixelType> image(100, 100, -1);
     
     SUBCASE("Many advances maintain correct indexing") {
-        SlidingWindowBuffer<PixelType> buffer(3, 100, 1, -1);
+        sliding_window_buffer<PixelType> buffer(3, 100, 1, -1);
         buffer.initialize(image, 0);
         
         // Advance through entire image
@@ -188,11 +188,11 @@ TEST_CASE("Buffer with vec3 pixels") {
     using PixelType = vec3<unsigned int>;
     TestImageAccessor<PixelType> image(5, 5, PixelType{0, 0, 0});
     
-    SlidingWindow3x3<PixelType> window(5);
+    sliding_window_3x3<PixelType> window(5);
     window.initialize(image, 1);
     
     // The test pattern creates vec3{y*100+x, y*100+x, y*100+x}
-    auto center = window.getCenter(1);
+    auto center = window.get_center(1);
     CHECK(center.x == 101);
     CHECK(center.y == 101);
     CHECK(center.z == 101);

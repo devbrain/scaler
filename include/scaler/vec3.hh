@@ -54,6 +54,25 @@ namespace scaler {
     }
 
     template<typename T>
+    vec3<T> operator + (const vec3<T>& a, const vec3<T>& b) {
+        return {a.x+b.x, a.y+b.y, a.z+b.z};
+    }
+
+    template<typename T, typename S>
+    vec3<T> operator * (const vec3<T>& v, S scalar) {
+        return {
+            static_cast<T>(v.x * scalar),
+            static_cast<T>(v.y * scalar),
+            static_cast<T>(v.z * scalar)
+        };
+    }
+
+    template<typename T, typename S>
+    vec3<T> operator * (S scalar, const vec3<T>& v) {
+        return v * scalar;
+    }
+
+    template<typename T>
     vec3<T> abs(const vec3<T>& a) {
         return {std::abs(a.x), std::abs(a.y), std::abs(a.z)};
     }

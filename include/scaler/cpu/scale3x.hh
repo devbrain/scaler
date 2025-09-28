@@ -1,20 +1,17 @@
 #pragma once
 
-#include <scaler/image_base.hh>
-#include <scaler/scaler_common.hh>
-#include <scaler/sliding_window_buffer.hh>
+#include <scaler/cpu/sliding_window_buffer.hh>
 
 namespace scaler {
     // Scale3x algorithm - 3x magnification version of Scale2x
     // http://www.scale2x.it/algorithm
     template<typename InputImage, typename OutputImage>
-    auto scaleScale3x(const InputImage& src, size_t scale_factor = 3)
-        -> OutputImage {
+    OutputImage scale_scale_3x(const InputImage& src, size_t scale_factor = 3) {
         OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
 
         // Use cache-friendly sliding window buffer for 3x3 neighborhood
         using PixelType = decltype(src.get_pixel(0, 0));
-        SlidingWindow3x3<PixelType> window(src.width());
+        sliding_window_3x3 <PixelType> window(src.width());
         window.initialize(src, 0);
 
         for (size_t y = 0; y < src.height(); y++) {
@@ -24,25 +21,25 @@ namespace scaler {
             }
 
             // Get row references once per scanline for better performance
-            const auto& topRow = window.getRow(-1);
-            const auto& midRow = window.getRow(0);
-            const auto& botRow = window.getRow(1);
-            const int pad = window.getPadding();
+            const auto& topRow = window.get_row(-1);
+            const auto& midRow = window.get_row(0);
+            const auto& botRow = window.get_row(1);
+            const int pad = window.get_padding();
 
             for (size_t x = 0; x < src.width(); x++) {
                 // Get 3x3 neighborhood from cached row references
-                const int xp = static_cast<int>(x) + pad;
-                auto A = topRow[static_cast<size_t>(xp - 1)];
-                auto B = topRow[static_cast<size_t>(xp)];
-                auto C = topRow[static_cast<size_t>(xp + 1)];
+                const int xp = static_cast <int>(x) + pad;
+                auto A = topRow[static_cast <size_t>(xp - 1)];
+                auto B = topRow[static_cast <size_t>(xp)];
+                auto C = topRow[static_cast <size_t>(xp + 1)];
 
-                auto D = midRow[static_cast<size_t>(xp - 1)];
-                auto E = midRow[static_cast<size_t>(xp)];
-                auto F = midRow[static_cast<size_t>(xp + 1)];
+                auto D = midRow[static_cast <size_t>(xp - 1)];
+                auto E = midRow[static_cast <size_t>(xp)];
+                auto F = midRow[static_cast <size_t>(xp + 1)];
 
-                auto G = botRow[static_cast<size_t>(xp - 1)];
-                auto H = botRow[static_cast<size_t>(xp)];
-                auto I = botRow[static_cast<size_t>(xp + 1)];
+                auto G = botRow[static_cast <size_t>(xp - 1)];
+                auto H = botRow[static_cast <size_t>(xp)];
+                auto I = botRow[static_cast <size_t>(xp + 1)];
 
                 // Scale3x algorithm rules
                 auto E0 = E;

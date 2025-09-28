@@ -1,10 +1,10 @@
 #include <doctest/doctest.h>
 #include <scaler/image_base.hh>
-#include <scaler/epx.hh>
-#include <scaler/eagle.hh>
-#include <scaler/2xsai.hh>
-#include <scaler/hq2x.hh>
-#include <scaler/hq3x.hh>
+#include <scaler/cpu/epx.hh>
+#include <scaler/cpu/eagle.hh>
+#include <scaler/cpu/2xsai.hh>
+#include <scaler/cpu/hq2x.hh>
+#include <scaler/cpu/hq3x.hh>
 #include <vector>
 #include <random>
 #include <chrono>
@@ -13,8 +13,8 @@
 #include <cmath>
 using namespace scaler;
 // Enhanced test image with more analysis capabilities
-class AnalysisImage : public InputImageBase<AnalysisImage, uvec3>,
-                       public OutputImageBase<AnalysisImage, uvec3> {
+class AnalysisImage : public input_image_base<AnalysisImage, uvec3>,
+                       public output_image_base<AnalysisImage, uvec3> {
 public:
     AnalysisImage(size_t w, size_t h) 
         : m_width(w), m_height(h), m_data(w * h, {0, 0, 0}) {}
@@ -23,11 +23,11 @@ public:
         : AnalysisImage(w, h) {}
     
     // Resolve ambiguity
-    using InputImageBase<AnalysisImage, uvec3>::width;
-    using InputImageBase<AnalysisImage, uvec3>::height;
-    using InputImageBase<AnalysisImage, uvec3>::get_pixel;
-    using InputImageBase<AnalysisImage, uvec3>::safeAccess;
-    using OutputImageBase<AnalysisImage, uvec3>::set_pixel;
+    using input_image_base<AnalysisImage, uvec3>::width;
+    using input_image_base<AnalysisImage, uvec3>::height;
+    using input_image_base<AnalysisImage, uvec3>::get_pixel;
+    using input_image_base<AnalysisImage, uvec3>::safe_access;
+    using output_image_base<AnalysisImage, uvec3>::set_pixel;
     
     [[nodiscard]] size_t width_impl() const { return m_width; }
     [[nodiscard]] size_t height_impl() const { return m_height; }
@@ -147,10 +147,10 @@ TEST_CASE("Algorithm Correctness - Color Preservation") {
         
         double original_avg = input.calculateAverageColor();
         
-        auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
-        auto eagle_output = scaleEagle<AnalysisImage, AnalysisImage>(input);
-        auto advmame_output = scaleAdvMame<AnalysisImage, AnalysisImage>(input);
-        auto sai_output = scale2xSaI<AnalysisImage, AnalysisImage>(input);
+        auto epx_output = scale_epx<AnalysisImage, AnalysisImage>(input);
+        auto eagle_output = scale_eagle<AnalysisImage, AnalysisImage>(input);
+        auto advmame_output = scale_adv_mame<AnalysisImage, AnalysisImage>(input);
+        auto sai_output = scale_2x_sai<AnalysisImage, AnalysisImage>(input);
         
         // Color average should be preserved within reasonable tolerance
         CHECK(std::abs(epx_output.calculateAverageColor() - original_avg) < 5.0);
@@ -165,8 +165,8 @@ TEST_CASE("Algorithm Correctness - Color Preservation") {
         
         double original_variance = input.calculateColorVariance();
         
-        auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
-        auto eagle_output = scaleEagle<AnalysisImage, AnalysisImage>(input);
+        auto epx_output = scale_epx<AnalysisImage, AnalysisImage>(input);
+        auto eagle_output = scale_eagle<AnalysisImage, AnalysisImage>(input);
         
         // Variance should not increase dramatically
         CHECK(epx_output.calculateColorVariance() <= original_variance * 1.5);
@@ -186,9 +186,9 @@ TEST_CASE("Algorithm Correctness - Edge Preservation") {
         
         [[maybe_unused]] double original_sharpness = input.calculateSharpness();
         
-        auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
-        auto eagle_output = scaleEagle<AnalysisImage, AnalysisImage>(input);
-        auto sai_output = scale2xSaI<AnalysisImage, AnalysisImage>(input);
+        auto epx_output = scale_epx<AnalysisImage, AnalysisImage>(input);
+        auto eagle_output = scale_eagle<AnalysisImage, AnalysisImage>(input);
+        auto sai_output = scale_2x_sai<AnalysisImage, AnalysisImage>(input);
         
         // Sharpness metrics
         double epx_sharpness = epx_output.calculateSharpness();
@@ -214,8 +214,8 @@ TEST_CASE("Algorithm Correctness - Edge Preservation") {
             }
         }
         
-        auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
-        auto sai_output = scale2xSaI<AnalysisImage, AnalysisImage>(input);
+        auto epx_output = scale_epx<AnalysisImage, AnalysisImage>(input);
+        auto sai_output = scale_2x_sai<AnalysisImage, AnalysisImage>(input);
         
         // Check diagonal preservation
         CHECK(epx_output.get_pixel(0, 0) == uvec3{0, 0, 255});
@@ -246,7 +246,7 @@ TEST_CASE("Algorithm Correctness - Artifact Detection") {
             }
         }
         
-        auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
+        auto epx_output = scale_epx<AnalysisImage, AnalysisImage>(input);
         
         // Check corners remain pure colors
         CHECK(epx_output.get_pixel(0, 0) == uvec3{255, 0, 0});
@@ -264,8 +264,8 @@ TEST_CASE("Algorithm Correctness - Artifact Detection") {
             }
         }
         
-        auto eagle_output = scaleEagle<AnalysisImage, AnalysisImage>(input);
-        auto advmame_output = scaleAdvMame<AnalysisImage, AnalysisImage>(input);
+        auto eagle_output = scale_eagle<AnalysisImage, AnalysisImage>(input);
+        auto advmame_output = scale_adv_mame<AnalysisImage, AnalysisImage>(input);
         
         // All pixels should be the same color
         CHECK(eagle_output.countUniqueColors() == 1);
@@ -293,7 +293,7 @@ TEST_CASE("Algorithm Correctness - Symmetry Tests") {
             }
         }
         
-        auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
+        auto epx_output = scale_epx<AnalysisImage, AnalysisImage>(input);
         
         // Check horizontal symmetry is preserved
         for (size_t y = 0; y < 12; ++y) {
@@ -313,7 +313,7 @@ TEST_CASE("Algorithm Correctness - Symmetry Tests") {
         input.set_pixel(1, 2, {0, 0, 255});
         input.set_pixel(2, 2, {255, 255, 0});
         
-        auto output1 = scaleEpx<AnalysisImage, AnalysisImage>(input);
+        auto output1 = scale_epx<AnalysisImage, AnalysisImage>(input);
         
         // Create 90-degree rotated version
         AnalysisImage rotated(4, 4);
@@ -322,7 +322,7 @@ TEST_CASE("Algorithm Correctness - Symmetry Tests") {
         rotated.set_pixel(2, 2, {0, 0, 255});
         rotated.set_pixel(2, 1, {255, 255, 0});
         
-        auto output2 = scaleEpx<AnalysisImage, AnalysisImage>(rotated);
+        auto output2 = scale_epx<AnalysisImage, AnalysisImage>(rotated);
         
         // Both should have same color distribution
         CHECK(output1.countUniqueColors() == output2.countUniqueColors());
@@ -339,7 +339,7 @@ TEST_CASE("Algorithm Correctness - Interpolation Quality") {
             input.set_pixel(x, 0, {val, val, val});
         }
         
-        auto sai_output = scale2xSaI<AnalysisImage, AnalysisImage>(input);
+        auto sai_output = scale_2x_sai<AnalysisImage, AnalysisImage>(input);
         
         // Check that interpolation creates reasonable transitions
         // 2xSaI is designed for pixel art, not perfect gradients
@@ -367,7 +367,7 @@ TEST_CASE("Algorithm Correctness - Interpolation Quality") {
         input.set_pixel(2, 2, {255, 255, 0}); // Yellow
         input.set_pixel(1, 1, {128, 128, 128}); // Gray center
         
-        auto sai_output = scale2xSaI<AnalysisImage, AnalysisImage>(input);
+        auto sai_output = scale_2x_sai<AnalysisImage, AnalysisImage>(input);
         
         // Center region should have interpolated values
         auto center_pixel = sai_output.get_pixel(3, 3);
@@ -395,8 +395,8 @@ TEST_CASE("Algorithm Performance Characteristics") {
             AnalysisImage input(size, size);
             input.generateRandomNoise(static_cast<unsigned int>(size));
             
-            auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
-            auto eagle_output = scaleEagle<AnalysisImage, AnalysisImage>(input);
+            auto epx_output = scale_epx<AnalysisImage, AnalysisImage>(input);
+            auto eagle_output = scale_eagle<AnalysisImage, AnalysisImage>(input);
             
             // Verify correct output dimensions
             CHECK(epx_output.width() == size * 2);
@@ -424,8 +424,8 @@ TEST_CASE("Algorithm Performance Characteristics") {
             }
         }
         
-        auto epx_output = scaleEpx<AnalysisImage, AnalysisImage>(input);
-        auto advmame_output = scaleAdvMame<AnalysisImage, AnalysisImage>(input);
+        auto epx_output = scale_epx<AnalysisImage, AnalysisImage>(input);
+        auto advmame_output = scale_adv_mame<AnalysisImage, AnalysisImage>(input);
         
         // Check no overflow or underflow
         for (size_t y = 0; y < 8; ++y) {

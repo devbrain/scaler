@@ -1,9 +1,9 @@
 #pragma once
 
-#include "compiler_compat.hh"
+#include <scaler/compiler_compat.hh>
 #include <scaler/vec3.hh>
 #include <scaler/image_base.hh>
-#include <scaler/buffer_policy.hh>
+#include <scaler/cpu/buffer_policy.hh>
 #include <array>
 #include <vector>
 #include <cstdint>
@@ -17,54 +17,54 @@ namespace scaler {
         constexpr uint32_t THRESHOLD_V = 0x06;
 
         // Specialized blend functions for common weight patterns
-        
+
         // blend2_3_1: 75% first color, 25% second (3:1 ratio) - most common
         template<typename T>
         SCALER_FORCE_INLINE SCALER_PURE T blend2_3_1(const T& c0, const T& c1) noexcept {
             return T{
-                static_cast<typename T::value_type>((c0.x * 3 + c1.x) / 4),
-                static_cast<typename T::value_type>((c0.y * 3 + c1.y) / 4),
-                static_cast<typename T::value_type>((c0.z * 3 + c1.z) / 4)
+                static_cast <typename T::value_type>((c0.x * 3 + c1.x) / 4),
+                static_cast <typename T::value_type>((c0.y * 3 + c1.y) / 4),
+                static_cast <typename T::value_type>((c0.z * 3 + c1.z) / 4)
             };
         }
-        
+
         // blend2_7_1: 87.5% first color, 12.5% second (7:1 ratio)
         template<typename T>
         SCALER_FORCE_INLINE SCALER_PURE T blend2_7_1(const T& c0, const T& c1) noexcept {
             return T{
-                static_cast<typename T::value_type>((c0.x * 7 + c1.x) / 8),
-                static_cast<typename T::value_type>((c0.y * 7 + c1.y) / 8),
-                static_cast<typename T::value_type>((c0.z * 7 + c1.z) / 8)
+                static_cast <typename T::value_type>((c0.x * 7 + c1.x) / 8),
+                static_cast <typename T::value_type>((c0.y * 7 + c1.y) / 8),
+                static_cast <typename T::value_type>((c0.z * 7 + c1.z) / 8)
             };
         }
-        
+
         // blend2_1_1: 50% each (1:1 ratio)
         template<typename T>
         SCALER_FORCE_INLINE SCALER_PURE T blend2_1_1(const T& c0, const T& c1) noexcept {
             return T{
-                static_cast<typename T::value_type>((c0.x + c1.x) / 2),
-                static_cast<typename T::value_type>((c0.y + c1.y) / 2),
-                static_cast<typename T::value_type>((c0.z + c1.z) / 2)
+                static_cast <typename T::value_type>((c0.x + c1.x) / 2),
+                static_cast <typename T::value_type>((c0.y + c1.y) / 2),
+                static_cast <typename T::value_type>((c0.z + c1.z) / 2)
             };
         }
-        
+
         // blend3_2_1_1: 50% first, 25% second, 25% third (2:1:1 ratio)
         template<typename T>
         SCALER_FORCE_INLINE SCALER_PURE T blend3_2_1_1(const T& c0, const T& c1, const T& c2) noexcept {
             return T{
-                static_cast<typename T::value_type>((c0.x * 2 + c1.x + c2.x) / 4),
-                static_cast<typename T::value_type>((c0.y * 2 + c1.y + c2.y) / 4),
-                static_cast<typename T::value_type>((c0.z * 2 + c1.z + c2.z) / 4)
+                static_cast <typename T::value_type>((c0.x * 2 + c1.x + c2.x) / 4),
+                static_cast <typename T::value_type>((c0.y * 2 + c1.y + c2.y) / 4),
+                static_cast <typename T::value_type>((c0.z * 2 + c1.z + c2.z) / 4)
             };
         }
-        
+
         // blend3_2_7_7: special case for 2:7:7 ratio
         template<typename T>
         SCALER_FORCE_INLINE SCALER_PURE T blend3_2_7_7(const T& c0, const T& c1, const T& c2) noexcept {
             return T{
-                static_cast<typename T::value_type>((c0.x * 2 + c1.x * 7 + c2.x * 7) / 16),
-                static_cast<typename T::value_type>((c0.y * 2 + c1.y * 7 + c2.y * 7) / 16),
-                static_cast<typename T::value_type>((c0.z * 2 + c1.z * 7 + c2.z * 7) / 16)
+                static_cast <typename T::value_type>((c0.x * 2 + c1.x * 7 + c2.x * 7) / 16),
+                static_cast <typename T::value_type>((c0.y * 2 + c1.y * 7 + c2.y * 7) / 16),
+                static_cast <typename T::value_type>((c0.z * 2 + c1.z * 7 + c2.z * 7) / 16)
             };
         }
 
@@ -80,7 +80,8 @@ namespace scaler {
         }
 
         template<typename T>
-        SCALER_FORCE_INLINE SCALER_PURE T blend3(const T& c0, const T& c1, const T& c2, unsigned w0, unsigned w1, unsigned w2) noexcept {
+        SCALER_FORCE_INLINE SCALER_PURE T blend3(const T& c0, const T& c1, const T& c2, unsigned w0, unsigned w1,
+                                                 unsigned w2) noexcept {
             unsigned total = w0 + w1 + w2;
             return T{
                 static_cast <typename T::value_type>((c0.x * w0 + c1.x * w1 + c2.x * w2) / total),
@@ -91,29 +92,30 @@ namespace scaler {
 
         // YUV difference check - optimized with integer arithmetic
         template<typename T>
-        SCALER_FORCE_INLINE SCALER_PURE bool yuvDifference(const T& lhs, const T& rhs) noexcept {
+        SCALER_FORCE_INLINE SCALER_PURE bool yuv_difference(const T& lhs, const T& rhs) noexcept {
             if (SCALER_UNLIKELY(lhs == rhs)) return false;
 
             // Use integer arithmetic with fixed point (scale by 256 instead of dividing by 1000)
-            int r1 = static_cast<int>(lhs.x), g1 = static_cast<int>(lhs.y), b1 = static_cast<int>(lhs.z);
-            int r2 = static_cast<int>(rhs.x), g2 = static_cast<int>(rhs.y), b2 = static_cast<int>(rhs.z);
+            int r1 = static_cast <int>(lhs.x), g1 = static_cast <int>(lhs.y), b1 = static_cast <int>(lhs.z);
+            int r2 = static_cast <int>(rhs.x), g2 = static_cast <int>(rhs.y), b2 = static_cast <int>(rhs.z);
 
             // Y difference (scaled by 256)
             int y_diff = std::abs((77 * (r1 - r2) + 150 * (g1 - g2) + 29 * (b1 - b2)) >> 8);
-            if (static_cast<uint32_t>(y_diff) > THRESHOLD_Y) return true;
+            if (static_cast <uint32_t>(y_diff) > THRESHOLD_Y) return true;
 
-            // U difference (scaled by 256)  
+            // U difference (scaled by 256)
             int u_diff = std::abs(((-43 * (r1 - r2) - 85 * (g1 - g2) + 128 * (b1 - b2)) >> 8));
-            if (static_cast<uint32_t>(u_diff) > THRESHOLD_U) return true;
+            if (static_cast <uint32_t>(u_diff) > THRESHOLD_U) return true;
 
             // V difference (scaled by 256)
             int v_diff = std::abs(((128 * (r1 - r2) - 107 * (g1 - g2) - 21 * (b1 - b2)) >> 8));
-            return static_cast<uint32_t>(v_diff) > THRESHOLD_V;
+            return static_cast <uint32_t>(v_diff) > THRESHOLD_V;
         }
 
         // Process pattern with all 256 cases
         template<typename T>
-        SCALER_HOT SCALER_FLATTEN void processPattern(const std::array <T, 9>& w, T* SCALER_RESTRICT output, int pattern) noexcept {
+        SCALER_HOT SCALER_FLATTEN void process_pattern(const std::array <T, 9>& w, T* SCALER_RESTRICT output,
+                                                       int pattern) noexcept {
             // Default: copy center to all
             for (int i = 0; i < 9; i++) output[i] = w[4];
 
@@ -328,7 +330,7 @@ namespace scaler {
                 case 18:
                 case 50:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = blend2_3_1(w[4], w[2]);
                         output[5] = w[4];
@@ -352,7 +354,7 @@ namespace scaler {
                     output[3] = blend2_3_1(w[4], w[3]);
                     output[4] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = blend2_3_1(w[4], w[8]);
@@ -370,7 +372,7 @@ namespace scaler {
                     output[2] = blend3_2_1_1(w[4], w[1], w[5]);
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = blend2_3_1(w[4], w[6]);
                         output[7] = w[4];
@@ -384,7 +386,7 @@ namespace scaler {
 
                 case 10:
                 case 138:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                         output[1] = w[4];
                         output[3] = w[4];
@@ -484,7 +486,7 @@ namespace scaler {
                 case 22:
                 case 54:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -508,7 +510,7 @@ namespace scaler {
                     output[3] = blend2_3_1(w[4], w[3]);
                     output[4] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = w[4];
@@ -526,7 +528,7 @@ namespace scaler {
                     output[2] = blend3_2_1_1(w[4], w[1], w[5]);
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -540,7 +542,7 @@ namespace scaler {
 
                 case 11:
                 case 139:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -559,7 +561,7 @@ namespace scaler {
 
                 case 19:
                 case 51:
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[0] = blend2_3_1(w[4], w[3]);
                         output[1] = w[4];
                         output[2] = blend2_3_1(w[4], w[2]);
@@ -579,7 +581,7 @@ namespace scaler {
 
                 case 146:
                 case 178:
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = blend2_3_1(w[4], w[2]);
                         output[5] = w[4];
@@ -599,7 +601,7 @@ namespace scaler {
 
                 case 84:
                 case 85:
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[2] = blend2_3_1(w[4], w[1]);
                         output[5] = w[4];
                         output[7] = w[4];
@@ -619,7 +621,7 @@ namespace scaler {
 
                 case 112:
                 case 113:
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[6] = blend2_3_1(w[4], w[3]);
                         output[7] = w[4];
@@ -639,7 +641,7 @@ namespace scaler {
 
                 case 200:
                 case 204:
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = blend2_3_1(w[4], w[6]);
                         output[7] = w[4];
@@ -659,7 +661,7 @@ namespace scaler {
 
                 case 73:
                 case 77:
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[0] = blend2_3_1(w[4], w[1]);
                         output[3] = w[4];
                         output[6] = blend2_3_1(w[4], w[6]);
@@ -679,7 +681,7 @@ namespace scaler {
 
                 case 42:
                 case 170:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                         output[1] = w[4];
                         output[3] = w[4];
@@ -699,7 +701,7 @@ namespace scaler {
 
                 case 14:
                 case 142:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                         output[1] = w[4];
                         output[2] = blend2_3_1(w[4], w[5]);
@@ -815,7 +817,7 @@ namespace scaler {
 
                 case 26:
                 case 31:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[3] = w[4];
                     } else {
@@ -823,7 +825,7 @@ namespace scaler {
                         output[3] = blend2_7_1(w[4], w[3]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = w[4];
                         output[5] = w[4];
                     } else {
@@ -839,7 +841,7 @@ namespace scaler {
                 case 82:
                 case 214:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                     } else {
@@ -850,7 +852,7 @@ namespace scaler {
                     output[4] = w[4];
                     output[5] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[7] = w[4];
                         output[8] = w[4];
                     } else {
@@ -865,7 +867,7 @@ namespace scaler {
                     output[1] = blend2_3_1(w[4], w[1]);
                     output[2] = blend2_3_1(w[4], w[2]);
                     output[4] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                     } else {
@@ -873,7 +875,7 @@ namespace scaler {
                         output[6] = blend3_2_7_7(w[4], w[3], w[7]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[8] = w[4];
                     } else {
@@ -884,7 +886,7 @@ namespace scaler {
 
                 case 74:
                 case 107:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                     } else {
@@ -895,7 +897,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = w[4];
                         output[7] = w[4];
                     } else {
@@ -906,7 +908,7 @@ namespace scaler {
                     break;
 
                 case 27:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -925,7 +927,7 @@ namespace scaler {
 
                 case 86:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -948,7 +950,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = w[4];
@@ -965,7 +967,7 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[2]);
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -979,7 +981,7 @@ namespace scaler {
 
                 case 30:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -1002,7 +1004,7 @@ namespace scaler {
                     output[3] = blend2_3_1(w[4], w[3]);
                     output[4] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = w[4];
@@ -1019,7 +1021,7 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[2]);
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -1032,7 +1034,7 @@ namespace scaler {
                     break;
 
                 case 75:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -1194,13 +1196,13 @@ namespace scaler {
                     break;
 
                 case 58:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -1216,7 +1218,7 @@ namespace scaler {
                 case 83:
                     output[0] = blend2_3_1(w[4], w[3]);
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -1226,7 +1228,7 @@ namespace scaler {
                     output[5] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -1240,13 +1242,13 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -1254,7 +1256,7 @@ namespace scaler {
                     break;
 
                 case 202:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
@@ -1264,7 +1266,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
@@ -1274,7 +1276,7 @@ namespace scaler {
                     break;
 
                 case 78:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
@@ -1284,7 +1286,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
@@ -1294,13 +1296,13 @@ namespace scaler {
                     break;
 
                 case 154:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -1316,7 +1318,7 @@ namespace scaler {
                 case 114:
                     output[0] = blend2_3_1(w[4], w[0]);
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -1326,7 +1328,7 @@ namespace scaler {
                     output[5] = w[4];
                     output[6] = blend2_3_1(w[4], w[3]);
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -1340,13 +1342,13 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -1354,13 +1356,13 @@ namespace scaler {
                     break;
 
                 case 90:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -1368,13 +1370,13 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -1383,7 +1385,7 @@ namespace scaler {
 
                 case 55:
                 case 23:
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[0] = blend2_3_1(w[4], w[3]);
                         output[1] = w[4];
                         output[2] = w[4];
@@ -1403,7 +1405,7 @@ namespace scaler {
 
                 case 182:
                 case 150:
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -1423,7 +1425,7 @@ namespace scaler {
 
                 case 213:
                 case 212:
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[2] = blend2_3_1(w[4], w[1]);
                         output[5] = w[4];
                         output[7] = w[4];
@@ -1443,7 +1445,7 @@ namespace scaler {
 
                 case 241:
                 case 240:
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[6] = blend2_3_1(w[4], w[3]);
                         output[7] = w[4];
@@ -1463,7 +1465,7 @@ namespace scaler {
 
                 case 236:
                 case 232:
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -1483,7 +1485,7 @@ namespace scaler {
 
                 case 109:
                 case 105:
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[0] = blend2_3_1(w[4], w[1]);
                         output[3] = w[4];
                         output[6] = w[4];
@@ -1503,7 +1505,7 @@ namespace scaler {
 
                 case 171:
                 case 43:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -1523,7 +1525,7 @@ namespace scaler {
 
                 case 143:
                 case 15:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[2] = blend2_3_1(w[4], w[5]);
@@ -1547,7 +1549,7 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[1]);
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -1560,7 +1562,7 @@ namespace scaler {
                     break;
 
                 case 203:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -1579,7 +1581,7 @@ namespace scaler {
 
                 case 62:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -1602,7 +1604,7 @@ namespace scaler {
                     output[3] = blend2_3_1(w[4], w[3]);
                     output[4] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = w[4];
@@ -1615,7 +1617,7 @@ namespace scaler {
 
                 case 118:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -1638,7 +1640,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = w[4];
@@ -1655,7 +1657,7 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[5]);
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -1668,7 +1670,7 @@ namespace scaler {
                     break;
 
                 case 155:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -1787,12 +1789,12 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[1]);
                     output[3] = w[4];
                     output[4] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = w[4];
@@ -1804,12 +1806,12 @@ namespace scaler {
                     break;
 
                 case 158:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -1826,7 +1828,7 @@ namespace scaler {
                     break;
 
                 case 234:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
@@ -1835,7 +1837,7 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[2]);
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -1850,7 +1852,7 @@ namespace scaler {
                 case 242:
                     output[0] = blend2_3_1(w[4], w[0]);
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -1858,7 +1860,7 @@ namespace scaler {
                     output[3] = blend2_3_1(w[4], w[3]);
                     output[4] = w[4];
                     output[6] = blend2_3_1(w[4], w[3]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = w[4];
@@ -1870,7 +1872,7 @@ namespace scaler {
                     break;
 
                 case 59:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -1879,7 +1881,7 @@ namespace scaler {
                         output[1] = blend2_7_1(w[4], w[1]);
                         output[3] = blend2_7_1(w[4], w[3]);
                     }
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -1897,7 +1899,7 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[2]);
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -1906,7 +1908,7 @@ namespace scaler {
                         output[6] = blend3_2_7_7(w[4], w[3], w[7]);
                         output[7] = blend2_7_1(w[4], w[7]);
                     }
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -1915,7 +1917,7 @@ namespace scaler {
 
                 case 87:
                     output[0] = blend2_3_1(w[4], w[3]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -1928,7 +1930,7 @@ namespace scaler {
                     output[4] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -1936,7 +1938,7 @@ namespace scaler {
                     break;
 
                 case 79:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -1948,7 +1950,7 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[5]);
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
@@ -1958,20 +1960,20 @@ namespace scaler {
                     break;
 
                 case 122:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
                     }
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -1980,7 +1982,7 @@ namespace scaler {
                         output[6] = blend3_2_7_7(w[4], w[3], w[7]);
                         output[7] = blend2_7_1(w[4], w[7]);
                     }
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -1988,12 +1990,12 @@ namespace scaler {
                     break;
 
                 case 94:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -2004,13 +2006,13 @@ namespace scaler {
                     }
                     output[3] = w[4];
                     output[4] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -2018,25 +2020,25 @@ namespace scaler {
                     break;
 
                 case 218:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
                     }
                     output[3] = w[4];
                     output[4] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = w[4];
@@ -2048,7 +2050,7 @@ namespace scaler {
                     break;
 
                 case 91:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -2057,20 +2059,20 @@ namespace scaler {
                         output[1] = blend2_7_1(w[4], w[1]);
                         output[3] = blend2_7_1(w[4], w[3]);
                     }
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
                     }
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -2126,13 +2128,13 @@ namespace scaler {
                     break;
 
                 case 186:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -2148,7 +2150,7 @@ namespace scaler {
                 case 115:
                     output[0] = blend2_3_1(w[4], w[3]);
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -2158,7 +2160,7 @@ namespace scaler {
                     output[5] = w[4];
                     output[6] = blend2_3_1(w[4], w[3]);
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -2172,13 +2174,13 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -2186,7 +2188,7 @@ namespace scaler {
                     break;
 
                 case 206:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
@@ -2196,7 +2198,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
@@ -2213,7 +2215,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = blend2_3_1(w[4], w[6]);
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
@@ -2224,7 +2226,7 @@ namespace scaler {
 
                 case 174:
                 case 46:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = blend2_3_1(w[4], w[0]);
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
@@ -2243,7 +2245,7 @@ namespace scaler {
                 case 147:
                     output[0] = blend2_3_1(w[4], w[3]);
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = blend2_3_1(w[4], w[2]);
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -2266,7 +2268,7 @@ namespace scaler {
                     output[5] = w[4];
                     output[6] = blend2_3_1(w[4], w[3]);
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = blend2_3_1(w[4], w[8]);
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -2299,7 +2301,7 @@ namespace scaler {
 
                 case 126:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -2309,7 +2311,7 @@ namespace scaler {
                         output[5] = blend2_7_1(w[4], w[5]);
                     }
                     output[4] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -2322,7 +2324,7 @@ namespace scaler {
                     break;
 
                 case 219:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -2334,7 +2336,7 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[2]);
                     output[4] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = w[4];
@@ -2346,7 +2348,7 @@ namespace scaler {
                     break;
 
                 case 125:
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[0] = blend2_3_1(w[4], w[1]);
                         output[3] = w[4];
                         output[6] = w[4];
@@ -2365,7 +2367,7 @@ namespace scaler {
                     break;
 
                 case 221:
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[2] = blend2_3_1(w[4], w[1]);
                         output[5] = w[4];
                         output[7] = w[4];
@@ -2384,7 +2386,7 @@ namespace scaler {
                     break;
 
                 case 207:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[2] = blend2_3_1(w[4], w[5]);
@@ -2403,7 +2405,7 @@ namespace scaler {
                     break;
 
                 case 238:
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -2422,7 +2424,7 @@ namespace scaler {
                     break;
 
                 case 190:
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -2441,7 +2443,7 @@ namespace scaler {
                     break;
 
                 case 187:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -2460,7 +2462,7 @@ namespace scaler {
                     break;
 
                 case 243:
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[6] = blend2_3_1(w[4], w[3]);
                         output[7] = w[4];
@@ -2479,7 +2481,7 @@ namespace scaler {
                     break;
 
                 case 119:
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[0] = blend2_3_1(w[4], w[3]);
                         output[1] = w[4];
                         output[2] = w[4];
@@ -2505,7 +2507,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = w[4];
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
@@ -2516,7 +2518,7 @@ namespace scaler {
 
                 case 175:
                 case 47:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
@@ -2535,7 +2537,7 @@ namespace scaler {
                 case 151:
                     output[0] = blend2_3_1(w[4], w[3]);
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = w[4];
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -2558,7 +2560,7 @@ namespace scaler {
                     output[5] = w[4];
                     output[6] = blend2_3_1(w[4], w[3]);
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = w[4];
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -2570,7 +2572,7 @@ namespace scaler {
                     output[1] = w[4];
                     output[2] = blend2_3_1(w[4], w[2]);
                     output[4] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                     } else {
@@ -2578,7 +2580,7 @@ namespace scaler {
                         output[6] = blend3_2_7_7(w[4], w[3], w[7]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[8] = w[4];
                     } else {
@@ -2588,7 +2590,7 @@ namespace scaler {
                     break;
 
                 case 123:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                     } else {
@@ -2599,7 +2601,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = w[4];
                         output[7] = w[4];
                     } else {
@@ -2610,7 +2612,7 @@ namespace scaler {
                     break;
 
                 case 95:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[3] = w[4];
                     } else {
@@ -2618,7 +2620,7 @@ namespace scaler {
                         output[3] = blend2_7_1(w[4], w[3]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = w[4];
                         output[5] = w[4];
                     } else {
@@ -2633,7 +2635,7 @@ namespace scaler {
 
                 case 222:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                     } else {
@@ -2644,7 +2646,7 @@ namespace scaler {
                     output[4] = w[4];
                     output[5] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[7] = w[4];
                         output[8] = w[4];
                     } else {
@@ -2659,7 +2661,7 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[1]);
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                     } else {
@@ -2667,7 +2669,7 @@ namespace scaler {
                         output[6] = blend3_2_7_7(w[4], w[3], w[7]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = w[4];
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -2680,13 +2682,13 @@ namespace scaler {
                     output[2] = blend2_3_1(w[4], w[2]);
                     output[3] = w[4];
                     output[4] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = w[4];
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[8] = w[4];
                     } else {
@@ -2696,7 +2698,7 @@ namespace scaler {
                     break;
 
                 case 235:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                     } else {
@@ -2707,7 +2709,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = w[4];
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
@@ -2717,7 +2719,7 @@ namespace scaler {
                     break;
 
                 case 111:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
@@ -2727,7 +2729,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = w[4];
                         output[7] = w[4];
                     } else {
@@ -2738,13 +2740,13 @@ namespace scaler {
                     break;
 
                 case 63:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = w[4];
                         output[5] = w[4];
                     } else {
@@ -2759,7 +2761,7 @@ namespace scaler {
                     break;
 
                 case 159:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[3] = w[4];
                     } else {
@@ -2767,7 +2769,7 @@ namespace scaler {
                         output[3] = blend2_7_1(w[4], w[3]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = w[4];
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -2782,7 +2784,7 @@ namespace scaler {
                 case 215:
                     output[0] = blend2_3_1(w[4], w[3]);
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = w[4];
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -2791,7 +2793,7 @@ namespace scaler {
                     output[4] = w[4];
                     output[5] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[7] = w[4];
                         output[8] = w[4];
                     } else {
@@ -2802,7 +2804,7 @@ namespace scaler {
 
                 case 246:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                     } else {
@@ -2814,7 +2816,7 @@ namespace scaler {
                     output[5] = w[4];
                     output[6] = blend2_3_1(w[4], w[3]);
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = w[4];
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -2823,7 +2825,7 @@ namespace scaler {
 
                 case 254:
                     output[0] = blend2_3_1(w[4], w[0]);
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                     } else {
@@ -2831,14 +2833,14 @@ namespace scaler {
                         output[2] = blend3_2_7_7(w[4], w[1], w[5]);
                     }
                     output[4] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                     } else {
                         output[3] = blend2_7_1(w[4], w[3]);
                         output[6] = blend3_2_7_7(w[4], w[3], w[7]);
                     }
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[7] = w[4];
                         output[8] = w[4];
@@ -2856,13 +2858,13 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = w[4];
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = w[4];
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -2870,7 +2872,7 @@ namespace scaler {
                     break;
 
                 case 251:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                     } else {
@@ -2879,7 +2881,7 @@ namespace scaler {
                     }
                     output[2] = blend2_3_1(w[4], w[2]);
                     output[4] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[3] = w[4];
                         output[6] = w[4];
                         output[7] = w[4];
@@ -2888,7 +2890,7 @@ namespace scaler {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                         output[7] = blend2_7_1(w[4], w[7]);
                     }
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[5] = w[4];
                         output[8] = w[4];
                     } else {
@@ -2898,7 +2900,7 @@ namespace scaler {
                     break;
 
                 case 239:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
@@ -2908,7 +2910,7 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = blend2_3_1(w[4], w[5]);
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = w[4];
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
@@ -2918,7 +2920,7 @@ namespace scaler {
                     break;
 
                 case 127:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[1] = w[4];
                         output[3] = w[4];
@@ -2927,7 +2929,7 @@ namespace scaler {
                         output[1] = blend2_7_1(w[4], w[1]);
                         output[3] = blend2_7_1(w[4], w[3]);
                     }
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = w[4];
                         output[5] = w[4];
                     } else {
@@ -2935,7 +2937,7 @@ namespace scaler {
                         output[5] = blend2_7_1(w[4], w[5]);
                     }
                     output[4] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = w[4];
                         output[7] = w[4];
                     } else {
@@ -2946,13 +2948,13 @@ namespace scaler {
                     break;
 
                 case 191:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = w[4];
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -2966,14 +2968,14 @@ namespace scaler {
                     break;
 
                 case 223:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                         output[3] = w[4];
                     } else {
                         output[0] = blend3_2_7_7(w[4], w[3], w[1]);
                         output[3] = blend2_7_1(w[4], w[3]);
                     }
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[1] = w[4];
                         output[2] = w[4];
                         output[5] = w[4];
@@ -2984,7 +2986,7 @@ namespace scaler {
                     }
                     output[4] = w[4];
                     output[6] = blend2_3_1(w[4], w[6]);
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[7] = w[4];
                         output[8] = w[4];
                     } else {
@@ -2996,7 +2998,7 @@ namespace scaler {
                 case 247:
                     output[0] = blend2_3_1(w[4], w[3]);
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = w[4];
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -3006,7 +3008,7 @@ namespace scaler {
                     output[5] = w[4];
                     output[6] = blend2_3_1(w[4], w[3]);
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = w[4];
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -3014,13 +3016,13 @@ namespace scaler {
                     break;
 
                 case 255:
-                    if (hq3x_detail::yuvDifference(w[3], w[1])) {
+                    if (hq3x_detail::yuv_difference(w[3], w[1])) {
                         output[0] = w[4];
                     } else {
                         output[0] = blend3_2_1_1(w[4], w[3], w[1]);
                     }
                     output[1] = w[4];
-                    if (hq3x_detail::yuvDifference(w[1], w[5])) {
+                    if (hq3x_detail::yuv_difference(w[1], w[5])) {
                         output[2] = w[4];
                     } else {
                         output[2] = blend3_2_1_1(w[4], w[1], w[5]);
@@ -3028,13 +3030,13 @@ namespace scaler {
                     output[3] = w[4];
                     output[4] = w[4];
                     output[5] = w[4];
-                    if (hq3x_detail::yuvDifference(w[7], w[3])) {
+                    if (hq3x_detail::yuv_difference(w[7], w[3])) {
                         output[6] = w[4];
                     } else {
                         output[6] = blend3_2_1_1(w[4], w[7], w[3]);
                     }
                     output[7] = w[4];
-                    if (hq3x_detail::yuvDifference(w[5], w[7])) {
+                    if (hq3x_detail::yuv_difference(w[5], w[7])) {
                         output[8] = w[4];
                     } else {
                         output[8] = blend3_2_1_1(w[4], w[5], w[7]);
@@ -3046,7 +3048,7 @@ namespace scaler {
 
     // Main HQ3x function - optimized with row caching
     template<typename InputImage, typename OutputImage>
-    SCALER_HOT auto scaleHq3x(const InputImage& src) -> OutputImage {
+    SCALER_HOT OutputImage scale_hq_3x(const InputImage& src) {
         const auto src_width = src.width();
         const auto src_height = src.height();
 
@@ -3057,12 +3059,12 @@ namespace scaler {
         }
 
         using PixelType = decltype(src.get_pixel(0, 0));
-        
+
         // Pre-allocate row buffers for sliding window
-        std::vector<PixelType> prev_row;
-        std::vector<PixelType> curr_row;
-        std::vector<PixelType> next_row;
-        
+        std::vector <PixelType> prev_row;
+        std::vector <PixelType> curr_row;
+        std::vector <PixelType> next_row;
+
         prev_row.reserve(src_width + 2);
         curr_row.reserve(src_width + 2);
         next_row.reserve(src_width + 2);
@@ -3072,82 +3074,82 @@ namespace scaler {
             prev_row.clear();
             curr_row.clear();
             next_row.clear();
-            
+
             // Load previous row (or edge)
             if (y == 0) {
                 // First row - use safeAccess for all
-                prev_row.push_back(src.safeAccess(-1, -1));
+                prev_row.push_back(src.safe_access(-1, -1));
                 for (size_t x = 0; x < src_width; ++x) {
-                    prev_row.push_back(src.safeAccess(static_cast<int>(x), -1));
+                    prev_row.push_back(src.safe_access(static_cast <int>(x), -1));
                 }
-                prev_row.push_back(src.safeAccess(static_cast<int>(src_width), -1));
+                prev_row.push_back(src.safe_access(static_cast <int>(src_width), -1));
             } else {
                 // Middle rows - only edges need safeAccess
-                prev_row.push_back(src.safeAccess(-1, static_cast<int>(y) - 1));
+                prev_row.push_back(src.safe_access(-1, static_cast <int>(y) - 1));
                 for (size_t x = 0; x < src_width; ++x) {
                     prev_row.push_back(src.get_pixel(x, y - 1));
                 }
-                prev_row.push_back(src.safeAccess(static_cast<int>(src_width), static_cast<int>(y) - 1));
+                prev_row.push_back(src.safe_access(static_cast <int>(src_width), static_cast <int>(y) - 1));
             }
-            
+
             // Load current row
             // Handle left edge
-            curr_row.push_back(src.safeAccess(-1, static_cast<int>(y)));
+            curr_row.push_back(src.safe_access(-1, static_cast <int>(y)));
             // Handle main pixels
             for (size_t x = 0; x < src_width; ++x) {
                 curr_row.push_back(src.get_pixel(x, y));
             }
             // Handle right edge
-            curr_row.push_back(src.safeAccess(static_cast<int>(src_width), static_cast<int>(y)));
-            
+            curr_row.push_back(src.safe_access(static_cast <int>(src_width), static_cast <int>(y)));
+
             // Load next row (or edge)
             if (y == src_height - 1) {
                 // Last row - use safeAccess for all
-                next_row.push_back(src.safeAccess(-1, static_cast<int>(y) + 1));
+                next_row.push_back(src.safe_access(-1, static_cast <int>(y) + 1));
                 for (size_t x = 0; x < src_width; ++x) {
-                    next_row.push_back(src.safeAccess(static_cast<int>(x), static_cast<int>(y) + 1));
+                    next_row.push_back(src.safe_access(static_cast <int>(x), static_cast <int>(y) + 1));
                 }
-                next_row.push_back(src.safeAccess(static_cast<int>(src_width), static_cast<int>(y) + 1));
+                next_row.push_back(src.safe_access(static_cast <int>(src_width), static_cast <int>(y) + 1));
             } else {
                 // Middle rows - only edges need safeAccess
-                next_row.push_back(src.safeAccess(-1, static_cast<int>(y) + 1));
+                next_row.push_back(src.safe_access(-1, static_cast <int>(y) + 1));
                 for (size_t x = 0; x < src_width; ++x) {
                     next_row.push_back(src.get_pixel(x, y + 1));
                 }
-                next_row.push_back(src.safeAccess(static_cast<int>(src_width), static_cast<int>(y) + 1));
+                next_row.push_back(src.safe_access(static_cast <int>(src_width), static_cast <int>(y) + 1));
             }
-            
+
             for (size_t x = 0; x < src_width; ++x) {
                 // Get 3x3 window from cached rows (index offset by 1 for padding)
                 std::array <PixelType, 9> w;
-                w[0] = prev_row[x];      // x-1, y-1
-                w[1] = prev_row[x + 1];  // x,   y-1
-                w[2] = prev_row[x + 2];  // x+1, y-1
-                w[3] = curr_row[x];      // x-1, y
-                w[4] = curr_row[x + 1];  // x,   y  (center)
-                w[5] = curr_row[x + 2];  // x+1, y
-                w[6] = next_row[x];      // x-1, y+1
-                w[7] = next_row[x + 1];  // x,   y+1
-                w[8] = next_row[x + 2];  // x+1, y+1
+                w[0] = prev_row[x]; // x-1, y-1
+                w[1] = prev_row[x + 1]; // x,   y-1
+                w[2] = prev_row[x + 2]; // x+1, y-1
+                w[3] = curr_row[x]; // x-1, y
+                w[4] = curr_row[x + 1]; // x,   y  (center)
+                w[5] = curr_row[x + 2]; // x+1, y
+                w[6] = next_row[x]; // x-1, y+1
+                w[7] = next_row[x + 1]; // x,   y+1
+                w[8] = next_row[x + 2]; // x+1, y+1
 
                 // Compute pattern - unrolled for better performance
                 int pattern = 0;
                 const PixelType& center = w[4];
-                
+
                 // Check each neighbor and set corresponding bit if different
-                if (w[0] != center && hq3x_detail::yuvDifference(center, w[0])) pattern |= 1;
-                if (w[1] != center && hq3x_detail::yuvDifference(center, w[1])) pattern |= 2;
-                if (w[2] != center && hq3x_detail::yuvDifference(center, w[2])) pattern |= 4;
-                if (w[3] != center && hq3x_detail::yuvDifference(center, w[3])) pattern |= 8;
+                if (w[0] != center && hq3x_detail::yuv_difference(center, w[0])) pattern |= 1;
+                if (w[1] != center && hq3x_detail::yuv_difference(center, w[1])) pattern |= 2;
+                if (w[2] != center && hq3x_detail::yuv_difference(center, w[2])) pattern |= 4;
+                if (w[3] != center && hq3x_detail::yuv_difference(center, w[3])) pattern |= 8;
                 // w[4] is center, skip
-                if (w[5] != center && hq3x_detail::yuvDifference(center, w[5])) pattern |= 32;
-                if (w[6] != center && hq3x_detail::yuvDifference(center, w[6])) pattern |= 64;
-                if (w[7] != center && hq3x_detail::yuvDifference(center, w[7])) pattern |= 128;
-                if (w[8] != center && hq3x_detail::yuvDifference(center, w[8])) pattern |= 256;
+                if (w[5] != center && hq3x_detail::yuv_difference(center, w[5])) pattern |= 32;
+                if (w[6] != center && hq3x_detail::yuv_difference(center, w[6])) pattern |= 64;
+                if (w[7] != center && hq3x_detail::yuv_difference(center, w[7])) pattern |= 128;
+                if (w[8] != center && hq3x_detail::yuv_difference(center, w[8])) pattern |= 256;
 
                 // Process pattern
                 std::array <PixelType, 9> output;
-                hq3x_detail::processPattern(w, output.data(), pattern);
+                hq3x_detail::process_pattern(w, output.data(), pattern);
 
                 // Write 3x3 block
                 size_t out_x = x * 3;
@@ -3167,9 +3169,10 @@ namespace scaler {
 
         return result;
     }
+
     // Optimized HQ3x for 24-bit RGB - bypasses SDL and uses fixed arrays
     template<typename InputImage, typename OutputImage>
-    SCALER_HOT auto scaleHq3xFast(const InputImage& src) -> OutputImage {
+    SCALER_HOT OutputImage scale_hq_3x_fast(const InputImage& src) {
         const auto src_width = src.width();
         const auto src_height = src.height();
 
@@ -3180,14 +3183,14 @@ namespace scaler {
         }
 
         using PixelType = decltype(src.get_pixel(0, 0));
-        
+
         // Use fixed-size arrays with max reasonable size (up to 4K width)
         constexpr size_t MAX_WIDTH = 4096;
         if (src_width > MAX_WIDTH) {
             // Fall back to regular version for very wide images
-            return scaleHq3x<InputImage, OutputImage>(src);
+            return scale_hq_3x <InputImage, OutputImage>(src);
         }
-        
+
         // Fixed-size row buffers - no allocation overhead
         alignas(64) PixelType prev_row[MAX_WIDTH + 2];
         alignas(64) PixelType curr_row[MAX_WIDTH + 2];
@@ -3199,45 +3202,45 @@ namespace scaler {
             if (y == 0) {
                 // First row - use safeAccess
                 for (size_t x = 0; x <= src_width + 1; ++x) {
-                    prev_row[x] = src.safeAccess(static_cast<int>(x) - 1, -1);
+                    prev_row[x] = src.safe_access(static_cast <int>(x) - 1, -1);
                 }
             } else {
                 // Middle rows - optimize inner pixels
-                prev_row[0] = src.safeAccess(-1, static_cast<int>(y) - 1);
+                prev_row[0] = src.safe_access(-1, static_cast <int>(y) - 1);
                 for (size_t x = 0; x < src_width; ++x) {
                     prev_row[x + 1] = src.get_pixel(x, y - 1);
                 }
-                prev_row[src_width + 1] = src.safeAccess(static_cast<int>(src_width), static_cast<int>(y) - 1);
+                prev_row[src_width + 1] = src.safe_access(static_cast <int>(src_width), static_cast <int>(y) - 1);
             }
-            
+
             // Current row - optimize center pixels
-            curr_row[0] = src.safeAccess(-1, static_cast<int>(y));
+            curr_row[0] = src.safe_access(-1, static_cast <int>(y));
             for (size_t x = 0; x < src_width; ++x) {
                 curr_row[x + 1] = src.get_pixel(x, y);
             }
-            curr_row[src_width + 1] = src.safeAccess(static_cast<int>(src_width), static_cast<int>(y));
-            
+            curr_row[src_width + 1] = src.safe_access(static_cast <int>(src_width), static_cast <int>(y));
+
             // Next row
             if (y == src_height - 1) {
                 // Last row - use safeAccess
                 for (size_t x = 0; x <= src_width + 1; ++x) {
-                    next_row[x] = src.safeAccess(static_cast<int>(x) - 1, static_cast<int>(y) + 1);
+                    next_row[x] = src.safe_access(static_cast <int>(x) - 1, static_cast <int>(y) + 1);
                 }
             } else {
                 // Middle rows - optimize inner pixels
-                next_row[0] = src.safeAccess(-1, static_cast<int>(y) + 1);
+                next_row[0] = src.safe_access(-1, static_cast <int>(y) + 1);
                 for (size_t x = 0; x < src_width; ++x) {
                     next_row[x + 1] = src.get_pixel(x, y + 1);
                 }
-                next_row[src_width + 1] = src.safeAccess(static_cast<int>(src_width), static_cast<int>(y) + 1);
+                next_row[src_width + 1] = src.safe_access(static_cast <int>(src_width), static_cast <int>(y) + 1);
             }
-            
+
             // Process each pixel
             for (size_t x = 0; x < src_width; ++x) {
                 const size_t idx = x + 1;
-                
+
                 // Get 3x3 window from fixed buffers
-                std::array<PixelType, 9> w;
+                std::array <PixelType, 9> w;
                 w[0] = prev_row[idx - 1];
                 w[1] = prev_row[idx];
                 w[2] = prev_row[idx + 1];
@@ -3251,31 +3254,31 @@ namespace scaler {
                 // Compute pattern - unrolled
                 int pattern = 0;
                 const PixelType& center = w[4];
-                
-                if (w[0] != center && hq3x_detail::yuvDifference(center, w[0])) pattern |= 1;
-                if (w[1] != center && hq3x_detail::yuvDifference(center, w[1])) pattern |= 2;
-                if (w[2] != center && hq3x_detail::yuvDifference(center, w[2])) pattern |= 4;
-                if (w[3] != center && hq3x_detail::yuvDifference(center, w[3])) pattern |= 8;
-                if (w[5] != center && hq3x_detail::yuvDifference(center, w[5])) pattern |= 32;
-                if (w[6] != center && hq3x_detail::yuvDifference(center, w[6])) pattern |= 64;
-                if (w[7] != center && hq3x_detail::yuvDifference(center, w[7])) pattern |= 128;
-                if (w[8] != center && hq3x_detail::yuvDifference(center, w[8])) pattern |= 256;
+
+                if (w[0] != center && hq3x_detail::yuv_difference(center, w[0])) pattern |= 1;
+                if (w[1] != center && hq3x_detail::yuv_difference(center, w[1])) pattern |= 2;
+                if (w[2] != center && hq3x_detail::yuv_difference(center, w[2])) pattern |= 4;
+                if (w[3] != center && hq3x_detail::yuv_difference(center, w[3])) pattern |= 8;
+                if (w[5] != center && hq3x_detail::yuv_difference(center, w[5])) pattern |= 32;
+                if (w[6] != center && hq3x_detail::yuv_difference(center, w[6])) pattern |= 64;
+                if (w[7] != center && hq3x_detail::yuv_difference(center, w[7])) pattern |= 128;
+                if (w[8] != center && hq3x_detail::yuv_difference(center, w[8])) pattern |= 256;
 
                 // Process pattern
-                std::array<PixelType, 9> output;
-                hq3x_detail::processPattern(w, output.data(), pattern);
+                std::array <PixelType, 9> output;
+                hq3x_detail::process_pattern(w, output.data(), pattern);
 
                 // Write 3x3 block
                 const size_t out_x = x * 3;
                 const size_t out_y = y * 3;
-                
-                result.set_pixel(out_x,     out_y,     output[0]);
-                result.set_pixel(out_x + 1, out_y,     output[1]);
-                result.set_pixel(out_x + 2, out_y,     output[2]);
-                result.set_pixel(out_x,     out_y + 1, output[3]);
+
+                result.set_pixel(out_x, out_y, output[0]);
+                result.set_pixel(out_x + 1, out_y, output[1]);
+                result.set_pixel(out_x + 2, out_y, output[2]);
+                result.set_pixel(out_x, out_y + 1, output[3]);
                 result.set_pixel(out_x + 1, out_y + 1, output[4]);
                 result.set_pixel(out_x + 2, out_y + 1, output[5]);
-                result.set_pixel(out_x,     out_y + 2, output[6]);
+                result.set_pixel(out_x, out_y + 2, output[6]);
                 result.set_pixel(out_x + 1, out_y + 2, output[7]);
                 result.set_pixel(out_x + 2, out_y + 2, output[8]);
             }
@@ -3283,5 +3286,4 @@ namespace scaler {
 
         return result;
     }
-
 } // namespace scaler

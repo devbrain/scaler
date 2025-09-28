@@ -2,7 +2,9 @@
 
 #include <vector>
 #include <array>
+#ifdef DEBUG
 #include <cassert>
+#endif
 #include <stdexcept>
 namespace scaler {
     /**
@@ -14,7 +16,7 @@ namespace scaler {
      * @tparam PixelType The type of pixel data stored in the buffer
      */
     template<typename PixelType>
-    class SlidingWindowBuffer {
+    class sliding_window_buffer {
         protected:  // Changed from private to protected for derived class access
             std::vector<std::vector<PixelType>> buffer_;
             int window_height_;      // Number of rows in the window (e.g., 3 for 3x3, 5 for 5x5)
@@ -24,7 +26,7 @@ namespace scaler {
             int buffer_offset_;      // Offset from current_y to first buffer row
 
             // Maps a source row index to buffer index
-            inline size_t rowToBufferIndex(int src_row) const noexcept {
+            [[nodiscard]] size_t row_to_buffer_index(int src_row) const noexcept {
                 // Optimize modulo for positive numbers and power-of-2 sizes
                 // For non-power-of-2, use single modulo for positive src_row
                 int idx = src_row % window_height_;
@@ -40,7 +42,7 @@ namespace scaler {
              * @param padding Padding on each side for boundary access
              * @param buffer_offset Offset from current position (e.g., -1 for centered window)
              */
-            SlidingWindowBuffer(int window_height, size_t image_width, int padding, int buffer_offset)
+            sliding_window_buffer(int window_height, size_t image_width, int padding, int buffer_offset)
                 : window_height_(window_height)
                 , width_(image_width + 2 * static_cast<size_t>(padding))
                 , padding_(padding)
@@ -65,7 +67,7 @@ namespace scaler {
                 // Load all initial rows
                 for (int i = 0; i < window_height_; ++i) {
                     int src_y = static_cast<int>(start_y) + buffer_offset_ + i;
-                    loadRow(src, src_y);
+                    load_row(src, src_y);
                 }
             }
 
@@ -79,7 +81,7 @@ namespace scaler {
 
                 // Load the new row that enters the window
                 int new_src_row = static_cast<int>(current_y_) + buffer_offset_ + window_height_ - 1;
-                loadRow(src, new_src_row);
+                load_row(src, new_src_row);
             }
 
             /**
@@ -90,7 +92,7 @@ namespace scaler {
              */
             inline PixelType get(size_t x, int y_offset) const noexcept {
                 const int src_row = static_cast<int>(current_y_) + y_offset;
-                const size_t buffer_idx = rowToBufferIndex(src_row);
+                const size_t buffer_idx = row_to_buffer_index(src_row);
                 const size_t x_idx = x + static_cast<size_t>(padding_);
 
 #ifdef DEBUG
@@ -106,9 +108,9 @@ namespace scaler {
              * @param y_offset Offset from current_y
              * @return Reference to the row vector
              */
-            inline const std::vector<PixelType>& getRow(int y_offset) const noexcept {
+            inline const std::vector<PixelType>& get_row(int y_offset) const noexcept {
                 const int src_row = static_cast<int>(current_y_) + y_offset;
-                const size_t buffer_idx = rowToBufferIndex(src_row);
+                const size_t buffer_idx = row_to_buffer_index(src_row);
 
 #ifdef DEBUG
                 assert(buffer_idx < static_cast<size_t>(window_height_));
@@ -119,24 +121,24 @@ namespace scaler {
             /**
              * Get the current y position in the source image
              */
-            size_t getCurrentY() const { return current_y_; }
+            [[nodiscard]] size_t get_current_y() const { return current_y_; }
 
             /**
              * Get the padding amount
              */
-            int getPadding() const { return padding_; }
+            [[nodiscard]] int get_padding() const { return padding_; }
 
         private:
             /**
              * Load a row from the source image into the buffer
              */
             template<typename ImageAccessor>
-            void loadRow(const ImageAccessor& src, int src_y) {
-                size_t buffer_idx = rowToBufferIndex(src_y);
+            void load_row(const ImageAccessor& src, int src_y) {
+                size_t buffer_idx = row_to_buffer_index(src_y);
 
                 for (size_t x = 0; x < width_; ++x) {
                     int src_x = static_cast<int>(x) - padding_;
-                    buffer_[buffer_idx][x] = src.safeAccess(src_x, src_y);
+                    buffer_[buffer_idx][x] = src.safe_access(src_x, src_y);
                 }
             }
     };
@@ -145,25 +147,25 @@ namespace scaler {
      * Helper factory function for creating sliding window buffers
      */
     template<typename PixelType>
-    auto makeSlidingWindowBuffer(int window_height, size_t image_width, int padding, int buffer_offset) {
-        return SlidingWindowBuffer<PixelType>(window_height, image_width, padding, buffer_offset);
+    auto make_sliding_window_buffer(int window_height, size_t image_width, int padding, int buffer_offset) {
+        return sliding_window_buffer<PixelType>(window_height, image_width, padding, buffer_offset);
     }
 
     // Specialized versions for common window sizes
     template<typename PixelType>
-    class SlidingWindow3x3 : public SlidingWindowBuffer<PixelType> {
+    class sliding_window_3x3 : public sliding_window_buffer<PixelType> {
         public:
-            explicit SlidingWindow3x3(size_t image_width)
-                : SlidingWindowBuffer<PixelType>(3, image_width, 1, -1) {}
+            explicit sliding_window_3x3(size_t image_width)
+                : sliding_window_buffer<PixelType>(3, image_width, 1, -1) {}
 
             // Get all 3x3 pixels with a single row lookup per row - more efficient
             inline void get3x3(size_t x, PixelType& tl, PixelType& t, PixelType& tr,
                                PixelType& l, PixelType& c, PixelType& r,
                                PixelType& bl, PixelType& b, PixelType& br) const noexcept {
-                const size_t xp = x + static_cast<size_t>(this->getPadding());
-                const auto& topRow = this->getRow(-1);
-                const auto& midRow = this->getRow(0);
-                const auto& botRow = this->getRow(1);
+                const size_t xp = x + static_cast<size_t>(this->get_padding());
+                const auto& topRow = this->get_row(-1);
+                const auto& midRow = this->get_row(0);
+                const auto& botRow = this->get_row(1);
 
                 tl = topRow[xp - 1]; t = topRow[xp]; tr = topRow[xp + 1];
                 l = midRow[xp - 1]; c = midRow[xp]; r = midRow[xp + 1];
@@ -171,58 +173,58 @@ namespace scaler {
             }
 
             // Keep individual accessors for compatibility but optimize them
-            inline PixelType getTopLeft(size_t x) const noexcept {
-                size_t row_idx = this->rowToBufferIndex(static_cast<int>(this->current_y_) - 1);
+            inline PixelType get_top_left(size_t x) const noexcept {
+                size_t row_idx = this->row_to_buffer_index(static_cast<int>(this->current_y_) - 1);
                 size_t col_idx = x + static_cast<size_t>(this->padding_ - 1);
                 return this->buffer_[row_idx][col_idx];
             }
-            inline PixelType getTop(size_t x) const noexcept {
-                size_t row_idx = this->rowToBufferIndex(static_cast<int>(this->current_y_) - 1);
+            inline PixelType get_top(size_t x) const noexcept {
+                size_t row_idx = this->row_to_buffer_index(static_cast<int>(this->current_y_) - 1);
                 size_t col_idx = x + static_cast<size_t>(this->padding_);
                 return this->buffer_[row_idx][col_idx];
             }
-            inline PixelType getTopRight(size_t x) const noexcept {
-                size_t row_idx = this->rowToBufferIndex(static_cast<int>(this->current_y_) - 1);
+            inline PixelType get_top_right(size_t x) const noexcept {
+                size_t row_idx = this->row_to_buffer_index(static_cast<int>(this->current_y_) - 1);
                 size_t col_idx = x + static_cast<size_t>(this->padding_ + 1);
                 return this->buffer_[row_idx][col_idx];
             }
-            inline PixelType getLeft(size_t x) const noexcept {
-                size_t row_idx = this->rowToBufferIndex(static_cast<int>(this->current_y_));
+            inline PixelType get_left(size_t x) const noexcept {
+                size_t row_idx = this->row_to_buffer_index(static_cast<int>(this->current_y_));
                 size_t col_idx = x + static_cast<size_t>(this->padding_ - 1);
                 return this->buffer_[row_idx][col_idx];
             }
-            inline PixelType getCenter(size_t x) const noexcept {
-                size_t row_idx = this->rowToBufferIndex(static_cast<int>(this->current_y_));
+            inline PixelType get_center(size_t x) const noexcept {
+                size_t row_idx = this->row_to_buffer_index(static_cast<int>(this->current_y_));
                 size_t col_idx = x + static_cast<size_t>(this->padding_);
                 return this->buffer_[row_idx][col_idx];
             }
-            inline PixelType getRight(size_t x) const noexcept {
-                size_t row_idx = this->rowToBufferIndex(static_cast<int>(this->current_y_));
+            inline PixelType get_right(size_t x) const noexcept {
+                size_t row_idx = this->row_to_buffer_index(static_cast<int>(this->current_y_));
                 size_t col_idx = x + static_cast<size_t>(this->padding_ + 1);
                 return this->buffer_[row_idx][col_idx];
             }
-            inline PixelType getBottomLeft(size_t x) const noexcept {
-                size_t row_idx = this->rowToBufferIndex(static_cast<int>(this->current_y_) + 1);
+            inline PixelType get_bottom_left(size_t x) const noexcept {
+                size_t row_idx = this->row_to_buffer_index(static_cast<int>(this->current_y_) + 1);
                 size_t col_idx = x + static_cast<size_t>(this->padding_ - 1);
                 return this->buffer_[row_idx][col_idx];
             }
-            inline PixelType getBottom(size_t x) const noexcept {
-                size_t row_idx = this->rowToBufferIndex(static_cast<int>(this->current_y_) + 1);
+            inline PixelType get_bottom(size_t x) const noexcept {
+                size_t row_idx = this->row_to_buffer_index(static_cast<int>(this->current_y_) + 1);
                 size_t col_idx = x + static_cast<size_t>(this->padding_);
                 return this->buffer_[row_idx][col_idx];
             }
-            inline PixelType getBottomRight(size_t x) const noexcept {
-                size_t row_idx = this->rowToBufferIndex(static_cast<int>(this->current_y_) + 1);
+            inline PixelType get_bottom_right(size_t x) const noexcept {
+                size_t row_idx = this->row_to_buffer_index(static_cast<int>(this->current_y_) + 1);
                 size_t col_idx = x + static_cast<size_t>(this->padding_ + 1);
                 return this->buffer_[row_idx][col_idx];
             }
 
             // Get all pixels for a 3x3 neighborhood centered at (x, current_y)
-            inline void getNeighborhood(size_t x, PixelType neighborhood[3][3]) const noexcept {
-                const size_t xp = x + static_cast<size_t>(this->getPadding());
-                const auto& topRow = this->getRow(-1);
-                const auto& midRow = this->getRow(0);
-                const auto& botRow = this->getRow(1);
+            inline void get_neighborhood(size_t x, PixelType neighborhood[3][3]) const noexcept {
+                const size_t xp = x + static_cast<size_t>(this->get_padding());
+                const auto& topRow = this->get_row(-1);
+                const auto& midRow = this->get_row(0);
+                const auto& botRow = this->get_row(1);
 
                 neighborhood[0][0] = topRow[xp - 1]; neighborhood[0][1] = topRow[xp]; neighborhood[0][2] = topRow[xp + 1];
                 neighborhood[1][0] = midRow[xp - 1]; neighborhood[1][1] = midRow[xp]; neighborhood[1][2] = midRow[xp + 1];
@@ -231,27 +233,27 @@ namespace scaler {
 
         private:
             // Optimized modulo for size 3
-            inline size_t rowToBufferIndex(int src_row) const noexcept {
+            [[nodiscard]] size_t row_to_buffer_index(int src_row) const noexcept {
                 int idx = src_row % 3;
                 return static_cast<size_t>((idx < 0) ? (idx + 3) : idx);
             }
     };
 
     template<typename PixelType>
-    class SlidingWindow4x4 : public SlidingWindowBuffer<PixelType> {
+    class sliding_window_4x4 : public sliding_window_buffer<PixelType> {
         public:
-            explicit SlidingWindow4x4(size_t image_width)
-                : SlidingWindowBuffer<PixelType>(4, image_width, 2, -1) {}
+            explicit sliding_window_4x4(size_t image_width)
+                : sliding_window_buffer<PixelType>(4, image_width, 2, -1) {}
 
             // Get pixels in 4x4 pattern for 2xSaI (from y-1 to y+2, x-1 to x+2)
             inline void get4x4(size_t x, PixelType out[4][4]) const noexcept {
                 const size_t xp = x + static_cast<size_t>(this->padding_);
 
                 // Unroll loops and use direct buffer access with optimized modulo
-                const auto& row0 = this->buffer_[rowToBufferIndex(static_cast<int>(this->current_y_) - 1)];
-                const auto& row1 = this->buffer_[rowToBufferIndex(static_cast<int>(this->current_y_))];
-                const auto& row2 = this->buffer_[rowToBufferIndex(static_cast<int>(this->current_y_) + 1)];
-                const auto& row3 = this->buffer_[rowToBufferIndex(static_cast<int>(this->current_y_) + 2)];
+                const auto& row0 = this->buffer_[row_to_buffer_index(static_cast<int>(this->current_y_) - 1)];
+                const auto& row1 = this->buffer_[row_to_buffer_index(static_cast<int>(this->current_y_))];
+                const auto& row2 = this->buffer_[row_to_buffer_index(static_cast<int>(this->current_y_) + 1)];
+                const auto& row3 = this->buffer_[row_to_buffer_index(static_cast<int>(this->current_y_) + 2)];
 
                 // Load all 16 pixels with minimal index calculations
                 out[0][0] = row0[xp - 1]; out[0][1] = row0[xp]; out[0][2] = row0[xp + 1]; out[0][3] = row0[xp + 2];
@@ -262,28 +264,28 @@ namespace scaler {
 
         private:
             // Optimized modulo for power of 2 (size 4)
-            inline size_t rowToBufferIndex(int src_row) const noexcept {
+            [[nodiscard]] size_t row_to_buffer_index(int src_row) const noexcept {
                 // For power of 2, we can use bitwise AND which is much faster than modulo
                 return static_cast<size_t>(src_row & 3);  // Equivalent to src_row % 4 for positive numbers
             }
     };
 
     template<typename PixelType>
-    class SlidingWindow5x5 : public SlidingWindowBuffer<PixelType> {
+    class sliding_window_5x5 : public sliding_window_buffer<PixelType> {
         public:
-            explicit SlidingWindow5x5(size_t image_width)
-                : SlidingWindowBuffer<PixelType>(5, image_width, 2, -2) {}
+            explicit sliding_window_5x5(size_t image_width)
+                : sliding_window_buffer<PixelType>(5, image_width, 2, -2) {}
 
             // Get all pixels for a 5x5 neighborhood centered at (x, current_y)
-            inline void getNeighborhood(size_t x, PixelType neighborhood[5][5]) const noexcept {
+            void get_neighborhood(size_t x, PixelType neighborhood[5][5]) const noexcept {
                 const size_t xp = x + static_cast<size_t>(this->padding_);
 
                 // Unroll loops and use direct buffer access
-                const auto& row0 = this->buffer_[rowToBufferIndex(static_cast<int>(this->current_y_) - 2)];
-                const auto& row1 = this->buffer_[rowToBufferIndex(static_cast<int>(this->current_y_) - 1)];
-                const auto& row2 = this->buffer_[rowToBufferIndex(static_cast<int>(this->current_y_))];
-                const auto& row3 = this->buffer_[rowToBufferIndex(static_cast<int>(this->current_y_) + 1)];
-                const auto& row4 = this->buffer_[rowToBufferIndex(static_cast<int>(this->current_y_) + 2)];
+                const auto& row0 = this->buffer_[row_to_buffer_index(static_cast<int>(this->current_y_) - 2)];
+                const auto& row1 = this->buffer_[row_to_buffer_index(static_cast<int>(this->current_y_) - 1)];
+                const auto& row2 = this->buffer_[row_to_buffer_index(static_cast<int>(this->current_y_))];
+                const auto& row3 = this->buffer_[row_to_buffer_index(static_cast<int>(this->current_y_) + 1)];
+                const auto& row4 = this->buffer_[row_to_buffer_index(static_cast<int>(this->current_y_) + 2)];
 
                 // Load all 25 pixels with minimal index calculations
                 neighborhood[0][0] = row0[xp - 2]; neighborhood[0][1] = row0[xp - 1];
@@ -304,7 +306,7 @@ namespace scaler {
 
         private:
             // Optimized modulo for size 5
-            inline size_t rowToBufferIndex(int src_row) const noexcept {
+            [[nodiscard]] size_t row_to_buffer_index(int src_row) const noexcept {
                 int idx = src_row % 5;
                 return static_cast<size_t>((idx < 0) ? (idx + 5) : idx);
             }
@@ -315,7 +317,7 @@ namespace scaler {
      * Optimized for images up to 4096 pixels wide
      */
     template<typename PixelType, size_t MaxWidth = 4096>
-    class FastSlidingWindow3x3 {
+    class fast_sliding_window_3x3 {
     private:
         static constexpr int WINDOW_HEIGHT = 3;
         static constexpr int PADDING = 1;
@@ -326,17 +328,17 @@ namespace scaler {
         size_t current_y_;       // Current y position in the source image
         
         // Maps a source row index to buffer index (optimized for 3)
-        inline size_t rowToBufferIndex(int src_row) const noexcept {
+        [[nodiscard]] size_t row_to_buffer_index(int src_row) const noexcept {
             // Optimized modulo for size 3
             int idx = src_row % 3;
             return static_cast<size_t>((idx < 0) ? (idx + 3) : idx);
         }
         
     public:
-        explicit FastSlidingWindow3x3(size_t image_width) 
+        explicit fast_sliding_window_3x3(size_t image_width)
             : width_(image_width), current_y_(0) {
             if (image_width > MaxWidth) {
-                throw std::runtime_error("Image width exceeds FastSlidingWindow3x3 capacity");
+                throw std::runtime_error("Image width exceeds fast_sliding_window_3x3 capacity");
             }
         }
         
@@ -347,9 +349,9 @@ namespace scaler {
             
             // Load all 3 rows
             for (int dy = -1; dy <= 1; ++dy) {
-                auto& row = buffer_[rowToBufferIndex(static_cast<int>(start_y) + dy)];
+                auto& row = buffer_[row_to_buffer_index(static_cast<int>(start_y) + dy)];
                 for (int x = -PADDING; x < static_cast<int>(width_ + PADDING); ++x) {
-                    row[static_cast<size_t>(x + PADDING)] = src.safeAccess(x, static_cast<int>(start_y) + dy);
+                    row[static_cast<size_t>(x + PADDING)] = src.safe_access(x, static_cast<int>(start_y) + dy);
                 }
             }
         }
@@ -360,28 +362,28 @@ namespace scaler {
             current_y_++;
             
             // Load the new row (current_y + 1) into the buffer
-            auto& new_row = buffer_[rowToBufferIndex(static_cast<int>(current_y_) + 1)];
+            auto& new_row = buffer_[row_to_buffer_index(static_cast<int>(current_y_) + 1)];
             for (int x = -PADDING; x < static_cast<int>(width_ + PADDING); ++x) {
-                new_row[static_cast<size_t>(x + PADDING)] = src.safeAccess(x, static_cast<int>(current_y_) + 1);
+                new_row[static_cast<size_t>(x + PADDING)] = src.safe_access(x, static_cast<int>(current_y_) + 1);
             }
         }
         
         // Get a row relative to current position
-        inline const std::array<PixelType, MaxWidth + 2>& getRow(int offset) const noexcept {
-            return buffer_[rowToBufferIndex(static_cast<int>(current_y_) + offset)];
+        const std::array<PixelType, MaxWidth + 2>& get_row(int offset) const noexcept {
+            return buffer_[row_to_buffer_index(static_cast<int>(current_y_) + offset)];
         }
         
         // Get padding amount
-        inline int getPadding() const noexcept { return PADDING; }
+        [[nodiscard]] int get_padding() const noexcept { return PADDING; }
         
         // Get all 3x3 pixels with a single row lookup per row
-        inline void get3x3(size_t x, PixelType& tl, PixelType& t, PixelType& tr,
-                          PixelType& l, PixelType& c, PixelType& r,
-                          PixelType& bl, PixelType& b, PixelType& br) const noexcept {
+        void get_3x3(size_t x, PixelType& tl, PixelType& t, PixelType& tr,
+                    PixelType& l, PixelType& c, PixelType& r,
+                    PixelType& bl, PixelType& b, PixelType& br) const noexcept {
             const size_t xp = x + static_cast<size_t>(PADDING);
-            const auto& topRow = getRow(-1);
-            const auto& midRow = getRow(0);
-            const auto& botRow = getRow(1);
+            const auto& topRow = get_row(-1);
+            const auto& midRow = get_row(0);
+            const auto& botRow = get_row(1);
             
             tl = topRow[xp - 1]; t = topRow[xp]; tr = topRow[xp + 1];
             l = midRow[xp - 1]; c = midRow[xp]; r = midRow[xp + 1];
@@ -389,11 +391,11 @@ namespace scaler {
         }
         
         // Get neighborhood as array
-        inline void getNeighborhood(size_t x, PixelType neighborhood[9]) const noexcept {
+        void get_neighborhood(size_t x, PixelType neighborhood[9]) const noexcept {
             const size_t xp = x + static_cast<size_t>(PADDING);
-            const auto& topRow = getRow(-1);
-            const auto& midRow = getRow(0);
-            const auto& botRow = getRow(1);
+            const auto& topRow = get_row(-1);
+            const auto& midRow = get_row(0);
+            const auto& botRow = get_row(1);
             
             neighborhood[0] = topRow[xp - 1]; neighborhood[1] = topRow[xp]; neighborhood[2] = topRow[xp + 1];
             neighborhood[3] = midRow[xp - 1]; neighborhood[4] = midRow[xp]; neighborhood[5] = midRow[xp + 1];
@@ -405,11 +407,11 @@ namespace scaler {
      * Automatic sliding window selector - uses fast version for small images
      */
     template<typename PixelType>
-    inline auto makeSlidingWindow3x3(size_t image_width) {
+    auto make_sliding_window_3x3(size_t image_width) {
         if (image_width <= 4096) {
-            return FastSlidingWindow3x3<PixelType, 4096>(image_width);
+            return fast_sliding_window_3x3<PixelType, 4096>(image_width);
         } else {
-            return SlidingWindow3x3<PixelType>(image_width);
+            return sliding_window_3x3<PixelType>(image_width);
         }
     }
 }

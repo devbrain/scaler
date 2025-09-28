@@ -1,13 +1,13 @@
 #include <doctest/doctest.h>
 #include <scaler/image_base.hh>
-#include <scaler/xbr.hh>
-#include <scaler/hq2x.hh>
-#include <scaler/hq3x.hh>
+#include <scaler/cpu/xbr.hh>
+#include <scaler/cpu/hq2x.hh>
+#include <scaler/cpu/hq3x.hh>
 #include <vector>
 using namespace scaler;
 // Test image implementation for XBR/HQ2x tests
-class TestImageXBR : public InputImageBase<TestImageXBR, uvec3>,
-                     public OutputImageBase<TestImageXBR, uvec3> {
+class TestImageXBR : public input_image_base<TestImageXBR, uvec3>,
+                     public output_image_base<TestImageXBR, uvec3> {
 public:
     TestImageXBR(size_t w, size_t h) 
         : m_width(w), m_height(h), m_data(w * h, {0, 0, 0}) {}
@@ -16,11 +16,11 @@ public:
         : TestImageXBR(w, h) {}
     
     // Resolve ambiguity
-    using InputImageBase<TestImageXBR, uvec3>::width;
-    using InputImageBase<TestImageXBR, uvec3>::height;
-    using InputImageBase<TestImageXBR, uvec3>::get_pixel;
-    using InputImageBase<TestImageXBR, uvec3>::safeAccess;
-    using OutputImageBase<TestImageXBR, uvec3>::set_pixel;
+    using input_image_base<TestImageXBR, uvec3>::width;
+    using input_image_base<TestImageXBR, uvec3>::height;
+    using input_image_base<TestImageXBR, uvec3>::get_pixel;
+    using input_image_base<TestImageXBR, uvec3>::safe_access;
+    using output_image_base<TestImageXBR, uvec3>::set_pixel;
     
     [[nodiscard]] size_t width_impl() const { return m_width; }
     [[nodiscard]] size_t height_impl() const { return m_height; }
@@ -42,7 +42,7 @@ public:
         std::fill(m_data.begin(), m_data.end(), color);
     }
     
-    void fillPattern(const std::vector<std::vector<uvec3>>& pattern) {
+    void fill_pattern(const std::vector<std::vector<uvec3>>& pattern) {
         for (size_t y = 0; y < std::min(pattern.size(), m_height); ++y) {
             for (size_t x = 0; x < std::min(pattern[y].size(), m_width); ++x) {
                 set_pixel(x, y, pattern[y][x]);
@@ -50,7 +50,7 @@ public:
         }
     }
     
-    [[nodiscard]] size_t countPixelsOfColor(const uvec3& color) const {
+    [[nodiscard]] size_t count_pixels_of_color(const uvec3& color) const {
         return static_cast<size_t>(std::count(m_data.begin(), m_data.end(), color));
     }
     
@@ -75,11 +75,11 @@ TEST_CASE("XBR Scaler Tests") {
         TestImageXBR input(4, 4);
         input.fill(RED);
         
-        auto output = scaleXbr<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_xbr<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
-        CHECK(output.countPixelsOfColor(RED) == 64);
+        CHECK(output.count_pixels_of_color(RED) == 64);
     }
     
     SUBCASE("Edge detection - vertical line") {
@@ -91,7 +91,7 @@ TEST_CASE("XBR Scaler Tests") {
             }
         }
         
-        auto output = scaleXbr<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_xbr<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
@@ -103,14 +103,14 @@ TEST_CASE("XBR Scaler Tests") {
     SUBCASE("Diagonal edge handling") {
         TestImageXBR input(4, 4);
         // Create diagonal pattern
-        input.fillPattern({
+        input.fill_pattern({
             {BLACK, BLACK, WHITE, WHITE},
             {BLACK, BLACK, WHITE, WHITE},
             {WHITE, WHITE, BLACK, BLACK},
             {WHITE, WHITE, BLACK, BLACK}
         });
         
-        auto output = scaleXbr<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_xbr<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
@@ -122,13 +122,13 @@ TEST_CASE("XBR Scaler Tests") {
     SUBCASE("Anti-aliasing behavior") {
         TestImageXBR input(3, 3);
         // Create pattern that XBR will anti-alias
-        input.fillPattern({
+        input.fill_pattern({
             {WHITE, BLACK, WHITE},
             {BLACK, GRAY, BLACK},
             {WHITE, BLACK, WHITE}
         });
         
-        auto output = scaleXbr<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_xbr<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 6);
         CHECK(output.height() == 6);
@@ -142,7 +142,7 @@ TEST_CASE("XBR Scaler Tests") {
     
     SUBCASE("Empty input") {
         TestImageXBR input(0, 0);
-        auto output = scaleXbr<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_xbr<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 0);
         CHECK(output.height() == 0);
@@ -154,11 +154,11 @@ TEST_CASE("HQ2x Scaler Tests") {
         TestImageXBR input(3, 3);
         input.fill(BLUE);
         
-        auto output = scaleHq2x<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_hq2x<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 6);
         CHECK(output.height() == 6);
-        CHECK(output.countPixelsOfColor(BLUE) == 36);
+        CHECK(output.count_pixels_of_color(BLUE) == 36);
     }
     
     SUBCASE("Pattern preservation - checkerboard") {
@@ -170,25 +170,25 @@ TEST_CASE("HQ2x Scaler Tests") {
             }
         }
         
-        auto output = scaleHq2x<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_hq2x<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
         // HQ2x applies complex interpolation, pattern might not be perfectly preserved
-        CHECK(output.countPixelsOfColor(BLACK) >= 4);
-        CHECK(output.countPixelsOfColor(WHITE) >= 4);
+        CHECK(output.count_pixels_of_color(BLACK) >= 4);
+        CHECK(output.count_pixels_of_color(WHITE) >= 4);
     }
     
     SUBCASE("Complex interpolation rules") {
         TestImageXBR input(3, 3);
         // Create pattern that triggers HQ2x interpolation
-        input.fillPattern({
+        input.fill_pattern({
             {RED, GREEN, BLUE},
             {GREEN, YELLOW, GREEN},
             {BLUE, GREEN, RED}
         });
         
-        auto output = scaleHq2x<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_hq2x<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 6);
         CHECK(output.height() == 6);
@@ -204,21 +204,21 @@ TEST_CASE("HQ2x Scaler Tests") {
         }
         CHECK(has_yellow);
         // Check that all original colors are present
-        CHECK(output.countPixelsOfColor(RED) >= 2);
-        CHECK(output.countPixelsOfColor(GREEN) >= 4);
-        CHECK(output.countPixelsOfColor(BLUE) >= 2);
-        CHECK(output.countPixelsOfColor(YELLOW) >= 1);
+        CHECK(output.count_pixels_of_color(RED) >= 2);
+        CHECK(output.count_pixels_of_color(GREEN) >= 4);
+        CHECK(output.count_pixels_of_color(BLUE) >= 2);
+        CHECK(output.count_pixels_of_color(YELLOW) >= 1);
     }
     
     SUBCASE("Edge case - single pixel") {
         TestImageXBR input(1, 1);
         input.set_pixel(0, 0, GRAY);
         
-        auto output = scaleHq2x<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_hq2x<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 2);
         CHECK(output.height() == 2);
-        CHECK(output.countPixelsOfColor(GRAY) == 4);
+        CHECK(output.count_pixels_of_color(GRAY) == 4);
     }
     
     SUBCASE("Gradient smoothing") {
@@ -229,7 +229,7 @@ TEST_CASE("HQ2x Scaler Tests") {
         input.set_pixel(2, 0, {170, 170, 170});
         input.set_pixel(3, 0, {255, 255, 255});
         
-        auto output = scaleHq2x<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_hq2x<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 2);
@@ -243,14 +243,14 @@ TEST_CASE("XBR vs HQ2x Comparison") {
     SUBCASE("Same input different outputs") {
         TestImageXBR input(3, 3);
         // Diagonal line
-        input.fillPattern({
+        input.fill_pattern({
             {BLACK, WHITE, WHITE},
             {WHITE, BLACK, WHITE},
             {WHITE, WHITE, BLACK}
         });
         
-        auto xbr_output = scaleXbr<TestImageXBR, TestImageXBR>(input);
-        auto hq2x_output = scaleHq2x<TestImageXBR, TestImageXBR>(input);
+        auto xbr_output = scale_xbr<TestImageXBR, TestImageXBR>(input);
+        auto hq2x_output = scale_hq2x<TestImageXBR, TestImageXBR>(input);
         
         // Both should produce same dimensions
         CHECK(xbr_output.width() == hq2x_output.width());
@@ -268,14 +268,14 @@ TEST_CASE("XBR vs HQ2x Comparison") {
         
         // XBR and HQ2x use different algorithms, so outputs will differ
         // but both should have reasonable color distribution
-        CHECK(xbr_output.countPixelsOfColor(BLACK) >= 6);
-        CHECK(hq2x_output.countPixelsOfColor(BLACK) >= 3);
+        CHECK(xbr_output.count_pixels_of_color(BLACK) >= 6);
+        CHECK(hq2x_output.count_pixels_of_color(BLACK) >= 3);
     }
     
     SUBCASE("Performance characteristics - complex pattern") {
         TestImageXBR input(5, 5);
         // Create complex pattern
-        input.fillPattern({
+        input.fill_pattern({
             {RED, GREEN, BLUE, YELLOW, RED},
             {GREEN, BLACK, WHITE, BLACK, GREEN},
             {BLUE, WHITE, GRAY, WHITE, BLUE},
@@ -283,8 +283,8 @@ TEST_CASE("XBR vs HQ2x Comparison") {
             {RED, GREEN, BLUE, YELLOW, RED}
         });
         
-        auto xbr_output = scaleXbr<TestImageXBR, TestImageXBR>(input);
-        auto hq2x_output = scaleHq2x<TestImageXBR, TestImageXBR>(input);
+        auto xbr_output = scale_xbr<TestImageXBR, TestImageXBR>(input);
+        auto hq2x_output = scale_hq2x<TestImageXBR, TestImageXBR>(input);
         
         CHECK(xbr_output.width() == 10);
         CHECK(hq2x_output.width() == 10);
@@ -324,7 +324,7 @@ TEST_CASE("HQ3x Algorithm Tests") {
         input.set_pixel(0, 1, WHITE);
         input.set_pixel(1, 1, BLACK);
         
-        auto output = scaleHq3x<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_hq_3x<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 6);
         CHECK(output.height() == 6);
@@ -345,7 +345,7 @@ TEST_CASE("HQ3x Algorithm Tests") {
             input.set_pixel(x, 2, BLUE);
         }
         
-        auto output = scaleHq3x<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_hq_3x<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 9);
         CHECK(output.height() == 9);
@@ -379,7 +379,7 @@ TEST_CASE("HQ3x Algorithm Tests") {
         input.set_pixel(1, 2, WHITE);
         input.set_pixel(2, 2, BLACK);
         
-        auto output = scaleHq3x<TestImageXBR, TestImageXBR>(input);
+        auto output = scale_hq_3x<TestImageXBR, TestImageXBR>(input);
         
         CHECK(output.width() == 9);
         CHECK(output.height() == 9);

@@ -1,13 +1,13 @@
 #include <doctest/doctest.h>
-#include <scaler/scale2x_sfx.hh>
-#include <scaler/scale3x.hh>
-#include <scaler/scale3x_sfx.hh>
+#include <scaler/cpu/scale2x_sfx.hh>
+#include <scaler/cpu/scale3x.hh>
+#include <scaler/cpu/scale3x_sfx.hh>
 #include <scaler/image_base.hh>
 #include <vector>
 using namespace scaler;
 // Simple test image class - separate input and output classes to avoid ambiguity
 template<typename PixelType>
-class TestInputImage : public InputImageBase<TestInputImage<PixelType>, PixelType> {
+class TestInputImage : public input_image_base<TestInputImage<PixelType>, PixelType> {
 private:
     size_t width_;
     size_t height_;
@@ -41,7 +41,7 @@ public:
 };
 
 template<typename PixelType>
-class TestOutputImage : public OutputImageBase<TestOutputImage<PixelType>, PixelType> {
+class TestOutputImage : public output_image_base<TestOutputImage<PixelType>, PixelType> {
 private:
     size_t width_;
     size_t height_;
@@ -87,7 +87,7 @@ TEST_CASE("Scale2xSFX algorithm basic test") {
     input.setData(1, 1, vec3<unsigned int>(0, 0, 255)); // Blue
     
     // Test Scale2xSFX
-    auto result = scaleScale2xSFX<TestInputVec3, TestOutputVec3>(input, 2);
+    auto result = scale_scale_2x_sfx<TestInputVec3, TestOutputVec3>(input, 2);
     
     CHECK(result.width() == 8);
     CHECK(result.height() == 8);
@@ -109,7 +109,7 @@ TEST_CASE("Scale3x algorithm basic test") {
     input.setData(1, 1, vec3<unsigned int>(0, 0, 255)); // Blue
     
     // Test Scale3x
-    auto result = scaleScale3x<TestInputVec3, TestOutputVec3>(input, 3);
+    auto result = scale_scale_3x<TestInputVec3, TestOutputVec3>(input, 3);
     
     CHECK(result.width() == 12);
     CHECK(result.height() == 12);
@@ -131,7 +131,7 @@ TEST_CASE("Scale3xSFX algorithm basic test") {
     input.setData(1, 1, vec3<unsigned int>(0, 0, 255)); // Blue
     
     // Test Scale3xSFX
-    auto result = scaleScale3xSFX<TestInputVec3, TestOutputVec3>(input, 3);
+    auto result = scale_scale_3x_sfx<TestInputVec3, TestOutputVec3>(input, 3);
     
     CHECK(result.width() == 12);
     CHECK(result.height() == 12);
@@ -149,7 +149,7 @@ TEST_CASE("Scale algorithms preserve single pixel") {
     input.setData(0, 0, vec3<unsigned int>(128, 64, 192));
     
     SUBCASE("Scale2xSFX") {
-        auto result = scaleScale2xSFX<TestInputVec3, TestOutputVec3>(input, 2);
+        auto result = scale_scale_2x_sfx<TestInputVec3, TestOutputVec3>(input, 2);
         CHECK(result.width() == 2);
         CHECK(result.height() == 2);
         
@@ -165,7 +165,7 @@ TEST_CASE("Scale algorithms preserve single pixel") {
     }
     
     SUBCASE("Scale3x") {
-        auto result = scaleScale3x<TestInputVec3, TestOutputVec3>(input, 3);
+        auto result = scale_scale_3x<TestInputVec3, TestOutputVec3>(input, 3);
         CHECK(result.width() == 3);
         CHECK(result.height() == 3);
         
@@ -181,7 +181,7 @@ TEST_CASE("Scale algorithms preserve single pixel") {
     }
     
     SUBCASE("Scale3xSFX") {
-        auto result = scaleScale3xSFX<TestInputVec3, TestOutputVec3>(input, 3);
+        auto result = scale_scale_3x_sfx<TestInputVec3, TestOutputVec3>(input, 3);
         CHECK(result.width() == 3);
         CHECK(result.height() == 3);
         

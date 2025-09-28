@@ -6,7 +6,7 @@
 namespace scaler {
     class SDLOutputImage;  // Forward declaration
 
-    class SDLInputImage : public InputImageBase<SDLInputImage, uvec3> {
+    class SDLInputImage : public input_image_base<SDLInputImage, uvec3> {
         friend class SDLOutputImage;
         public:
             explicit SDLInputImage(SDL_Surface* surface)
@@ -69,7 +69,7 @@ namespace scaler {
             SDL_Palette* m_palette;
     };
 
-    class SDLOutputImage : public OutputImageBase<SDLOutputImage, uvec3> {
+    class SDLOutputImage : public output_image_base<SDLOutputImage, uvec3> {
         public:
             // Constructor with SDL_Surface template
             SDLOutputImage(size_t width, size_t height, const SDL_Surface* template_surface)

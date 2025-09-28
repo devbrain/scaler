@@ -1,14 +1,14 @@
 #include <scaler/sdl/sdl_image.hh>
-#include <scaler/epx.hh>
-#include <scaler/eagle.hh>
-#include <scaler/2xsai.hh>
-#include <scaler/xbr.hh>
-#include <scaler/hq2x.hh>
-#include <scaler/hq3x.hh>
-#include <scaler/scale2x_sfx.hh>
-#include <scaler/scale3x.hh>
-#include <scaler/scale3x_sfx.hh>
-#include <scaler/omniscale.hh>
+#include <scaler/cpu/epx.hh>
+#include <scaler/cpu/eagle.hh>
+#include <scaler/cpu/2xsai.hh>
+#include <scaler/cpu/xbr.hh>
+#include <scaler/cpu/hq2x.hh>
+#include <scaler/cpu/hq3x.hh>
+#include <scaler/cpu/scale2x_sfx.hh>
+#include <scaler/cpu/scale3x.hh>
+#include <scaler/cpu/scale3x_sfx.hh>
+#include <scaler/cpu/omniscale.hh>
 #include <scaler/sdl/sdl_scalers.hh>
 
 #include <chrono>

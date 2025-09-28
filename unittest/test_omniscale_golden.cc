@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
 #include <../include/scaler/sdl/sdl_image.hh>
-#include <scaler/omniscale.hh>
+#include <../include/scaler/cpu/omniscale.hh>
 #include <memory>
 #include <vector>
 #include <cstring>
@@ -104,7 +104,7 @@ TEST_CASE("OmniScale Golden Data Tests") {
         
         // Run OmniScale 2x on the source image
         SDLInputImage input(source.get());
-        auto output = scaleOmniScale2x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_omni_scale_2x<SDLInputImage, SDLOutputImage>(input);
         
         // Check dimensions
         CHECK(output.width() == golden->w);
@@ -139,7 +139,7 @@ TEST_CASE("OmniScale Golden Data Tests") {
         
         // Run OmniScale 3x on the source image
         SDLInputImage input(source.get());
-        auto output = scaleOmniScale3x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_omni_scale_3x<SDLInputImage, SDLOutputImage>(input);
         
         // Check dimensions
         CHECK(output.width() == golden->w);
@@ -187,7 +187,7 @@ TEST_CASE("OmniScale Golden Data Tests") {
         
         // Scale it
         SDLInputImage input(pattern);
-        auto output = scaleOmniScale2x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_omni_scale_2x<SDLInputImage, SDLOutputImage>(input);
         
         // Check dimensions
         CHECK(output.width() == 8);
@@ -218,7 +218,7 @@ TEST_CASE("OmniScale Golden Data Tests") {
         
         // Scale it
         SDLInputImage input(pattern);
-        auto output = scaleOmniScale3x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_omni_scale_3x<SDLInputImage, SDLOutputImage>(input);
         
         // Check dimensions
         CHECK(output.width() == 9);

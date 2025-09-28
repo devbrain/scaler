@@ -1,7 +1,7 @@
 #include <doctest/doctest.h>
-#include <scaler/hq3x.hh>
+#include <../include/scaler/cpu/hq3x.hh>
 #include <scaler/image_base.hh>
-#include <scaler/vec3.hh>
+#include <../include/scaler/vec3.hh>
 #include <vector>
 #include <cstring>
 
@@ -12,8 +12,8 @@
 using namespace scaler;
 
 // Test image implementation for golden data tests
-class GoldenTestImage : public InputImageBase<GoldenTestImage, uvec3>,
-                        public OutputImageBase<GoldenTestImage, uvec3> {
+class GoldenTestImage : public input_image_base<GoldenTestImage, uvec3>,
+                        public output_image_base<GoldenTestImage, uvec3> {
 public:
     GoldenTestImage(size_t w, size_t h) 
         : m_width(w), m_height(h), m_data(w * h, {0, 0, 0}) {}
@@ -22,11 +22,11 @@ public:
         : GoldenTestImage(w, h) {}
     
     // Resolve ambiguity
-    using InputImageBase<GoldenTestImage, uvec3>::width;
-    using InputImageBase<GoldenTestImage, uvec3>::height;
-    using InputImageBase<GoldenTestImage, uvec3>::get_pixel;
-    using InputImageBase<GoldenTestImage, uvec3>::safeAccess;
-    using OutputImageBase<GoldenTestImage, uvec3>::set_pixel;
+    using input_image_base<GoldenTestImage, uvec3>::width;
+    using input_image_base<GoldenTestImage, uvec3>::height;
+    using input_image_base<GoldenTestImage, uvec3>::get_pixel;
+    using input_image_base<GoldenTestImage, uvec3>::safe_access;
+    using output_image_base<GoldenTestImage, uvec3>::set_pixel;
     
     [[nodiscard]] size_t width_impl() const { return m_width; }
     [[nodiscard]] size_t height_impl() const { return m_height; }
@@ -110,7 +110,7 @@ TEST_CASE("HQ3x Golden Data Comparison") {
         input.loadFromRawRGB(rotozoom_24bit_data);
         
         // Apply HQ3x scaling
-        auto output = scaleHq3x<GoldenTestImage, GoldenTestImage>(input);
+        auto output = scale_hq_3x<GoldenTestImage, GoldenTestImage>(input);
         
         // Check dimensions
         CHECK(output.width() == rotozoom_hq3x_width);
@@ -164,7 +164,7 @@ TEST_CASE("HQ3x Golden Data Comparison") {
             }
         }
         
-        auto output = scaleHq3x<GoldenTestImage, GoldenTestImage>(input);
+        auto output = scale_hq_3x<GoldenTestImage, GoldenTestImage>(input);
         
         CHECK(output.width() == 30);
         CHECK(output.height() == 30);
@@ -190,7 +190,7 @@ TEST_CASE("HQ3x Golden Data Comparison") {
             }
         }
         
-        auto output = scaleHq3x<GoldenTestImage, GoldenTestImage>(input);
+        auto output = scale_hq_3x<GoldenTestImage, GoldenTestImage>(input);
         
         CHECK(output.width() == 12);
         CHECK(output.height() == 12);

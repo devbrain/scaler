@@ -1,16 +1,16 @@
 #include <doctest/doctest.h>
 #include <scaler/image_base.hh>
-#include <scaler/epx.hh>
-#include <scaler/eagle.hh>
-#include <scaler/2xsai.hh>
+#include <scaler/cpu/epx.hh>
+#include <scaler/cpu/eagle.hh>
+#include <scaler/cpu/2xsai.hh>
 #include <vector>
 #include <array>
 #include <cmath>
 #include <algorithm>
 using namespace scaler;
 // Test image implementation with additional utilities
-class TestImage : public InputImageBase<TestImage, uvec3>,
-                  public OutputImageBase<TestImage, uvec3> {
+class TestImage : public input_image_base<TestImage, uvec3>,
+                  public output_image_base<TestImage, uvec3> {
 public:
     TestImage(size_t w, size_t h) 
         : m_width(w), m_height(h), m_data(w * h, {0, 0, 0}) {}
@@ -19,11 +19,11 @@ public:
         : TestImage(w, h) {}
     
     // Resolve ambiguity
-    using InputImageBase<TestImage, uvec3>::width;
-    using InputImageBase<TestImage, uvec3>::height;
-    using InputImageBase<TestImage, uvec3>::get_pixel;
-    using InputImageBase<TestImage, uvec3>::safeAccess;
-    using OutputImageBase<TestImage, uvec3>::set_pixel;
+    using input_image_base<TestImage, uvec3>::width;
+    using input_image_base<TestImage, uvec3>::height;
+    using input_image_base<TestImage, uvec3>::get_pixel;
+    using input_image_base<TestImage, uvec3>::safe_access;
+    using output_image_base<TestImage, uvec3>::set_pixel;
     
     [[nodiscard]] size_t width_impl() const { return m_width; }
     [[nodiscard]] size_t height_impl() const { return m_height; }
@@ -95,7 +95,7 @@ TEST_CASE("EPX Scaler Comprehensive Tests") {
         TestImage input(4, 4);
         input.fill(Colors::RED);
         
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
@@ -110,7 +110,7 @@ TEST_CASE("EPX Scaler Comprehensive Tests") {
             }
         }
         
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
@@ -127,7 +127,7 @@ TEST_CASE("EPX Scaler Comprehensive Tests") {
             input.set_pixel(i, i, Colors::BLACK);
         }
         
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 10);
         CHECK(output.height() == 10);
@@ -149,7 +149,7 @@ TEST_CASE("EPX Scaler Comprehensive Tests") {
             {Colors::WHITE, Colors::WHITE, Colors::WHITE}
         });
         
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 6);
         CHECK(output.height() == 6);
@@ -162,7 +162,7 @@ TEST_CASE("EPX Scaler Comprehensive Tests") {
         TestImage input(1, 1);
         input.set_pixel(0, 0, Colors::MAGENTA);
         
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 2);
         CHECK(output.height() == 2);
@@ -171,7 +171,7 @@ TEST_CASE("EPX Scaler Comprehensive Tests") {
     
     SUBCASE("Empty/zero size handling") {
         TestImage input(0, 0);
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 0);
         CHECK(output.height() == 0);
@@ -183,7 +183,7 @@ TEST_CASE("AdvMAME Scaler Comprehensive Tests") {
         TestImage input(3, 3);
         input.fill(Colors::BLUE);
         
-        auto output = scaleAdvMame<TestImage, TestImage>(input);
+        auto output = scale_adv_mame<TestImage, TestImage>(input);
         
         CHECK(output.width() == 6);
         CHECK(output.height() == 6);
@@ -198,7 +198,7 @@ TEST_CASE("AdvMAME Scaler Comprehensive Tests") {
             }
         }
         
-        auto output = scaleAdvMame<TestImage, TestImage>(input);
+        auto output = scale_adv_mame<TestImage, TestImage>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
@@ -219,7 +219,7 @@ TEST_CASE("AdvMAME Scaler Comprehensive Tests") {
             }
         }
         
-        auto output = scaleAdvMame<TestImage, TestImage>(input);
+        auto output = scale_adv_mame<TestImage, TestImage>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
@@ -238,7 +238,7 @@ TEST_CASE("Eagle Scaler Comprehensive Tests") {
         TestImage input(3, 3);
         input.fill(Colors::GRAY);
         
-        auto output = scaleEagle<TestImage, TestImage>(input);
+        auto output = scale_eagle<TestImage, TestImage>(input);
         
         CHECK(output.width() == 6);
         CHECK(output.height() == 6);
@@ -253,7 +253,7 @@ TEST_CASE("Eagle Scaler Comprehensive Tests") {
             {Colors::WHITE, Colors::BLACK, Colors::WHITE}
         });
         
-        auto output = scaleEagle<TestImage, TestImage>(input);
+        auto output = scale_eagle<TestImage, TestImage>(input);
         
         CHECK(output.width() == 6);
         CHECK(output.height() == 6);
@@ -272,7 +272,7 @@ TEST_CASE("Eagle Scaler Comprehensive Tests") {
             {Colors::GREEN, Colors::GREEN, Colors::GREEN}
         });
         
-        auto output = scaleEagle<TestImage, TestImage>(input);
+        auto output = scale_eagle<TestImage, TestImage>(input);
         
         CHECK(output.width() == 6);
         CHECK(output.height() == 6);
@@ -291,7 +291,7 @@ TEST_CASE("Eagle Scaler Comprehensive Tests") {
             {Colors::BLACK, Colors::BLACK, Colors::BLACK, Colors::BLACK}
         });
         
-        auto output = scaleEagle<TestImage, TestImage>(input);
+        auto output = scale_eagle<TestImage, TestImage>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
@@ -315,7 +315,7 @@ TEST_CASE("2xSaI Scaler Comprehensive Tests") {
         TestImage input(4, 4);
         input.fill(Colors::MAGENTA);
         
-        auto output = scale2xSaI<TestImage, TestImage>(input);
+        auto output = scale_2x_sai<TestImage, TestImage>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
@@ -332,7 +332,7 @@ TEST_CASE("2xSaI Scaler Comprehensive Tests") {
             }
         }
         
-        auto output = scale2xSaI<TestImage, TestImage>(input);
+        auto output = scale_2x_sai<TestImage, TestImage>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
@@ -362,7 +362,7 @@ TEST_CASE("2xSaI Scaler Comprehensive Tests") {
             }
         }
         
-        auto output = scale2xSaI<TestImage, TestImage>(input);
+        auto output = scale_2x_sai<TestImage, TestImage>(input);
         
         CHECK(output.width() == 8);
         CHECK(output.height() == 8);
@@ -386,7 +386,7 @@ TEST_CASE("2xSaI Scaler Comprehensive Tests") {
             if (i < 4) input.set_pixel(i + 1, i, Colors::GRAY);
         }
         
-        auto output = scale2xSaI<TestImage, TestImage>(input);
+        auto output = scale_2x_sai<TestImage, TestImage>(input);
         
         CHECK(output.width() == 10);
         CHECK(output.height() == 10);
@@ -406,10 +406,10 @@ TEST_CASE("Algorithm Comparison Tests") {
             {Colors::WHITE, Colors::GRAY, Colors::BLACK}
         });
         
-        auto epx_output = scaleEpx<TestImage, TestImage>(input);
-        auto eagle_output = scaleEagle<TestImage, TestImage>(input);
-        auto advmame_output = scaleAdvMame<TestImage, TestImage>(input);
-        auto sai_output = scale2xSaI<TestImage, TestImage>(input);
+        auto epx_output = scale_epx<TestImage, TestImage>(input);
+        auto eagle_output = scale_eagle<TestImage, TestImage>(input);
+        auto advmame_output = scale_adv_mame<TestImage, TestImage>(input);
+        auto sai_output = scale_2x_sai<TestImage, TestImage>(input);
         
         // All should produce same dimensions
         CHECK(epx_output.width() == 6);
@@ -436,7 +436,7 @@ TEST_CASE("Edge Cases and Boundary Tests") {
         TestImage input(5, 3);
         input.fill(Colors::BLUE);
         
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 10);
         CHECK(output.height() == 6);
@@ -448,7 +448,7 @@ TEST_CASE("Edge Cases and Boundary Tests") {
         input.set_pixel(0, 0, Colors::RED);
         input.set_pixel(1, 0, Colors::GREEN);
         
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 4);
         CHECK(output.height() == 2);
@@ -473,7 +473,7 @@ TEST_CASE("Edge Cases and Boundary Tests") {
             }
         }
         
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 20);
         CHECK(output.height() == 20);
@@ -498,7 +498,7 @@ TEST_CASE("Pattern Recognition Tests") {
             {Colors::WHITE, Colors::BLACK, Colors::BLACK, Colors::BLACK, Colors::WHITE}
         });
         
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 10);
         CHECK(output.height() == 10);
@@ -524,7 +524,7 @@ TEST_CASE("Pattern Recognition Tests") {
             {Colors::BLACK, Colors::BLACK, Colors::BLACK}
         });
         
-        auto output = scaleEagle<TestImage, TestImage>(input);
+        auto output = scale_eagle<TestImage, TestImage>(input);
         
         CHECK(output.width() == 6);
         CHECK(output.height() == 10);

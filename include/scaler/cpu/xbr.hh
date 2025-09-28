@@ -1,53 +1,54 @@
 #pragma once
 
 #include <scaler/image_base.hh>
-#include <scaler/scaler_common.hh>
-#include <scaler/sliding_window_buffer.hh>
+#include <scaler/cpu/scaler_common.hh>
+#include <scaler/cpu/sliding_window_buffer.hh>
 
 namespace scaler {
-    constexpr uint8_t Y_COEFF = 0x30;
-    constexpr uint8_t U_COEFF = 0x07;
-    constexpr uint8_t V_COEFF = 0x06;
+    namespace detail {
+        constexpr uint8_t Y_COEFF = 0x30;
+        constexpr uint8_t U_COEFF = 0x07;
+        constexpr uint8_t V_COEFF = 0x06;
 
-    // Helper function to compute absolute difference efficiently
-    template<typename T>
-    inline static T abs_diff(T a, T b) noexcept {
-        return (a > b) ? (a - b) : (b - a);
-    }
+        // Helper function to compute absolute difference efficiently
+        template<typename T>
+        static T abs_diff(T a, T b) noexcept {
+            return (a > b) ? (a - b) : (b - a);
+        }
 
-    // Distance function for already-converted YUV values (for caching)
-    template<typename T>
-    inline static uint32_t dist_yuv(const T& A_yuv, const T& B_yuv) noexcept {
-        // Early exit for identical pixels
-        if (A_yuv.x == B_yuv.x && A_yuv.y == B_yuv.y && A_yuv.z == B_yuv.z) return 0;
+        // Distance function for already-converted YUV values (for caching)
+        template<typename T>
+        static uint32_t dist_yuv(const T& A_yuv, const T& B_yuv) noexcept {
+            // Early exit for identical pixels
+            if (A_yuv.x == B_yuv.x && A_yuv.y == B_yuv.y && A_yuv.z == B_yuv.z) return 0;
 
-        auto dy = abs_diff(A_yuv.x, B_yuv.x);
-        auto du = abs_diff(A_yuv.y, B_yuv.y);
-        auto dv = abs_diff(A_yuv.z, B_yuv.z);
+            auto dy = abs_diff(A_yuv.x, B_yuv.x);
+            auto du = abs_diff(A_yuv.y, B_yuv.y);
+            auto dv = abs_diff(A_yuv.z, B_yuv.z);
 
-        return (dy * Y_COEFF) + (du * U_COEFF) + (dv * V_COEFF);
-    }
+            return (dy * Y_COEFF) + (du * U_COEFF) + (dv * V_COEFF);
+        }
 
-    template<typename T>
-    inline static uint32_t dist(T A, T B) noexcept {
-        // Early exit for identical pixels
-        if (A == B) return 0;
+        template<typename T>
+        static uint32_t dist(T A, T B) noexcept {
+            // Early exit for identical pixels
+            if (A == B) return 0;
 
-        auto A_yuv = rgbToYuv(A);
-        auto B_yuv = rgbToYuv(B);
+            auto A_yuv = rgb_to_yuv(A);
+            auto B_yuv = rgb_to_yuv(B);
 
-        return dist_yuv(A_yuv, B_yuv);
+            return dist_yuv(A_yuv, B_yuv);
+        }
     }
 
     // Generic XBR scaler using CRTP - works with any image implementation
     template<typename InputImage, typename OutputImage>
-    auto scaleXbr(const InputImage& src, size_t scale_factor = 2)
-        -> OutputImage {
+    OutputImage scale_xbr(const InputImage& src, size_t scale_factor = 2) {
         OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
 
         // Use cache-friendly sliding window buffer for 5x5 neighborhood
         using PixelType = decltype(src.get_pixel(0, 0));
-        SlidingWindow5x5 <PixelType> window(src.width());
+        sliding_window_5x5 <PixelType> window(src.width());
         window.initialize(src, 0);
 
         for (size_t y = 0; y < src.height(); y++) {
@@ -59,7 +60,7 @@ namespace scaler {
             for (size_t x = 0; x < src.width(); x++) {
                 // Get 5x5 neighborhood from cache-friendly buffer
                 PixelType neighborhood[5][5];
-                window.getNeighborhood(x, neighborhood);
+                window.get_neighborhood(x, neighborhood);
 
                 // Map to original variable names
                 // Row y-2
@@ -95,17 +96,18 @@ namespace scaler {
 
                 // Pre-convert frequently used pixels to YUV to avoid redundant conversions
                 // E is used 8 times, so caching it saves 7 conversions
-                auto E_yuv = rgbToYuv(E);
+                auto E_yuv = rgb_to_yuv(E);
                 // These pixels are used 3-4 times each
-                auto A_yuv = rgbToYuv(A);
-                auto B_yuv = rgbToYuv(B);
-                auto C_yuv = rgbToYuv(C);
-                auto D_yuv = rgbToYuv(D);
-                auto F_yuv = rgbToYuv(F);
-                auto G_yuv = rgbToYuv(G);
-                auto H_yuv = rgbToYuv(H);
-                auto I_yuv = rgbToYuv(I);
+                auto A_yuv = rgb_to_yuv(A);
+                auto B_yuv = rgb_to_yuv(B);
+                auto C_yuv = rgb_to_yuv(C);
+                auto D_yuv = rgb_to_yuv(D);
+                auto F_yuv = rgb_to_yuv(F);
+                auto G_yuv = rgb_to_yuv(G);
+                auto H_yuv = rgb_to_yuv(H);
+                auto I_yuv = rgb_to_yuv(I);
 
+                using namespace detail;
                 // Detect diagonal edges in the four possible directions
                 // Use cached YUV values for frequently used pixels
                 uint32_t bot_right_perpendicular_dist =

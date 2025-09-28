@@ -1,11 +1,11 @@
 // Program to generate golden data for all scaling algorithms
 #include <scaler/sdl/sdl_compat.hh>
 #include <scaler/sdl/sdl_image.hh>
-#include <scaler/epx.hh>
-#include <scaler/eagle.hh>
-#include <scaler/2xsai.hh>
-#include <scaler/xbr.hh>
-#include <scaler/hq2x.hh>
+#include <../include/scaler/cpu/epx.hh>
+#include <scaler/cpu/eagle.hh>
+#include <../include/scaler/cpu/2xsai.hh>
+#include <../include/scaler/cpu/xbr.hh>
+#include <../include/scaler/cpu/hq2x.hh>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -134,35 +134,35 @@ void generateTestPattern() {
     
     // EPX
     {
-        auto output = scaleEpx<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_epx<SDLInputImage, SDLOutputImage>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("test_pattern_epx", output.width(), output.height(), data);
     }
     
     // Eagle
     {
-        auto output = scaleEagle<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_eagle<SDLInputImage, SDLOutputImage>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("test_pattern_eagle", output.width(), output.height(), data);
     }
     
     // 2xSaI
     {
-        auto output = scale2xSaI<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_2x_sai<SDLInputImage, SDLOutputImage>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("test_pattern_2xsai", output.width(), output.height(), data);
     }
     
     // XBR
     {
-        auto output = scaleXbr<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_xbr<SDLInputImage, SDLOutputImage>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("test_pattern_xbr", output.width(), output.height(), data);
     }
     
     // HQ2x
     {
-        auto output = scaleHq2x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_hq2x<SDLInputImage, SDLOutputImage>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("test_pattern_hq2x", output.width(), output.height(), data);
     }
@@ -212,35 +212,35 @@ int main() {
     
     // EPX
     {
-        auto output = scaleEpx<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_epx<SDLInputImage, SDLOutputImage>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("epx", output.width(), output.height(), data);
     }
     
     // Eagle
     {
-        auto output = scaleEagle<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_eagle<SDLInputImage, SDLOutputImage>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("eagle", output.width(), output.height(), data);
     }
     
     // 2xSaI
     {
-        auto output = scale2xSaI<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_2x_sai<SDLInputImage, SDLOutputImage>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("2xsai", output.width(), output.height(), data);
     }
     
     // XBR
     {
-        auto output = scaleXbr<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_xbr<SDLInputImage, SDLOutputImage>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("xbr", output.width(), output.height(), data);
     }
     
     // HQ2x
     {
-        auto output = scaleHq2x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_hq2x<SDLInputImage, SDLOutputImage>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("hq2x", output.width(), output.height(), data);
     }

@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include <scaler/hq3x.hh>
+#include <../include/scaler/cpu/hq3x.hh>
 #include <scaler/sdl/sdl_compat.hh>
 #include <scaler/sdl/sdl_image.hh>
 #include <vector>
@@ -39,7 +39,7 @@ TEST_CASE("HQ3x Exact Golden Data Comparison") {
     
     // Apply exact HQ3x scaling using CRTP interface
     scaler::SDLInputImage input_image(input_surface);
-    auto scaled = scaler::scaleHq3x<scaler::SDLInputImage, scaler::SDLOutputImage>(input_image);
+    auto scaled = scaler::scale_hq_3x<scaler::SDLInputImage, scaler::SDLOutputImage>(input_image);
     
     // Get SDL surface from output
     SDL_Surface* scaled_surface = scaled.get_surface();

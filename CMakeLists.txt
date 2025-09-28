@@ -11,6 +11,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(SDL3 QUIET)
 find_package(SDL2 QUIET)
 
+# Find OpenGL for GPU acceleration
+find_package(OpenGL)
+
 if(SDL3_FOUND)
     message(STATUS "Found SDL3 - using SDL3 for image operations")
     set(SCALER_USE_SDL3 ON)
@@ -139,7 +142,7 @@ add_subdirectory(ext)
 
 add_library(scaler INTERFACE
         # Core utilities
-        ${SCALER_PROJECT_ROOT}/include/scaler/scaler_common.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scaler_common.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/vec3.hh
         # CRTP framework-agnostic interface
         ${SCALER_PROJECT_ROOT}/include/scaler/image_base.hh
@@ -147,14 +150,14 @@ add_library(scaler INTERFACE
         ${SCALER_PROJECT_ROOT}/include/scaler/sdl/sdl_image.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/sdl/sdl_scalers.hh
         # Scaling algorithms (CRTP-based)
-        ${SCALER_PROJECT_ROOT}/include/scaler/epx.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/eagle.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/2xsai.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/xbr.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/hq2x.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/omniscale.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/scale2x_sfx.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/scale3x_sfx.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/epx.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/eagle.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/2xsai.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/xbr.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/hq2x.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/omniscale.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scale2x_sfx.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scale3x_sfx.hh
 )
 
 # Create alias for consistent usage
@@ -182,10 +185,6 @@ endif()
 
 if (SCALER_BUILD_BENCHMARK)
     add_subdirectory(benchmark)
-endif()
-
-if (SCALER_BUILD_TOOLS)
-    add_subdirectory(tools)
 endif()
 
 # ===========================================================================

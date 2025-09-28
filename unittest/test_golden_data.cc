@@ -1,10 +1,10 @@
 #include <doctest/doctest.h>
-#include <../include/scaler/sdl/sdl_image.hh>
-#include <scaler/epx.hh>
-#include <scaler/eagle.hh>
-#include <scaler/2xsai.hh>
-#include <scaler/xbr.hh>
-#include <scaler/hq2x.hh>
+#include <scaler/sdl/sdl_image.hh>
+#include <scaler/cpu/epx.hh>
+#include <scaler/cpu/eagle.hh>
+#include <scaler/cpu/2xsai.hh>
+#include <scaler/cpu/xbr.hh>
+#include <scaler/cpu/hq2x.hh>
 #include <memory>
 #include <vector>
 #include <cstring>
@@ -110,7 +110,7 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     
     SUBCASE("EPX algorithm matches golden data") {
         SDLInputImage input(source.get());
-        auto output = scaleEpx<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_epx<SDLInputImage, SDLOutputImage>(input);
         
         CHECK(output.width() == GOLDEN_TEST_PATTERN_EPX_WIDTH);
         CHECK(output.height() == GOLDEN_TEST_PATTERN_EPX_HEIGHT);
@@ -124,7 +124,7 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     
     SUBCASE("Eagle algorithm matches golden data") {
         SDLInputImage input(source.get());
-        auto output = scaleEagle<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_eagle<SDLInputImage, SDLOutputImage>(input);
         
         CHECK(output.width() == GOLDEN_TEST_PATTERN_EAGLE_WIDTH);
         CHECK(output.height() == GOLDEN_TEST_PATTERN_EAGLE_HEIGHT);
@@ -138,7 +138,7 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     
     SUBCASE("2xSaI algorithm matches golden data") {
         SDLInputImage input(source.get());
-        auto output = scale2xSaI<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_2x_sai<SDLInputImage, SDLOutputImage>(input);
         
         CHECK(output.width() == GOLDEN_TEST_PATTERN_2XSAI_WIDTH);
         CHECK(output.height() == GOLDEN_TEST_PATTERN_2XSAI_HEIGHT);
@@ -152,7 +152,7 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     
     SUBCASE("XBR algorithm matches golden data") {
         SDLInputImage input(source.get());
-        auto output = scaleXbr<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_xbr<SDLInputImage, SDLOutputImage>(input);
         
         CHECK(output.width() == GOLDEN_TEST_PATTERN_XBR_WIDTH);
         CHECK(output.height() == GOLDEN_TEST_PATTERN_XBR_HEIGHT);
@@ -166,7 +166,7 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     
     SUBCASE("HQ2x algorithm matches golden data") {
         SDLInputImage input(source.get());
-        auto output = scaleHq2x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_hq2x<SDLInputImage, SDLOutputImage>(input);
         
         CHECK(output.width() == GOLDEN_TEST_PATTERN_HQ2X_WIDTH);
         CHECK(output.height() == GOLDEN_TEST_PATTERN_HQ2X_HEIGHT);
@@ -243,7 +243,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
         #include "data/golden_epx.h"
         
         SDLInputImage input(source.get());
-        auto output = scaleEpx<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_epx<SDLInputImage, SDLOutputImage>(input);
         
         CHECK(output.width() == GOLDEN_EPX_WIDTH);
         CHECK(output.height() == GOLDEN_EPX_HEIGHT);
@@ -265,7 +265,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
         #include "data/golden_eagle.h"
         
         SDLInputImage input(source.get());
-        auto output = scaleEagle<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_eagle<SDLInputImage, SDLOutputImage>(input);
         
         CHECK(output.width() == GOLDEN_EAGLE_WIDTH);
         CHECK(output.height() == GOLDEN_EAGLE_HEIGHT);
@@ -286,7 +286,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
         #include "data/golden_2xsai.h"
         
         SDLInputImage input(source.get());
-        auto output = scale2xSaI<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_2x_sai<SDLInputImage, SDLOutputImage>(input);
         
         CHECK(output.width() == GOLDEN_2XSAI_WIDTH);
         CHECK(output.height() == GOLDEN_2XSAI_HEIGHT);
@@ -307,7 +307,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
         #include "data/golden_xbr.h"
         
         SDLInputImage input(source.get());
-        auto output = scaleXbr<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_xbr<SDLInputImage, SDLOutputImage>(input);
         
         CHECK(output.width() == GOLDEN_XBR_WIDTH);
         CHECK(output.height() == GOLDEN_XBR_HEIGHT);
@@ -328,7 +328,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
         #include "data/golden_hq2x.h"
         
         SDLInputImage input(source.get());
-        auto output = scaleHq2x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_hq2x<SDLInputImage, SDLOutputImage>(input);
         
         CHECK(output.width() == GOLDEN_HQ2X_WIDTH);
         CHECK(output.height() == GOLDEN_HQ2X_HEIGHT);

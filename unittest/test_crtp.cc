@@ -1,11 +1,11 @@
 #include <doctest/doctest.h>
 #include <scaler/image_base.hh>
-#include <scaler/epx.hh>
+#include <../include/scaler/cpu/epx.hh>
 #include <vector>
 using namespace scaler;
 // Simple test image implementation - combined input/output
-class TestImage : public InputImageBase<TestImage, uvec3>,
-                  public OutputImageBase<TestImage, uvec3> {
+class TestImage : public input_image_base<TestImage, uvec3>,
+                  public output_image_base<TestImage, uvec3> {
 public:
     TestImage(size_t w, size_t h) 
         : m_width(w), m_height(h), m_data(w * h) {}
@@ -14,11 +14,11 @@ public:
         : TestImage(w, h) {}
     
     // Resolve ambiguity by providing unified implementations
-    using InputImageBase<TestImage, uvec3>::width;
-    using InputImageBase<TestImage, uvec3>::height;
-    using InputImageBase<TestImage, uvec3>::get_pixel;
-    using InputImageBase<TestImage, uvec3>::safeAccess;
-    using OutputImageBase<TestImage, uvec3>::set_pixel;
+    using input_image_base<TestImage, uvec3>::width;
+    using input_image_base<TestImage, uvec3>::height;
+    using input_image_base<TestImage, uvec3>::get_pixel;
+    using input_image_base<TestImage, uvec3>::safe_access;
+    using output_image_base<TestImage, uvec3>::set_pixel;
     
     [[nodiscard]] size_t width_impl() const { return m_width; }
     [[nodiscard]] size_t height_impl() const { return m_height; }
@@ -69,17 +69,17 @@ TEST_CASE("CRTP Image Base Classes") {
         img.set_pixel(2, 2, center_pixel);
         
         // Test out of bounds with ZERO strategy
-        auto zero_result = img.safeAccess(-1, -1, ZERO);
+        auto zero_result = img.safe_access(-1, -1, ZERO);
         CHECK(zero_result.x == 0);
         CHECK(zero_result.y == 0);
         CHECK(zero_result.z == 0);
         
         // Test out of bounds with NEAREST strategy
-        auto nearest_result = img.safeAccess(-1, 2, NEAREST);
+        auto nearest_result = img.safe_access(-1, 2, NEAREST);
         CHECK(nearest_result.x == 0); // Should get pixel at (0, 2)
         
         // Test in bounds access
-        auto valid_result = img.safeAccess(2, 2);
+        auto valid_result = img.safe_access(2, 2);
         CHECK(valid_result.x == center_pixel.x);
         CHECK(valid_result.y == center_pixel.y);
         CHECK(valid_result.z == center_pixel.z);
@@ -100,7 +100,7 @@ TEST_CASE("EPX Scaling with CRTP") {
         input.set_pixel(1, 1, white);
         
         // Scale using EPX
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         // Check dimensions
         CHECK(output.width() == 4);
@@ -119,7 +119,7 @@ TEST_CASE("EPX Scaling with CRTP") {
         uvec3 red{255, 0, 0};
         input.set_pixel(0, 0, red);
         
-        auto output = scaleEpx<TestImage, TestImage>(input);
+        auto output = scale_epx<TestImage, TestImage>(input);
         
         CHECK(output.width() == 2);
         CHECK(output.height() == 2);

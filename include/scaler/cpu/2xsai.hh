@@ -1,39 +1,42 @@
 #pragma once
 
 #include <scaler/image_base.hh>
-#include <scaler/scaler_common.hh>
-#include <scaler/sliding_window_buffer.hh>
+#include <scaler/cpu/scaler_common.hh>
+#include <scaler/cpu/sliding_window_buffer.hh>
+
 namespace scaler {
-    /**
-     * Compute if C and D exclusively match either A or B.
-     *
-     * @param A First candidate for majority match
-     * @param B Second candidate for majority match
-     * @param C First value to check for majority match
-     * @param D Second value to check for majority match
-     *
-     * @return 0 if no majority match on A or B; 1 if majority match ONLY on A; -1 if majority match ONLY on B
-     */
-    template<typename T>
-    inline int8_t majorityMatch(T A, T B, T C, T D) {
-        int8_t x, y, r;
-        x = y = r = 0;
-        if (A == C) { x += 1; } else if (B == C) { y += 1; }
-        if (A == D) { x += 1; } else if (B == D) { y += 1; }
-        if (x <= 1) { r -= 1; }
-        if (y <= 1) { r += 1; }
-        return r;
+    namespace detail {
+        /**
+         * Compute if C and D exclusively match either A or B.
+         *
+         * @param A First candidate for majority match
+         * @param B Second candidate for majority match
+         * @param C First value to check for majority match
+         * @param D Second value to check for majority match
+         *
+         * @return 0 if no majority match on A or B; 1 if majority match ONLY on A; -1 if majority match ONLY on B
+         */
+        template<typename T>
+        int8_t majorityMatch(T A, T B, T C, T D) {
+            int8_t x, y, r;
+            x = y = r = 0;
+            if (A == C) { x += 1; } else if (B == C) { y += 1; }
+            if (A == D) { x += 1; } else if (B == D) { y += 1; }
+            if (x <= 1) { r -= 1; }
+            if (y <= 1) { r += 1; }
+            return r;
+        }
     }
 
     // Generic 2xSaI scaler using CRTP - works with any image implementation
     template<typename InputImage, typename OutputImage>
-    auto scale2xSaI(const InputImage& src, size_t scale_factor = 2)
+    auto scale_2x_sai(const InputImage& src, size_t scale_factor = 2)
         -> OutputImage {
         OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
 
         // Use cache-friendly sliding window buffer for 4x4 neighborhood
         using PixelType = decltype(src.get_pixel(0, 0));
-        SlidingWindow4x4<PixelType> window(src.width());
+        sliding_window_4x4 <PixelType> window(src.width());
         window.initialize(src, 0);
 
         for (size_t y = 0; y < src.height(); y++) {
@@ -48,25 +51,25 @@ namespace scaler {
                 window.get4x4(x, grid);
 
                 // Map to original variable names for clarity
-                auto I = grid[0][0];  // (x-1, y-1)
-                auto E = grid[0][1];  // (x,   y-1)
-                auto F = grid[0][2];  // (x+1, y-1)
-                auto J = grid[0][3];  // (x+2, y-1)
+                auto I = grid[0][0]; // (x-1, y-1)
+                auto E = grid[0][1]; // (x,   y-1)
+                auto F = grid[0][2]; // (x+1, y-1)
+                auto J = grid[0][3]; // (x+2, y-1)
 
-                auto G = grid[1][0];  // (x-1, y)
-                auto A = grid[1][1];  // (x,   y)
-                auto B = grid[1][2];  // (x+1, y)
-                auto K = grid[1][3];  // (x+2, y)
+                auto G = grid[1][0]; // (x-1, y)
+                auto A = grid[1][1]; // (x,   y)
+                auto B = grid[1][2]; // (x+1, y)
+                auto K = grid[1][3]; // (x+2, y)
 
-                auto H = grid[2][0];  // (x-1, y+1)
-                auto C = grid[2][1];  // (x,   y+1)
-                auto D = grid[2][2];  // (x+1, y+1)
-                auto L = grid[2][3];  // (x+2, y+1)
+                auto H = grid[2][0]; // (x-1, y+1)
+                auto C = grid[2][1]; // (x,   y+1)
+                auto D = grid[2][2]; // (x+1, y+1)
+                auto L = grid[2][3]; // (x+2, y+1)
 
-                auto M = grid[3][0];  // (x-1, y+2)
-                auto N = grid[3][1];  // (x,   y+2)
-                auto O = grid[3][2];  // (x+1, y+2)
-                [[maybe_unused]] auto P = grid[3][3];  // (x+2, y+2)
+                auto M = grid[3][0]; // (x-1, y+2)
+                auto N = grid[3][1]; // (x,   y+2)
+                auto O = grid[3][2]; // (x+1, y+2)
+                [[maybe_unused]] auto P = grid[3][3]; // (x+2, y+2)
 
                 decltype(A) right_interp, bottom_interp, bottom_right_interp;
 
@@ -108,21 +111,21 @@ namespace scaler {
                         bottom_interp = mix(A, C, 0.5f);
 
                         int8_t majority_accumulator = 0;
-                        majority_accumulator += majorityMatch(B, A, G, E);
-                        majority_accumulator += majorityMatch(B, A, K, F);
-                        majority_accumulator += majorityMatch(B, A, H, N);
-                        majority_accumulator += majorityMatch(B, A, L, O);
+                        majority_accumulator += detail::majorityMatch(B, A, G, E);
+                        majority_accumulator += detail::majorityMatch(B, A, K, F);
+                        majority_accumulator += detail::majorityMatch(B, A, H, N);
+                        majority_accumulator += detail::majorityMatch(B, A, L, O);
 
                         if (majority_accumulator > 0) {
                             bottom_right_interp = A;
                         } else if (majority_accumulator < 0) {
                             bottom_right_interp = B;
                         } else {
-                            bottom_right_interp = bilinearInterpolation(A, B, C, D, 0.5f, 0.5f);
+                            bottom_right_interp = bilinear_interpolation(A, B, C, D, 0.5f, 0.5f);
                         }
                     }
                 } else {
-                    bottom_right_interp = bilinearInterpolation(A, B, C, D, 0.5f, 0.5f);
+                    bottom_right_interp = bilinear_interpolation(A, B, C, D, 0.5f, 0.5f);
 
                     if (A == C && A == F && B != E && B == J) {
                         right_interp = A;
