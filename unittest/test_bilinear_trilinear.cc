@@ -229,7 +229,7 @@ TEST_CASE("Unified Scaler with Bilinear and Trilinear") {
 
     SUBCASE("Bilinear through unified interface") {
         auto output = Scaler<TestImage<uvec3>, TestImage<uvec3>>::scale(
-            input, Algorithm::Bilinear, 2.5f
+            input, algorithm::Bilinear, 2.5f
         );
 
         CHECK(output.width() == 5);
@@ -238,26 +238,26 @@ TEST_CASE("Unified Scaler with Bilinear and Trilinear") {
 
     SUBCASE("Trilinear through unified interface") {
         auto output = Scaler<TestImage<uvec3>, TestImage<uvec3>>::scale(
-            input, Algorithm::Trilinear, 0.5f
+            input, algorithm::Trilinear, 0.5f
         );
 
         CHECK(output.width() == 1);
         CHECK(output.height() == 1);
     }
 
-    SUBCASE("Algorithm capabilities") {
-        CHECK(ScalerCapabilities::supportsArbitraryScale(Algorithm::Bilinear) == true);
-        CHECK(ScalerCapabilities::supportsArbitraryScale(Algorithm::Trilinear) == true);
-        CHECK(ScalerCapabilities::isScaleSupported(Algorithm::Bilinear, 3.7f) == true);
-        CHECK(ScalerCapabilities::isScaleSupported(Algorithm::Trilinear, 0.3f) == true);
+    SUBCASE("algorithm capabilities") {
+        CHECK(scaler_capabilities::supports_arbitrary_scale(algorithm::Bilinear) == true);
+        CHECK(scaler_capabilities::supports_arbitrary_scale(algorithm::Trilinear) == true);
+        CHECK(scaler_capabilities::is_scale_supported(algorithm::Bilinear, 3.7f) == true);
+        CHECK(scaler_capabilities::is_scale_supported(algorithm::Trilinear, 0.3f) == true);
 
-        CHECK(ScalerCapabilities::getAlgorithmName(Algorithm::Bilinear) == "Bilinear");
-        CHECK(ScalerCapabilities::getAlgorithmName(Algorithm::Trilinear) == "Trilinear");
+        CHECK(scaler_capabilities::get_algorithm_name(algorithm::Bilinear) == "Bilinear");
+        CHECK(scaler_capabilities::get_algorithm_name(algorithm::Trilinear) == "Trilinear");
     }
 
     SUBCASE("Get algorithms for scale includes bilinear and trilinear") {
-        auto algos = ScalerCapabilities::getAlgorithmsForScale(1.5f);
-        CHECK(std::find(algos.begin(), algos.end(), Algorithm::Bilinear) != algos.end());
-        CHECK(std::find(algos.begin(), algos.end(), Algorithm::Trilinear) != algos.end());
+        auto algos = scaler_capabilities::get_algorithms_for_scale(1.5f);
+        CHECK(std::find(algos.begin(), algos.end(), algorithm::Bilinear) != algos.end());
+        CHECK(std::find(algos.begin(), algos.end(), algorithm::Trilinear) != algos.end());
     }
 }

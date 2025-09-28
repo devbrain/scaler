@@ -62,7 +62,7 @@ TEST_CASE("Unified Scaler Interface") {
 
     SUBCASE("Basic scaling works") {
         // Test EPX at 2x
-        auto output = Scaler<BasicInputImage<uvec3>, BasicImage<uvec3>>::scale(input, Algorithm::EPX, 2.0f);
+        auto output = Scaler<BasicInputImage<uvec3>, BasicImage<uvec3>>::scale(input, algorithm::EPX, 2.0f);
         CHECK(output.width() == 4);
         CHECK(output.height() == 4);
     }
@@ -72,83 +72,83 @@ TEST_CASE("Unified Scaler Interface") {
         using TestScaler = Scaler<BasicInputImage<uvec3>, BasicImage<uvec3>>;
 
         CHECK_THROWS_AS(
-            TestScaler::scale(input, Algorithm::EPX, 3.0f),
-            UnsupportedScaleException
+            TestScaler::scale(input, algorithm::EPX, 3.0f),
+            unsupported_scale_exception
         );
 
         try {
-            TestScaler::scale(input, Algorithm::EPX, 3.0f);
-        } catch (const UnsupportedScaleException& e) {
-            CHECK(e.algorithm == Algorithm::EPX);
-            CHECK(e.requested_scale == 3.0f);
-            CHECK(e.supported_scales == std::vector<float>{2.0f});
+            TestScaler::scale(input, algorithm::EPX, 3.0f);
+        } catch (const unsupported_scale_exception& e) {
+            CHECK(e.m_algorithm == algorithm::EPX);
+            CHECK(e.m_requested_scale == 3.0f);
+            CHECK(e.m_supported_scales == std::vector<float>{2.0f});
         }
     }
 
-    SUBCASE("Algorithm capabilities queries") {
+    SUBCASE("algorithm capabilities queries") {
         // Check EPX capabilities
-        CHECK(ScalerCapabilities::getAlgorithmName(Algorithm::EPX) == "EPX");
-        CHECK(ScalerCapabilities::getSupportedScales(Algorithm::EPX) == std::vector<float>{2.0f});
-        CHECK(ScalerCapabilities::supportsArbitraryScale(Algorithm::EPX) == false);
-        CHECK(ScalerCapabilities::isScaleSupported(Algorithm::EPX, 2.0f) == true);
-        CHECK(ScalerCapabilities::isScaleSupported(Algorithm::EPX, 3.0f) == false);
+        CHECK(scaler_capabilities::get_algorithm_name(algorithm::EPX) == "EPX");
+        CHECK(scaler_capabilities::get_supported_scales(algorithm::EPX) == std::vector<float>{2.0f});
+        CHECK(scaler_capabilities::supports_arbitrary_scale(algorithm::EPX) == false);
+        CHECK(scaler_capabilities::is_scale_supported(algorithm::EPX, 2.0f) == true);
+        CHECK(scaler_capabilities::is_scale_supported(algorithm::EPX, 3.0f) == false);
 
         // Check OmniScale capabilities
-        CHECK(ScalerCapabilities::supportsArbitraryScale(Algorithm::OmniScale) == true);
-        CHECK(ScalerCapabilities::isScaleSupported(Algorithm::OmniScale, 2.5f) == true);
-        CHECK(ScalerCapabilities::isScaleSupported(Algorithm::OmniScale, 3.7f) == true);
+        CHECK(scaler_capabilities::supports_arbitrary_scale(algorithm::OmniScale) == true);
+        CHECK(scaler_capabilities::is_scale_supported(algorithm::OmniScale, 2.5f) == true);
+        CHECK(scaler_capabilities::is_scale_supported(algorithm::OmniScale, 3.7f) == true);
     }
 
     SUBCASE("Get algorithms for specific scale") {
-        auto algos_2x = ScalerCapabilities::getAlgorithmsForScale(2.0f);
-        CHECK(std::find(algos_2x.begin(), algos_2x.end(), Algorithm::EPX) != algos_2x.end());
-        CHECK(std::find(algos_2x.begin(), algos_2x.end(), Algorithm::Eagle) != algos_2x.end());
-        CHECK(std::find(algos_2x.begin(), algos_2x.end(), Algorithm::HQ) != algos_2x.end());
+        auto algos_2x = scaler_capabilities::get_algorithms_for_scale(2.0f);
+        CHECK(std::find(algos_2x.begin(), algos_2x.end(), algorithm::EPX) != algos_2x.end());
+        CHECK(std::find(algos_2x.begin(), algos_2x.end(), algorithm::Eagle) != algos_2x.end());
+        CHECK(std::find(algos_2x.begin(), algos_2x.end(), algorithm::HQ) != algos_2x.end());
 
-        auto algos_3x = ScalerCapabilities::getAlgorithmsForScale(3.0f);
-        CHECK(std::find(algos_3x.begin(), algos_3x.end(), Algorithm::EPX) == algos_3x.end()); // EPX not in 3x
-        CHECK(std::find(algos_3x.begin(), algos_3x.end(), Algorithm::Scale) != algos_3x.end());
-        CHECK(std::find(algos_3x.begin(), algos_3x.end(), Algorithm::HQ) != algos_3x.end());
+        auto algos_3x = scaler_capabilities::get_algorithms_for_scale(3.0f);
+        CHECK(std::find(algos_3x.begin(), algos_3x.end(), algorithm::EPX) == algos_3x.end()); // EPX not in 3x
+        CHECK(std::find(algos_3x.begin(), algos_3x.end(), algorithm::Scale) != algos_3x.end());
+        CHECK(std::find(algos_3x.begin(), algos_3x.end(), algorithm::HQ) != algos_3x.end());
     }
 
-    SUBCASE("Algorithm info queries") {
+    SUBCASE("algorithm info queries") {
         // Test HQ info
-        CHECK(ScalerCapabilities::getAlgorithmName(Algorithm::HQ) == "HQ");
-        CHECK(ScalerCapabilities::getSupportedScales(Algorithm::HQ) == std::vector<float>{2.0f, 3.0f, 4.0f});
+        CHECK(scaler_capabilities::get_algorithm_name(algorithm::HQ) == "HQ");
+        CHECK(scaler_capabilities::get_supported_scales(algorithm::HQ) == std::vector<float>{2.0f, 3.0f, 4.0f});
 
         // Test Scale info
-        CHECK(ScalerCapabilities::getAlgorithmName(Algorithm::Scale) == "Scale");
-        CHECK(ScalerCapabilities::getSupportedScales(Algorithm::Scale) == std::vector<float>{2.0f, 3.0f, 4.0f});
+        CHECK(scaler_capabilities::get_algorithm_name(algorithm::Scale) == "Scale");
+        CHECK(scaler_capabilities::get_supported_scales(algorithm::Scale) == std::vector<float>{2.0f, 3.0f, 4.0f});
     }
 
     SUBCASE("Default scale selection") {
         // Use explicit scale since we removed the default overload
-        auto output = Scaler<BasicInputImage<uvec3>, BasicImage<uvec3>>::scale(input, Algorithm::EPX, 2.0f);
+        auto output = Scaler<BasicInputImage<uvec3>, BasicImage<uvec3>>::scale(input, algorithm::EPX, 2.0f);
         CHECK(output.width() == 4);  // 2x scale
         CHECK(output.height() == 4);
     }
 
     SUBCASE("Multiple algorithms produce correct output size") {
         struct TestCase {
-            Algorithm algo;
+            algorithm algo;
             float scale;
             size_t expected_width;
             size_t expected_height;
         };
 
         std::vector<TestCase> test_cases = {
-            {Algorithm::EPX, 2.0f, 4, 4},
-            {Algorithm::Eagle, 2.0f, 4, 4},
-            {Algorithm::Scale, 2.0f, 4, 4},
-            {Algorithm::Scale, 3.0f, 6, 6},
-            {Algorithm::HQ, 2.0f, 4, 4},
-            {Algorithm::HQ, 3.0f, 6, 6},
-            {Algorithm::OmniScale, 2.5f, 5, 5},
-            {Algorithm::Nearest, 3.5f, 7, 7},
+            {algorithm::EPX, 2.0f, 4, 4},
+            {algorithm::Eagle, 2.0f, 4, 4},
+            {algorithm::Scale, 2.0f, 4, 4},
+            {algorithm::Scale, 3.0f, 6, 6},
+            {algorithm::HQ, 2.0f, 4, 4},
+            {algorithm::HQ, 3.0f, 6, 6},
+            {algorithm::OmniScale, 2.5f, 5, 5},
+            {algorithm::Nearest, 3.5f, 7, 7},
         };
 
         for (const auto& tc : test_cases) {
-            INFO("Testing algorithm: " << ScalerCapabilities::getAlgorithmName(tc.algo)
+            INFO("Testing algorithm: " << scaler_capabilities::get_algorithm_name(tc.algo)
                  << " at scale " << tc.scale);
 
             auto output = Scaler<BasicInputImage<uvec3>, BasicImage<uvec3>>::scale(
@@ -170,7 +170,7 @@ TEST_CASE("Nearest neighbor implementation") {
 
     SUBCASE("2x scaling") {
         auto output = Scaler<BasicInputImage<uvec3>, BasicImage<uvec3>>::scale(
-            input, Algorithm::Nearest, 2.0f
+            input, algorithm::Nearest, 2.0f
         );
 
         // Check that each pixel is duplicated correctly
@@ -187,7 +187,7 @@ TEST_CASE("Nearest neighbor implementation") {
 
     SUBCASE("Non-integer scaling") {
         auto output = Scaler<BasicInputImage<uvec3>, BasicImage<uvec3>>::scale(
-            input, Algorithm::Nearest, 1.5f
+            input, algorithm::Nearest, 1.5f
         );
 
         CHECK(output.width() == 3);

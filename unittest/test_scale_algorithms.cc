@@ -12,27 +12,20 @@ private:
     size_t width_;
     size_t height_;
     std::vector<PixelType> data_;
-    
+
 public:
     TestInputImage(size_t w, size_t h) : width_(w), height_(h), data_(w * h) {}
-    
+
     size_t width_impl() const { return width_; }
     size_t height_impl() const { return height_; }
-    
+
     PixelType get_pixel_impl(size_t x, size_t y) const {
         if (x >= width_ || y >= height_) {
-            return data_[0]; // Return first pixel for out of bounds
+            return PixelType{};
         }
         return data_[y * width_ + x];
     }
-    
-    PixelType safeAccess(int x, int y) const {
-        if (x < 0 || y < 0) {
-            return data_[0]; // Return first pixel for out of bounds
-        }
-        return get_pixel_impl(static_cast<size_t>(x), static_cast<size_t>(y));
-    }
-    
+
     void setData(size_t x, size_t y, PixelType pixel) {
         if (x < width_ && y < height_) {
             data_[y * width_ + x] = pixel;
@@ -80,18 +73,19 @@ using TestOutputVec3 = TestOutputImage<vec3<unsigned int>>;
 TEST_CASE("Scale2xSFX algorithm basic test") {
     // Create a small test image
     TestInputVec3 input(4, 4);
-    
+
     // Create a simple pattern
     input.setData(0, 0, vec3<unsigned int>(255, 0, 0)); // Red
     input.setData(1, 0, vec3<unsigned int>(0, 255, 0)); // Green
     input.setData(1, 1, vec3<unsigned int>(0, 0, 255)); // Blue
-    
+    input.setData(3, 3, vec3<unsigned int>(255, 255, 0)); // Yellow at bottom-right
+
     // Test Scale2xSFX
     auto result = scale_scale_2x_sfx<TestInputVec3, TestOutputVec3>(input, 2);
-    
+
     CHECK(result.width() == 8);
     CHECK(result.height() == 8);
-    
+
     // Basic sanity check - corners should exist
     auto tl = result.get_pixel(0, 0);
     auto br = result.get_pixel(7, 7);
@@ -102,18 +96,19 @@ TEST_CASE("Scale2xSFX algorithm basic test") {
 TEST_CASE("Scale3x algorithm basic test") {
     // Create a small test image
     TestInputVec3 input(4, 4);
-    
+
     // Create a simple pattern
     input.setData(0, 0, vec3<unsigned int>(255, 0, 0)); // Red
     input.setData(1, 0, vec3<unsigned int>(0, 255, 0)); // Green
     input.setData(1, 1, vec3<unsigned int>(0, 0, 255)); // Blue
-    
+    input.setData(3, 3, vec3<unsigned int>(255, 255, 0)); // Yellow at bottom-right
+
     // Test Scale3x
     auto result = scale_scale_3x<TestInputVec3, TestOutputVec3>(input, 3);
-    
+
     CHECK(result.width() == 12);
     CHECK(result.height() == 12);
-    
+
     // Basic sanity check - corners should exist
     auto tl = result.get_pixel(0, 0);
     auto br = result.get_pixel(11, 11);
@@ -124,18 +119,19 @@ TEST_CASE("Scale3x algorithm basic test") {
 TEST_CASE("Scale3xSFX algorithm basic test") {
     // Create a small test image
     TestInputVec3 input(4, 4);
-    
+
     // Create a simple pattern
     input.setData(0, 0, vec3<unsigned int>(255, 0, 0)); // Red
     input.setData(1, 0, vec3<unsigned int>(0, 255, 0)); // Green
     input.setData(1, 1, vec3<unsigned int>(0, 0, 255)); // Blue
-    
+    input.setData(3, 3, vec3<unsigned int>(255, 255, 0)); // Yellow at bottom-right
+
     // Test Scale3xSFX
     auto result = scale_scale_3x_sfx<TestInputVec3, TestOutputVec3>(input, 3);
-    
+
     CHECK(result.width() == 12);
     CHECK(result.height() == 12);
-    
+
     // Basic sanity check - corners should exist
     auto tl = result.get_pixel(0, 0);
     auto br = result.get_pixel(11, 11);

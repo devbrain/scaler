@@ -142,6 +142,8 @@ namespace scaler::gpu {
         private:
             SDL_Window* window_ = nullptr;
             SDL_GLContext gl_context_ = nullptr;
+            bool owns_window_ = false;  // Track whether we created and own the window
+            bool owns_context_ = false; // Track whether we created and own the GL context
             GLuint framebuffer_ = 0;
             GLuint texture_ = 0;
 
@@ -1378,12 +1380,14 @@ namespace scaler::gpu {
                     if (!window_) {
                         throw std::runtime_error("Window creation failed: " + std::string(SDL_GetError()));
                     }
+                    owns_window_ = true;  // We created the window, so we own it
 
                     // Create OpenGL context
                     gl_context_ = SDL_GL_CreateContext(window_);
                     if (!gl_context_) {
                         throw std::runtime_error("OpenGL context creation failed: " + std::string(SDL_GetError()));
                     }
+                    owns_context_ = true;  // We created the context, so we own it
 
                     // Initialize OpenGL
                     initGL();
@@ -1398,7 +1402,10 @@ namespace scaler::gpu {
                     initialized_ = true;
                     return true;
                 } catch (...) {
-                    // Clean up on any failure
+                    // Clean up on any failure - reset ownership flags first
+                    owns_window_ = false;
+                    owns_context_ = false;
+
                     if (gl_context_) {
                         SDL_GL_DeleteContext(gl_context_);
                         gl_context_ = nullptr;
@@ -1425,7 +1432,9 @@ namespace scaler::gpu {
                 }
 
                 window_ = existing_window;
+                owns_window_ = false;  // We don't own the external window
                 gl_context_ = SDL_GL_GetCurrentContext();
+                owns_context_ = false;  // We don't own the external context
 
                 if (!gl_context_) {
                     return false;
@@ -1492,14 +1501,19 @@ namespace scaler::gpu {
                 }
 
                 // Clean up SDL - only if we own the resources
-                if (gl_context_) {
+                if (gl_context_ && owns_context_) {
                     SDL_GL_DeleteContext(gl_context_);
-                    gl_context_ = nullptr;
                 }
-                if (window_) {
+                gl_context_ = nullptr;
+
+                if (window_ && owns_window_) {
                     SDL_DestroyWindow(window_);
-                    window_ = nullptr;
                 }
+                window_ = nullptr;
+
+                // Reset ownership flags
+                owns_window_ = false;
+                owns_context_ = false;
 
                 // Note: SDL_Quit() removed - should be called by application, not library
             }
