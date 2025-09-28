@@ -1,6 +1,7 @@
 #pragma once
 
 #include <scaler/image_base.hh>
+#include <scaler/types.hh>
 #include <scaler/cpu/scaler_common.hh>
 #include <scaler/cpu/sliding_window_buffer.hh>
 
@@ -8,11 +9,11 @@ namespace scaler {
     namespace detail {
         // Implementation template for EPX with any window type
         template<typename InputImage, typename OutputImage, typename WindowType>
-        OutputImage scale_epx_impl(const InputImage& src, WindowType& window, size_t scale_factor = 2) {
+        OutputImage scale_epx_impl(const InputImage& src, WindowType& window, dimension_t scale_factor = 2) {
             OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
             window.initialize(src, 0);
 
-            for (size_t y = 0; y < src.height(); y++) {
+            for (index_t y = 0; y < src.height(); y++) {
                 // Advance sliding window for next row
                 if (y > 0) {
                     window.advance(src);
@@ -22,16 +23,16 @@ namespace scaler {
                 const auto& topRow = window.get_row(-1);
                 const auto& midRow = window.get_row(0);
                 const auto& botRow = window.get_row(1);
-                const int pad = window.get_padding();
+                const index_t pad = static_cast<index_t>(window.get_padding());
 
-                for (size_t x = 0; x < src.width(); x++) {
+                for (index_t x = 0; x < src.width(); x++) {
                     // Acquire neighbour pixel values from cached row references
-                    const int xp = static_cast <int>(x) + pad;
-                    auto A = topRow[static_cast <size_t>(xp)]; // top
-                    auto B = midRow[static_cast <size_t>(xp + 1)]; // right
-                    auto C = midRow[static_cast <size_t>(xp - 1)]; // left
-                    auto D = botRow[static_cast <size_t>(xp)]; // bottom
-                    auto original_pixel = midRow[static_cast <size_t>(xp)]; // center
+                    const index_t xp = x + pad;
+                    auto A = topRow[xp]; // top
+                    auto B = midRow[xp + 1]; // right
+                    auto C = xp > 0 ? midRow[xp - 1] : midRow[0]; // left (protect against underflow)
+                    auto D = botRow[xp]; // bottom
+                    auto original_pixel = midRow[xp]; // center
 
                     // Initial expanded pixel value assignments
                     auto one = original_pixel;
@@ -48,8 +49,8 @@ namespace scaler {
                         one = two = three = four = original_pixel;
                     }
 
-                    size_t dst_x = scale_factor * x;
-                    size_t dst_y = scale_factor * y;
+                    index_t dst_x = scale_factor * x;
+                    index_t dst_y = scale_factor * y;
                     result.set_pixel(dst_x, dst_y, one);
                     result.set_pixel(dst_x + 1, dst_y, two);
                     result.set_pixel(dst_x, dst_y + 1, three);
@@ -62,7 +63,7 @@ namespace scaler {
 
     // Generic EPX scaler using CRTP - automatically uses fast path for small images
     template<typename InputImage, typename OutputImage>
-    OutputImage scale_epx(const InputImage& src, size_t scale_factor = 2) {
+    OutputImage scale_epx(const InputImage& src, dimension_t scale_factor = 2) {
         using PixelType = decltype(src.get_pixel(0, 0));
 
         // Use fast sliding window for images <= 4096 pixels wide
@@ -79,11 +80,11 @@ namespace scaler {
     namespace detail {
         // Implementation template for AdvMAME with any window type
         template<typename InputImage, typename OutputImage, typename WindowType>
-        OutputImage scale_adv_mame_impl(const InputImage& src, WindowType& window, size_t scale_factor = 2) {
+        OutputImage scale_adv_mame_impl(const InputImage& src, WindowType& window, dimension_t scale_factor = 2) {
             OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
             window.initialize(src, 0);
 
-            for (size_t y = 0; y < src.height(); y++) {
+            for (index_t y = 0; y < src.height(); y++) {
                 // Advance sliding window for next row
                 if (y > 0) {
                     window.advance(src);
@@ -93,16 +94,16 @@ namespace scaler {
                 const auto& topRow = window.get_row(-1);
                 const auto& midRow = window.get_row(0);
                 const auto& botRow = window.get_row(1);
-                const int pad = window.get_padding();
+                const index_t pad = static_cast<index_t>(window.get_padding());
 
-                for (size_t x = 0; x < src.width(); x++) {
+                for (index_t x = 0; x < src.width(); x++) {
                     // Acquire neighbour pixel values from cached row references
-                    const int xp = static_cast <int>(x) + pad;
-                    auto A = topRow[static_cast <size_t>(xp)]; // top
-                    auto B = midRow[static_cast <size_t>(xp + 1)]; // right
-                    auto C = midRow[static_cast <size_t>(xp - 1)]; // left
-                    auto D = botRow[static_cast <size_t>(xp)]; // bottom
-                    auto original_pixel = midRow[static_cast <size_t>(xp)]; // center
+                    const index_t xp = x + pad;
+                    auto A = topRow[xp]; // top
+                    auto B = midRow[xp + 1]; // right
+                    auto C = xp > 0 ? midRow[xp - 1] : midRow[0]; // left (protect against underflow)
+                    auto D = botRow[xp]; // bottom
+                    auto original_pixel = midRow[xp]; // center
 
                     // Initial expanded pixel value assignments
                     auto one = original_pixel;
@@ -116,8 +117,8 @@ namespace scaler {
                     if (D == C && D != B && C != A) { three = C; }
                     if (B == D && B != A && D != C) { four = D; }
 
-                    size_t dst_x = scale_factor * x;
-                    size_t dst_y = scale_factor * y;
+                    index_t dst_x = scale_factor * x;
+                    index_t dst_y = scale_factor * y;
                     result.set_pixel(dst_x, dst_y, one);
                     result.set_pixel(dst_x + 1, dst_y, two);
                     result.set_pixel(dst_x, dst_y + 1, three);
@@ -130,7 +131,7 @@ namespace scaler {
 
     // Generic AdvMAME scaler using CRTP - automatically uses fast path for small images
     template<typename InputImage, typename OutputImage>
-    OutputImage scale_adv_mame(const InputImage& src, size_t scale_factor = 2) {
+    OutputImage scale_adv_mame(const InputImage& src, dimension_t scale_factor = 2) {
         using PixelType = decltype(src.get_pixel(0, 0));
 
         // Use fast sliding window for images <= 4096 pixels wide

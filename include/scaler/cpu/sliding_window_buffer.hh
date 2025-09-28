@@ -1,5 +1,6 @@
 #pragma once
 
+#include <scaler/types.hh>
 #include <vector>
 #include <array>
 #ifdef DEBUG
@@ -20,18 +21,18 @@ namespace scaler {
         protected:  // Changed from private to protected for derived class access
             std::vector<std::vector<PixelType>> buffer_;
             int window_height_;      // Number of rows in the window (e.g., 3 for 3x3, 5 for 5x5)
-            size_t width_;           // Width of each row (image width + padding)
+            dimension_t width_;      // Width of each row (image width + padding)
             int padding_;            // Padding on each side for boundary pixels
-            size_t current_y_;       // Current y position in the source image
+            index_t current_y_;      // Current y position in the source image
             int buffer_offset_;      // Offset from current_y to first buffer row
 
             // Maps a source row index to buffer index
-            [[nodiscard]] size_t row_to_buffer_index(int src_row) const noexcept {
+            [[nodiscard]] index_t row_to_buffer_index(coord_t src_row) const noexcept {
                 // Optimize modulo for positive numbers and power-of-2 sizes
                 // For non-power-of-2, use single modulo for positive src_row
                 int idx = src_row % window_height_;
                 // Handle negative case (only happens at image boundaries)
-                return static_cast<size_t>((idx < 0) ? (idx + window_height_) : idx);
+                return static_cast<index_t>((idx < 0) ? (idx + window_height_) : idx);
             }
 
         public:
@@ -42,14 +43,14 @@ namespace scaler {
              * @param padding Padding on each side for boundary access
              * @param buffer_offset Offset from current position (e.g., -1 for centered window)
              */
-            sliding_window_buffer(int window_height, size_t image_width, int padding, int buffer_offset)
+            sliding_window_buffer(int window_height, dimension_t image_width, int padding, int buffer_offset)
                 : window_height_(window_height)
-                , width_(image_width + 2 * static_cast<size_t>(padding))
+                , width_(image_width + 2 * static_cast<dimension_t>(padding))
                 , padding_(padding)
                 , current_y_(0)
                 , buffer_offset_(buffer_offset) {
 
-                buffer_.resize(static_cast<size_t>(window_height_));
+                buffer_.resize(static_cast<index_t>(window_height_));
                 for (auto& row : buffer_) {
                     row.resize(width_);
                 }

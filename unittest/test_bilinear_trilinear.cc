@@ -3,6 +3,7 @@
 #include <../include/scaler/cpu/bilinear.hh>
 #include <../include/scaler/cpu/trilinear.hh>
 #include <scaler/image_base.hh>
+#include <scaler/types.hh>
 #include <vector>
 #include <cmath>
 
@@ -12,12 +13,12 @@ class TestImage : public scaler::input_image_base<TestImage<PixelType>, PixelTyp
                   public scaler::output_image_base<TestImage<PixelType>, PixelType> {
     std::vector<std::vector<PixelType>> data_;
 public:
-    TestImage(size_t width, size_t height) {
+    TestImage(scaler::dimension_t width, scaler::dimension_t height) {
         data_.resize(height, std::vector<PixelType>(width));
     }
 
     template<typename T>
-    TestImage(size_t width, size_t height, const T&) : TestImage(width, height) {}
+    TestImage(scaler::dimension_t width, scaler::dimension_t height, const T&) : TestImage(width, height) {}
 
     TestImage(const std::vector<std::vector<PixelType>>& data) : data_(data) {}
 
@@ -26,10 +27,10 @@ public:
     using scaler::input_image_base<TestImage<PixelType>, PixelType>::get_pixel;
     using scaler::input_image_base<TestImage<PixelType>, PixelType>::safe_access;
 
-    size_t width_impl() const { return data_.empty() ? 0 : data_[0].size(); }
-    size_t height_impl() const { return data_.size(); }
-    PixelType get_pixel_impl(size_t x, size_t y) const { return data_[y][x]; }
-    void set_pixel_impl(size_t x, size_t y, const PixelType& pixel) {
+    scaler::dimension_t width_impl() const { return data_.empty() ? 0 : data_[0].size(); }
+    scaler::dimension_t height_impl() const { return data_.size(); }
+    PixelType get_pixel_impl(scaler::index_t x, scaler::index_t y) const { return data_[y][x]; }
+    void set_pixel_impl(scaler::index_t x, scaler::index_t y, const PixelType& pixel) {
         data_[y][x] = pixel;
     }
 };
@@ -53,6 +54,7 @@ TEST_CASE("Bilinear Scaler") {
         // Check corners are close to original pixels (bilinear won't be exact at edges)
         // Top-left should be mostly black
         auto tl = output.get_pixel(0, 0);
+        INFO("Top-left pixel: " << tl.x << ", " << tl.y << ", " << tl.z);
         CHECK(tl.x < 100);  // Mostly black
 
         // Check approximate colors for other corners

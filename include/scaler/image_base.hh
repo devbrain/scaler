@@ -2,6 +2,7 @@
 
 #include <scaler/compiler_compat.hh>
 #include <scaler/vec3.hh>
+#include <scaler/types.hh>
 
 namespace scaler {
     enum out_of_bounds_strategy { ZERO, NEAREST };
@@ -10,27 +11,27 @@ namespace scaler {
     template<typename Derived, typename PixelType = uvec3>
     class input_image_base {
         public:
-            [[nodiscard]] inline size_t width() const noexcept {
+            [[nodiscard]] inline dimension_t width() const noexcept {
                 return static_cast <const Derived*>(this)->width_impl();
             }
 
-            [[nodiscard]] inline size_t height() const noexcept {
+            [[nodiscard]] inline dimension_t height() const noexcept {
                 return static_cast <const Derived*>(this)->height_impl();
             }
 
-            [[nodiscard]] inline PixelType get_pixel(size_t x, size_t y) const noexcept {
+            [[nodiscard]] inline PixelType get_pixel(index_t x, index_t y) const noexcept {
                 return static_cast <const Derived*>(this)->get_pixel_impl(x, y);
             }
 
-            [[nodiscard]] inline PixelType safe_access(int x, int y,
+            [[nodiscard]] inline PixelType safe_access(coord_t x, coord_t y,
                                                        out_of_bounds_strategy strategy = NEAREST) const noexcept {
                 // Optimize for the common case where access is within bounds
                 // Use likely/unlikely hints for branch prediction
-                const size_t w = width();
-                const size_t h = height();
+                const dimension_t w = width();
+                const dimension_t h = height();
 
-                if (SCALER_LIKELY((x >= 0 && static_cast<size_t>(x) < w) && (y >= 0 && static_cast<size_t>(y) < h))) {
-                    return get_pixel(static_cast <size_t>(x), static_cast <size_t>(y));
+                if (SCALER_LIKELY(coord_in_bounds(x, w) && coord_in_bounds(y, h))) {
+                    return get_pixel(static_cast<index_t>(x), static_cast<index_t>(y));
                 }
 
                 // Handle out-of-bounds cases
@@ -38,9 +39,11 @@ namespace scaler {
                     case ZERO:
                         return {};
                     case NEAREST:
-                        x = (x < 0) ? 0 : (static_cast <size_t>(x) >= w) ? (static_cast <int>(w) - 1) : x;
-                        y = (y < 0) ? 0 : (static_cast <size_t>(y) >= h) ? (static_cast <int>(h) - 1) : y;
-                        return get_pixel(static_cast <size_t>(x), static_cast <size_t>(y));
+                        const coord_t max_x = dim_to_coord(w) - 1;
+                        const coord_t max_y = dim_to_coord(h) - 1;
+                        x = clamp_coord(x, 0, max_x);
+                        y = clamp_coord(y, 0, max_y);
+                        return get_pixel(static_cast<index_t>(x), static_cast<index_t>(y));
                 }
 
                 return {}; // Unreachable, but keeps compiler happy
@@ -51,15 +54,15 @@ namespace scaler {
     template<typename Derived, typename PixelType = uvec3>
     class output_image_base {
         public:
-            [[nodiscard]] size_t width() const {
+            [[nodiscard]] dimension_t width() const {
                 return static_cast <const Derived*>(this)->width_impl();
             }
 
-            [[nodiscard]] size_t height() const {
+            [[nodiscard]] dimension_t height() const {
                 return static_cast <const Derived*>(this)->height_impl();
             }
 
-            void set_pixel(size_t x, size_t y, const PixelType& pixel) {
+            void set_pixel(index_t x, index_t y, const PixelType& pixel) {
                 static_cast <Derived*>(this)->set_pixel_impl(x, y, pixel);
             }
 

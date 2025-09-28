@@ -1,6 +1,7 @@
 #pragma once
 
 #include <scaler/image_base.hh>
+#include <scaler/types.hh>
 #include <algorithm>
 #include <cmath>
 
@@ -12,10 +13,10 @@ namespace scaler {
     template<typename InputImage, typename OutputImage>
     auto scale_bilinear(const InputImage& src, float scale_factor)
         -> OutputImage {
-        const size_t src_width = src.width();
-        const size_t src_height = src.height();
-        const auto dst_width = static_cast <size_t>(src_width * scale_factor);
-        const auto dst_height = static_cast <size_t>(src_height * scale_factor);
+        const dimension_t src_width = src.width();
+        const dimension_t src_height = src.height();
+        const dimension_t dst_width = static_cast<dimension_t>(src_width * scale_factor);
+        const dimension_t dst_height = static_cast<dimension_t>(src_height * scale_factor);
 
         OutputImage result(dst_width, dst_height, src);
 
@@ -26,8 +27,8 @@ namespace scaler {
 
         if (src_width == 1 && src_height == 1) {
             auto pixel = src.get_pixel(0, 0);
-            for (size_t y = 0; y < dst_height; ++y) {
-                for (size_t x = 0; x < dst_width; ++x) {
+            for (index_t y = 0; y < dst_height; ++y) {
+                for (index_t x = 0; x < dst_width; ++x) {
                     result.set_pixel(x, y, pixel);
                 }
             }
@@ -39,30 +40,24 @@ namespace scaler {
 
         using PixelType = decltype(src.get_pixel(0, 0));
 
-        for (size_t dst_y = 0; dst_y < dst_height; ++dst_y) {
+        for (index_t dst_y = 0; dst_y < dst_height; ++dst_y) {
             // Map destination y to source space
             const float src_y = (dst_y + 0.5f) * inv_scale - 0.5f;
-            const int y0 = static_cast <int>(std::floor(src_y));
-            const int y1 = std::min(y0 + 1, static_cast <int>(src_height - 1));
-            const float fy = src_y - y0;
+            const index_t y0 = src_y >= 0 ? static_cast<index_t>(src_y) : 0;
+            const index_t y1 = std::min(y0 + 1, src_height - 1);
+            const float fy = src_y >= 0 ? src_y - static_cast<float>(y0) : 0.0f;
 
-            // Clamp y0 to valid range
-            const int y0_clamped = std::max(0, y0);
-
-            for (size_t dst_x = 0; dst_x < dst_width; ++dst_x) {
+            for (index_t dst_x = 0; dst_x < dst_width; ++dst_x) {
                 // Map destination x to source space
                 const float src_x = (dst_x + 0.5f) * inv_scale - 0.5f;
-                const int x0 = static_cast <int>(std::floor(src_x));
-                const int x1 = std::min(x0 + 1, static_cast <int>(src_width - 1));
-                const float fx = src_x - x0;
-
-                // Clamp x0 to valid range
-                const int x0_clamped = std::max(0, x0);
+                const index_t x0 = src_x >= 0 ? static_cast<index_t>(src_x) : 0;
+                const index_t x1 = std::min(x0 + 1, src_width - 1);
+                const float fx = src_x >= 0 ? src_x - static_cast<float>(x0) : 0.0f;
 
                 // Get the four neighboring pixels
-                const auto p00 = src.get_pixel(x0_clamped, y0_clamped);
-                const auto p10 = src.get_pixel(x1, y0_clamped);
-                const auto p01 = src.get_pixel(x0_clamped, y1);
+                const auto p00 = src.get_pixel(x0, y0);
+                const auto p10 = src.get_pixel(x1, y0);
+                const auto p01 = src.get_pixel(x0, y1);
                 const auto p11 = src.get_pixel(x1, y1);
 
                 // Bilinear interpolation
@@ -87,10 +82,10 @@ namespace scaler {
     template<typename InputImage, typename OutputImage, typename IntermediateImage = OutputImage>
     auto scale_bilinear_separable(const InputImage& src, float scale_factor)
         -> OutputImage {
-        const size_t src_width = src.width();
-        const size_t src_height = src.height();
-        const auto dst_width = static_cast <size_t>(src_width * scale_factor);
-        const auto dst_height = static_cast <size_t>(src_height * scale_factor);
+        const dimension_t src_width = src.width();
+        const dimension_t src_height = src.height();
+        const dimension_t dst_width = static_cast<dimension_t>(src_width * scale_factor);
+        const dimension_t dst_height = static_cast<dimension_t>(src_height * scale_factor);
 
         // Handle edge cases
         if (src_width == 0 || src_height == 0) {
@@ -101,15 +96,14 @@ namespace scaler {
         IntermediateImage temp(dst_width, src_height, src);
         const float inv_scale_x = 1.0f / scale_factor;
 
-        for (size_t y = 0; y < src_height; ++y) {
-            for (size_t dst_x = 0; dst_x < dst_width; ++dst_x) {
+        for (index_t y = 0; y < src_height; ++y) {
+            for (index_t dst_x = 0; dst_x < dst_width; ++dst_x) {
                 const float src_x = (dst_x + 0.5f) * inv_scale_x - 0.5f;
-                const int x0 = static_cast <int>(std::floor(src_x));
-                const int x1 = std::min(x0 + 1, static_cast <int>(src_width - 1));
-                const float fx = src_x - x0;
-                const int x0_clamped = std::max(0, x0);
+                const index_t x0 = src_x >= 0 ? static_cast<index_t>(src_x) : 0;
+                const index_t x1 = std::min(x0 + 1, src_width - 1);
+                const float fx = src_x >= 0 ? src_x - static_cast<float>(x0) : 0.0f;
 
-                const auto p0 = src.get_pixel(x0_clamped, y);
+                const auto p0 = src.get_pixel(x0, y);
                 const auto p1 = src.get_pixel(x1, y);
 
                 auto p = p0 * (1.0f - fx) + p1 * fx;
@@ -121,15 +115,14 @@ namespace scaler {
         OutputImage result(dst_width, dst_height, src);
         const float inv_scale_y = 1.0f / scale_factor;
 
-        for (size_t dst_y = 0; dst_y < dst_height; ++dst_y) {
+        for (index_t dst_y = 0; dst_y < dst_height; ++dst_y) {
             const float src_y = (dst_y + 0.5f) * inv_scale_y - 0.5f;
-            const int y0 = static_cast <int>(std::floor(src_y));
-            const int y1 = std::min(y0 + 1, static_cast <int>(src_height - 1));
-            const float fy = src_y - y0;
-            const int y0_clamped = std::max(0, y0);
+            const index_t y0 = src_y >= 0 ? static_cast<index_t>(src_y) : 0;
+            const index_t y1 = std::min(y0 + 1, src_height - 1);
+            const float fy = src_y >= 0 ? src_y - static_cast<float>(y0) : 0.0f;
 
-            for (size_t x = 0; x < dst_width; ++x) {
-                const auto p0 = temp.get_pixel(x, y0_clamped);
+            for (index_t x = 0; x < dst_width; ++x) {
+                const auto p0 = temp.get_pixel(x, y0);
                 const auto p1 = temp.get_pixel(x, y1);
 
                 auto p = p0 * (1.0f - fy) + p1 * fy;
