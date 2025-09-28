@@ -2,6 +2,7 @@
 
 #include <scaler/compiler_compat.hh>
 #include <scaler/image_base.hh>
+#include <scaler/types.hh>
 #include <scaler/cpu/sliding_window_buffer.hh>
 
 namespace scaler {
@@ -382,18 +383,15 @@ namespace scaler {
             const auto& topRow = window.get_row(-1);
             const auto& midRow = window.get_row(0);
             const auto& botRow = window.get_row(1);
-            const int pad = window.get_padding();
+            const padding_t pad = window.get_padding();
 
-            for (size_t x = 0; x < src.width(); x++) {
-                const int xp = static_cast <int>(x) + pad;
+            for (index_t x = 0; x < src.width(); x++) {
+                const index_t xp = x + pad;
 
                 // Load 3x3 neighborhood once
-                PixelType n0 = topRow[static_cast <size_t>(xp - 1)], n1 = topRow[static_cast <size_t>(xp)], n2 = topRow[
-                    static_cast <size_t>(xp + 1)];
-                PixelType n3 = midRow[static_cast <size_t>(xp - 1)], n4 = midRow[static_cast <size_t>(xp)], n5 = midRow[
-                    static_cast <size_t>(xp + 1)];
-                PixelType n6 = botRow[static_cast <size_t>(xp - 1)], n7 = botRow[static_cast <size_t>(xp)], n8 = botRow[
-                    static_cast <size_t>(xp + 1)];
+                PixelType n0 = topRow[xp - 1], n1 = topRow[xp], n2 = topRow[xp + 1];
+                PixelType n3 = midRow[xp - 1], n4 = midRow[xp], n5 = midRow[xp + 1];
+                PixelType n6 = botRow[xp - 1], n7 = botRow[xp], n8 = botRow[xp + 1];
 
                 // Build all patterns at once
                 pattern_cache <PixelType> cache;
@@ -469,18 +467,15 @@ namespace scaler {
             const auto& topRow = window.get_row(-1);
             const auto& midRow = window.get_row(0);
             const auto& botRow = window.get_row(1);
-            const int pad = window.get_padding();
+            const padding_t pad = window.get_padding();
 
-            for (size_t x = 0; x < src.width(); x++) {
-                const int xp = static_cast <int>(x) + pad;
+            for (index_t x = 0; x < src.width(); x++) {
+                const index_t xp = x + pad;
 
                 // Load 3x3 neighborhood once
-                PixelType n0 = topRow[static_cast <size_t>(xp - 1)], n1 = topRow[static_cast <size_t>(xp)], n2 = topRow[
-                    static_cast <size_t>(xp + 1)];
-                PixelType n3 = midRow[static_cast <size_t>(xp - 1)], n4 = midRow[static_cast <size_t>(xp)], n5 = midRow[
-                    static_cast <size_t>(xp + 1)];
-                PixelType n6 = botRow[static_cast <size_t>(xp - 1)], n7 = botRow[static_cast <size_t>(xp)], n8 = botRow[
-                    static_cast <size_t>(xp + 1)];
+                PixelType n0 = topRow[xp - 1], n1 = topRow[xp], n2 = topRow[xp + 1];
+                PixelType n3 = midRow[xp - 1], n4 = midRow[xp], n5 = midRow[xp + 1];
+                PixelType n6 = botRow[xp - 1], n7 = botRow[xp], n8 = botRow[xp + 1];
 
                 // Build all patterns at once
                 pattern_cache <PixelType> cache;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <scaler/types.hh>
 #include <scaler/cpu/sliding_window_buffer.hh>
 
 namespace scaler {
@@ -24,22 +25,22 @@ namespace scaler {
             const auto& topRow = window.get_row(-1);
             const auto& midRow = window.get_row(0);
             const auto& botRow = window.get_row(1);
-            const int pad = window.get_padding();
+            const padding_t pad = window.get_padding();
 
-            for (size_t x = 0; x < src.width(); x++) {
+            for (index_t x = 0; x < src.width(); x++) {
                 // Get 3x3 neighborhood from cached row references
-                const int xp = static_cast <int>(x) + pad;
-                auto A = topRow[static_cast <size_t>(xp - 1)];
-                auto B = topRow[static_cast <size_t>(xp)];
-                auto C = topRow[static_cast <size_t>(xp + 1)];
+                const index_t xp = x + pad;
+                auto A = topRow[xp - 1];
+                auto B = topRow[xp];
+                auto C = topRow[xp + 1];
 
-                auto D = midRow[static_cast <size_t>(xp - 1)];
-                auto E = midRow[static_cast <size_t>(xp)];
-                auto F = midRow[static_cast <size_t>(xp + 1)];
+                auto D = midRow[xp - 1];
+                auto E = midRow[xp];
+                auto F = midRow[xp + 1];
 
-                auto G = botRow[static_cast <size_t>(xp - 1)];
-                auto H = botRow[static_cast <size_t>(xp)];
-                auto I = botRow[static_cast <size_t>(xp + 1)];
+                auto G = botRow[xp - 1];
+                auto H = botRow[xp];
+                auto I = botRow[xp + 1];
 
                 // Scale3x algorithm rules
                 auto E0 = E;

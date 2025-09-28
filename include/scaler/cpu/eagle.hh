@@ -1,5 +1,6 @@
 #pragma once
 
+#include <scaler/types.hh>
 #include <scaler/cpu/sliding_window_buffer.hh>
 
 namespace scaler {
@@ -23,22 +24,22 @@ namespace scaler {
             const auto& topRow = window.get_row(-1);
             const auto& midRow = window.get_row(0);
             const auto& botRow = window.get_row(1);
-            const int pad = window.get_padding();
+            const padding_t pad = window.get_padding();
 
-            for (size_t x = 0; x < src.width(); x++) {
+            for (index_t x = 0; x < src.width(); x++) {
                 // Acquire neighbour pixel values from cached row references
-                const int xp = static_cast <int>(x) + pad;
-                auto top_left = topRow[static_cast <size_t>(xp - 1)];
-                auto top = topRow[static_cast <size_t>(xp)];
-                auto top_right = topRow[static_cast <size_t>(xp + 1)];
+                const index_t xp = x + pad;
+                auto top_left = topRow[xp - 1];
+                auto top = topRow[xp];
+                auto top_right = topRow[xp + 1];
 
-                auto left = midRow[static_cast <size_t>(xp - 1)];
-                auto original_pixel = midRow[static_cast <size_t>(xp)];
-                auto right = midRow[static_cast <size_t>(xp + 1)];
+                auto left = midRow[xp - 1];
+                auto original_pixel = midRow[xp];
+                auto right = midRow[xp + 1];
 
-                auto bottom_left = botRow[static_cast <size_t>(xp - 1)];
-                auto bottom = botRow[static_cast <size_t>(xp)];
-                auto bottom_right = botRow[static_cast <size_t>(xp + 1)];
+                auto bottom_left = botRow[xp - 1];
+                auto bottom = botRow[xp];
+                auto bottom_right = botRow[xp + 1];
 
                 // Initial expanded pixel value assignments
                 auto one = original_pixel;
