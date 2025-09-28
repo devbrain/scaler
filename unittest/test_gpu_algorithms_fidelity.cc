@@ -190,7 +190,7 @@ FidelityResult compareSurfacesFidelity(SDL_Surface* surf1, SDL_Surface* surf2, i
 struct AlgorithmTestCase {
     const char* name;
     std::function<SDL_Surface*(SDL_Surface*)> cpu_func;
-    SDLOpenGLMultiScaler::Algorithm gpu_enum;
+    sdl_opengl_multi_scaler::algorithm gpu_enum;
     float scale;
 };
 
@@ -206,7 +206,7 @@ auto makeCpuScaler(Func func, Args... args) {
 }
 
 // Helper function to test algorithm fidelity
-void testAlgorithmFidelity(const AlgorithmTestCase& test_case, SDLOpenGLMultiScaler& gpu_scaler) {
+void testAlgorithmFidelity(const AlgorithmTestCase& test_case, sdl_opengl_multi_scaler& gpu_scaler) {
     std::string algo_name(test_case.name);
     INFO("Testing " << algo_name << " algorithm");
 
@@ -223,7 +223,7 @@ void testAlgorithmFidelity(const AlgorithmTestCase& test_case, SDLOpenGLMultiSca
         REQUIRE(cpu_surface != nullptr);
 
         // GPU scaling
-        SDL_Surface* gpu_surface = gpu_scaler.scaleSurface(input, test_case.scale, test_case.gpu_enum);
+        SDL_Surface* gpu_surface = gpu_scaler.scale_surface(input, test_case.scale, test_case.gpu_enum);
         REQUIRE(gpu_surface != nullptr);
 
         // Compare results
@@ -251,7 +251,7 @@ void testAlgorithmFidelity(const AlgorithmTestCase& test_case, SDLOpenGLMultiSca
         }
 
         // Check quality metrics
-        INFO("Algorithm: " << algo_name << " - Mismatch: " << result.mismatch_percentage << "%");
+        INFO("algorithm: " << algo_name << " - Mismatch: " << result.mismatch_percentage << "%");
 
         // OmniScale and AA/Scale4x algorithms may differ slightly
         // between CPU and GPU implementations due to floating point precision
@@ -275,8 +275,8 @@ void testAlgorithmFidelity(const AlgorithmTestCase& test_case, SDLOpenGLMultiSca
     }
 }
 
-TEST_CASE("GPU Algorithm Fidelity Tests") {
-    INFO("Starting GPU Algorithm Fidelity Tests");
+TEST_CASE("GPU algorithm Fidelity Tests") {
+    INFO("Starting GPU algorithm Fidelity Tests");
 
     // Quit SDL if already initialized (from previous tests)
     SDL_Quit();
@@ -328,7 +328,7 @@ TEST_CASE("GPU Algorithm Fidelity Tests") {
 
     std::cout << "Created OpenGL context successfully\n";
 
-    SDLOpenGLMultiScaler gpu_scaler;
+    sdl_opengl_multi_scaler gpu_scaler;
     if (!gpu_scaler.initialize(window)) {
         std::cerr << "Could not initialize GPU scaler - OpenGL may not be available\n";
         std::cerr << "SDL Error: " << SDL_GetError() << "\n";
@@ -343,7 +343,7 @@ TEST_CASE("GPU Algorithm Fidelity Tests") {
     // Quick sanity check - test with a small surface
     SDL_Surface* test_surface = createTestPattern("checkerboard", 16);
     REQUIRE(test_surface != nullptr);
-    SDL_Surface* result = gpu_scaler.scaleSurface(test_surface, 2.0f, SDLOpenGLMultiScaler::EPX);
+    SDL_Surface* result = gpu_scaler.scale_surface(test_surface, 2.0f, sdl_opengl_multi_scaler::EPX);
     REQUIRE(result != nullptr);
     SDL_FreeSurface(result);
     SDL_FreeSurface(test_surface);
@@ -351,19 +351,19 @@ TEST_CASE("GPU Algorithm Fidelity Tests") {
 
     // Define test cases with their CPU and GPU implementations
     std::vector<AlgorithmTestCase> test_cases = {
-        {"EPX", makeCpuScaler(scale_epx<SDLInputImage, SDLOutputImage>, size_t(2)), SDLOpenGLMultiScaler::EPX, 2.0f},
-        {"Scale2x", makeCpuScaler(scale_adv_mame<SDLInputImage, SDLOutputImage>, size_t(2)), SDLOpenGLMultiScaler::Scale2x, 2.0f},
-        {"Scale2xSFX", makeCpuScaler(scale_scale_2x_sfx<SDLInputImage, SDLOutputImage>, size_t(2)), SDLOpenGLMultiScaler::Scale2xSFX, 2.0f},
-        {"Eagle", makeCpuScaler(scale_eagle<SDLInputImage, SDLOutputImage>, size_t(2)), SDLOpenGLMultiScaler::Eagle, 2.0f},
-        {"Scale3x", makeCpuScaler(scale_scale_3x<SDLInputImage, SDLOutputImage>, size_t(3)), SDLOpenGLMultiScaler::Scale3x, 3.0f},
-        {"2xSaI", makeCpuScaler(scale_2x_sai<SDLInputImage, SDLOutputImage>, size_t(2)), SDLOpenGLMultiScaler::TwoXSaI, 2.0f},
-        {"AdvMAME2x", makeCpuScaler(scale_adv_mame<SDLInputImage, SDLOutputImage>, size_t(2)), SDLOpenGLMultiScaler::AdvMAME2x, 2.0f},
-        {"AdvMAME3x", makeCpuScaler(scale_scale_3x<SDLInputImage, SDLOutputImage>, size_t(3)), SDLOpenGLMultiScaler::AdvMAME3x, 3.0f},
-        {"OmniScale2x", makeCpuScaler(scale_omni_scale_2x<SDLInputImage, SDLOutputImage>, size_t(2)), SDLOpenGLMultiScaler::OmniScale, 2.0f},
-        {"OmniScale3x", makeCpuScaler(scale_omni_scale_3x<SDLInputImage, SDLOutputImage>, size_t(3)), SDLOpenGLMultiScaler::OmniScale, 3.0f},
-        {"AAScale2x", makeCpuScaler(scale_aa_scale_2x<SDLInputImage, SDLOutputImage>, size_t(2)), SDLOpenGLMultiScaler::AAScale2x, 2.0f},
-        {"AAScale4x", makeCpuScaler(scale_aa_scale_4x<SDLInputImage, SDLOutputImage>, size_t(4)), SDLOpenGLMultiScaler::AAScale4x, 4.0f},
-        {"Scale4x", makeCpuScaler(scale_scale_4x<SDLInputImage, SDLOutputImage>, size_t(4)), SDLOpenGLMultiScaler::Scale4x, 4.0f}
+        {"EPX", makeCpuScaler(scale_epx<SDLInputImage, SDLOutputImage>, size_t(2)), sdl_opengl_multi_scaler::EPX, 2.0f},
+        {"Scale2x", makeCpuScaler(scale_adv_mame<SDLInputImage, SDLOutputImage>, size_t(2)), sdl_opengl_multi_scaler::Scale2x, 2.0f},
+        {"Scale2xSFX", makeCpuScaler(scale_scale_2x_sfx<SDLInputImage, SDLOutputImage>, size_t(2)), sdl_opengl_multi_scaler::Scale2xSFX, 2.0f},
+        {"Eagle", makeCpuScaler(scale_eagle<SDLInputImage, SDLOutputImage>, size_t(2)), sdl_opengl_multi_scaler::Eagle, 2.0f},
+        {"Scale3x", makeCpuScaler(scale_scale_3x<SDLInputImage, SDLOutputImage>, size_t(3)), sdl_opengl_multi_scaler::Scale3x, 3.0f},
+        {"2xSaI", makeCpuScaler(scale_2x_sai<SDLInputImage, SDLOutputImage>, size_t(2)), sdl_opengl_multi_scaler::TwoXSaI, 2.0f},
+        {"AdvMAME2x", makeCpuScaler(scale_adv_mame<SDLInputImage, SDLOutputImage>, size_t(2)), sdl_opengl_multi_scaler::AdvMAME2x, 2.0f},
+        {"AdvMAME3x", makeCpuScaler(scale_scale_3x<SDLInputImage, SDLOutputImage>, size_t(3)), sdl_opengl_multi_scaler::AdvMAME3x, 3.0f},
+        {"OmniScale2x", makeCpuScaler(scale_omni_scale_2x<SDLInputImage, SDLOutputImage>, size_t(2)), sdl_opengl_multi_scaler::OmniScale, 2.0f},
+        {"OmniScale3x", makeCpuScaler(scale_omni_scale_3x<SDLInputImage, SDLOutputImage>, size_t(3)), sdl_opengl_multi_scaler::OmniScale, 3.0f},
+        {"AAScale2x", makeCpuScaler(scale_aa_scale_2x<SDLInputImage, SDLOutputImage>, size_t(2)), sdl_opengl_multi_scaler::AAScale2x, 2.0f},
+        {"AAScale4x", makeCpuScaler(scale_aa_scale_4x<SDLInputImage, SDLOutputImage>, size_t(4)), sdl_opengl_multi_scaler::AAScale4x, 4.0f},
+        {"Scale4x", makeCpuScaler(scale_scale_4x<SDLInputImage, SDLOutputImage>, size_t(4)), sdl_opengl_multi_scaler::Scale4x, 4.0f}
     };
 
     // Test each algorithm
@@ -381,26 +381,26 @@ TEST_CASE("GPU Algorithm Fidelity Tests") {
 
         const int iterations = 20;
 
-        for (auto [name, algo] : std::vector<std::pair<const char*, SDLOpenGLMultiScaler::Algorithm>>{
-            {"EPX", SDLOpenGLMultiScaler::EPX},
-            {"Scale2x", SDLOpenGLMultiScaler::Scale2x},
-            {"Scale2xSFX", SDLOpenGLMultiScaler::Scale2xSFX},
-            {"Scale3x", SDLOpenGLMultiScaler::Scale3x},
-            {"Eagle", SDLOpenGLMultiScaler::Eagle},
-            {"2xSaI", SDLOpenGLMultiScaler::TwoXSaI},
-            {"AdvMAME2x", SDLOpenGLMultiScaler::AdvMAME2x},
-            {"AdvMAME3x", SDLOpenGLMultiScaler::AdvMAME3x}
+        for (auto [name, algo] : std::vector<std::pair<const char*, sdl_opengl_multi_scaler::algorithm>>{
+            {"EPX", sdl_opengl_multi_scaler::EPX},
+            {"Scale2x", sdl_opengl_multi_scaler::Scale2x},
+            {"Scale2xSFX", sdl_opengl_multi_scaler::Scale2xSFX},
+            {"Scale3x", sdl_opengl_multi_scaler::Scale3x},
+            {"Eagle", sdl_opengl_multi_scaler::Eagle},
+            {"2xSaI", sdl_opengl_multi_scaler::TwoXSaI},
+            {"AdvMAME2x", sdl_opengl_multi_scaler::AdvMAME2x},
+            {"AdvMAME3x", sdl_opengl_multi_scaler::AdvMAME3x}
         }) {
             Uint64 start = SDL_GetPerformanceCounter();
 
             for (int i = 0; i < iterations; ++i) {
                 float scale = 2.0f;
-                if (algo == SDLOpenGLMultiScaler::Scale3x || algo == SDLOpenGLMultiScaler::AdvMAME3x) {
+                if (algo == sdl_opengl_multi_scaler::Scale3x || algo == sdl_opengl_multi_scaler::AdvMAME3x) {
                     scale = 3.0f;
-                } else if (algo == SDLOpenGLMultiScaler::AAScale4x || algo == SDLOpenGLMultiScaler::Scale4x) {
+                } else if (algo == sdl_opengl_multi_scaler::AAScale4x || algo == sdl_opengl_multi_scaler::Scale4x) {
                     scale = 4.0f;
                 }
-                SDL_Surface* scaled_result = gpu_scaler.scaleSurface(input, scale, algo);
+                SDL_Surface* scaled_result = gpu_scaler.scale_surface(input, scale, algo);
                 if (scaled_result) SDL_FreeSurface(scaled_result);
             }
 

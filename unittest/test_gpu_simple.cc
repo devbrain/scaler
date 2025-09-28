@@ -125,7 +125,7 @@ TEST_CASE("Simple GPU EPX Test") {
         REQUIRE(cpu_surface != nullptr);
 
         // GPU EPX scaling
-        SDLOpenGLMultiScaler gpu_scaler;
+        sdl_opengl_multi_scaler gpu_scaler;
         bool init_success = gpu_scaler.initialize(window);
 
         if (!init_success) {
@@ -137,7 +137,7 @@ TEST_CASE("Simple GPU EPX Test") {
             return;
         }
 
-        SDL_Surface* gpu_surface = gpu_scaler.scaleSurface(input, 2.0f, SDLOpenGLMultiScaler::EPX);
+        SDL_Surface* gpu_surface = gpu_scaler.scale_surface(input, 2.0f, sdl_opengl_multi_scaler::EPX);
         REQUIRE(gpu_surface != nullptr);
 
         // Compare dimensions
@@ -170,7 +170,7 @@ TEST_CASE("Simple GPU EPX Test") {
             SDL_Surface* input = createTestPattern(size);
             REQUIRE(input != nullptr);
 
-            SDLOpenGLMultiScaler gpu_scaler;
+            sdl_opengl_multi_scaler gpu_scaler;
             bool init_success = gpu_scaler.initialize(window);
 
             if (!init_success) {
@@ -178,7 +178,7 @@ TEST_CASE("Simple GPU EPX Test") {
                 continue;
             }
 
-            SDL_Surface* gpu_surface = gpu_scaler.scaleSurface(input, 2.0f, SDLOpenGLMultiScaler::EPX);
+            SDL_Surface* gpu_surface = gpu_scaler.scale_surface(input, 2.0f, sdl_opengl_multi_scaler::EPX);
 
             if (gpu_surface) {
                 CHECK(gpu_surface->w == size * 2);
