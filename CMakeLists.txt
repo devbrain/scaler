@@ -13,6 +13,7 @@ find_package(SDL2 QUIET)
 
 # Find OpenGL for GPU acceleration
 find_package(OpenGL)
+find_package(GLEW)
 
 if(SDL3_FOUND)
     message(STATUS "Found SDL3 - using SDL3 for image operations")
@@ -142,6 +143,7 @@ add_subdirectory(ext)
 
 add_library(scaler INTERFACE
         # Core utilities
+        ${SCALER_PROJECT_ROOT}/include/scaler/algorithm.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scaler_common.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/vec3.hh
         # CRTP framework-agnostic interface
@@ -158,6 +160,9 @@ add_library(scaler INTERFACE
         ${SCALER_PROJECT_ROOT}/include/scaler/cpu/omniscale.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scale2x_sfx.hh
         ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scale3x_sfx.hh
+        # GPU utilities (new)
+        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/opengl_utils.hh
+        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/shader_cache.hh
 )
 
 # Create alias for consistent usage
@@ -176,6 +181,16 @@ if(NOT SCALER_NO_SDL)
         target_compile_definitions(scaler INTERFACE SCALER_HAS_SDL3)
     elseif(SCALER_USE_SDL2)
         target_compile_definitions(scaler INTERFACE SCALER_HAS_SDL2)
+    endif()
+endif()
+
+# Add OpenGL and GLEW dependencies if available
+if(OpenGL_FOUND)
+    target_link_libraries(scaler INTERFACE OpenGL::GL)
+    target_compile_definitions(scaler INTERFACE SCALER_HAS_OPENGL)
+    if(GLEW_FOUND)
+        target_link_libraries(scaler INTERFACE GLEW::GLEW)
+        target_compile_definitions(scaler INTERFACE SCALER_HAS_GLEW)
     endif()
 endif()
 

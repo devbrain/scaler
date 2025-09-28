@@ -7,6 +7,9 @@
 #include <algorithm>
 #include <sstream>
 
+// Include algorithm definitions (shared with GPU)
+#include <scaler/algorithm.hh>
+
 // Include all algorithm implementations
 #include <scaler/cpu/epx.hh>
 #include <scaler/cpu/eagle.hh>
@@ -23,36 +26,6 @@
 #include <scaler/cpu/trilinear.hh>
 
 namespace scaler {
-    // Scale-independent algorithm names
-    enum class algorithm {
-        // Simple scalers
-        Nearest, // Nearest neighbor (any scale)
-        Bilinear, // Bilinear interpolation (any scale)
-        Trilinear, // Trilinear interpolation with mipmapping (any scale)
-
-        // Classic pixel art scalers
-        EPX, // Eric's Pixel Expansion (2x only)
-        Eagle, // Eagle algorithm (2x only)
-        Scale, // AdvMAME Scale (2x, 3x, 4x)
-        ScaleSFX, // Sp00kyFox variant (2x, 3x)
-        Super2xSaI, // 2xSaI interpolation (2x only)
-
-        // High quality family
-        HQ, // High Quality (2x, 3x, 4x)
-
-        // Anti-aliased scaling
-        AAScale, // Anti-aliased Scale (2x, 4x)
-
-        // Advanced algorithms
-        xBR, // Hyllian's xBR (2x, 3x, 4x)
-        xBRZ, // Zenju's xBRZ variant (2x-6x) - TODO: add 5x, 6x support
-
-        // Resolution independent
-        OmniScale, // Any scale factor
-
-        // Aliases for backward compatibility
-        AdvMAME = Scale,
-    };
 
     // Exception for unsupported scale factors
     class unsupported_scale_exception : public std::runtime_error {
