@@ -1,6 +1,41 @@
 #pragma once
 
-#include <GL/glew.h>
+// Platform detection
+#if defined(_WIN32) || defined(_WIN64)
+    #define SCALER_PLATFORM_WINDOWS
+#elif defined(__APPLE__) && defined(__MACH__)
+    #define SCALER_PLATFORM_MACOS
+#elif defined(__linux__)
+    #define SCALER_PLATFORM_LINUX
+#elif defined(__unix__)
+    #define SCALER_PLATFORM_UNIX
+#else
+    #error "Unknown platform"
+#endif
+
+// Platform-specific OpenGL headers
+#ifdef SCALER_PLATFORM_WINDOWS
+    // Windows requires windows.h before GL headers
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <windows.h>
+    #include <GL/glew.h>  // GLEW handles extension loading on Windows
+#elif defined(SCALER_PLATFORM_MACOS)
+    // macOS uses different OpenGL headers and doesn't need GLEW for core functionality
+    #include <OpenGL/gl3.h>
+    #include <OpenGL/gl3ext.h>
+    // Define GLEW stubs for macOS to maintain API compatibility
+    #ifndef GLEW_OK
+        #define GLEW_OK 0
+        #define glewInit() (0)  // Always succeeds on macOS
+        #define glewGetErrorString(x) "No error"
+    #endif
+#else
+    // Linux/Unix uses standard GL headers with GLEW
+    #include <GL/glew.h>
+#endif
+
 #include <string>
 #include <stdexcept>
 #include <functional>

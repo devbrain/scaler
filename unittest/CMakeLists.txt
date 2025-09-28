@@ -3,31 +3,20 @@
 add_executable(scaler_unittest
         # Main test runner
         test_main.cc
-        # CRTP interface tests
-        test_crtp.cc
-        # Comprehensive scaler tests
-        test_scalers_comprehensive.cc
-        # Algorithm correctness tests
-        test_algorithm_correctness.cc
-        # XBR and HQ2x tests
-        test_xbr_hq2x.cc
-        # SDL interface tests
-        test_sdl_interface.cc
-        # Golden data tests
-        test_golden_data.cc
-        # Sliding window buffer tests
-        test_sliding_window_buffer.cc
-        # Scale algorithm tests
-        test_scale_algorithms.cc
-        # OmniScale golden data tests
-        test_omniscale_golden.cc
-        # HQ3x golden data tests
-        test_hq3x_golden.cc
-        # HQ3x exact implementation golden data tests
-        test_hq3x_exact_golden.cc
+        # Unified algorithm tests (replaces multiple old test files)
+        test_unified_algorithms.cc
         # Unified scaler interface tests
         test_unified_scaler.cc
-        # Bilinear and trilinear tests
+        # SDL interface tests
+        test_sdl_interface.cc
+        # Golden data regression tests
+        test_golden_data.cc
+        test_omniscale_golden.cc
+        test_hq3x_golden.cc
+        test_hq3x_exact_golden.cc
+        # Implementation-specific tests
+        test_sliding_window_buffer.cc
+        # Interpolation algorithm tests
         test_bilinear_trilinear.cc
 )
 
@@ -37,6 +26,7 @@ if(OpenGL_FOUND)
         test_gpu_simple.cc
         test_gpu_epx.cc
         test_gpu_algorithms_fidelity.cc
+        test_platform_config.cc
     )
 endif()
 

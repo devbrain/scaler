@@ -3077,14 +3077,14 @@ namespace scaler {
 
             // Load previous row (or edge)
             if (y == 0) {
-                // First row - use safeAccess for all
+                // First row - use safe_access for all
                 prev_row.push_back(src.safe_access(-1, -1));
                 for (size_t x = 0; x < src_width; ++x) {
                     prev_row.push_back(src.safe_access(static_cast <int>(x), -1));
                 }
                 prev_row.push_back(src.safe_access(static_cast <int>(src_width), -1));
             } else {
-                // Middle rows - only edges need safeAccess
+                // Middle rows - only edges need safe_access
                 prev_row.push_back(src.safe_access(-1, static_cast <int>(y) - 1));
                 for (size_t x = 0; x < src_width; ++x) {
                     prev_row.push_back(src.get_pixel(x, y - 1));
@@ -3104,14 +3104,14 @@ namespace scaler {
 
             // Load next row (or edge)
             if (y == src_height - 1) {
-                // Last row - use safeAccess for all
+                // Last row - use safe_access for all
                 next_row.push_back(src.safe_access(-1, static_cast <int>(y) + 1));
                 for (size_t x = 0; x < src_width; ++x) {
                     next_row.push_back(src.safe_access(static_cast <int>(x), static_cast <int>(y) + 1));
                 }
                 next_row.push_back(src.safe_access(static_cast <int>(src_width), static_cast <int>(y) + 1));
             } else {
-                // Middle rows - only edges need safeAccess
+                // Middle rows - only edges need safe_access
                 next_row.push_back(src.safe_access(-1, static_cast <int>(y) + 1));
                 for (size_t x = 0; x < src_width; ++x) {
                     next_row.push_back(src.get_pixel(x, y + 1));
@@ -3200,7 +3200,7 @@ namespace scaler {
             // Load rows into fixed buffers
             // Previous row
             if (y == 0) {
-                // First row - use safeAccess
+                // First row - use safe_access
                 for (size_t x = 0; x <= src_width + 1; ++x) {
                     prev_row[x] = src.safe_access(static_cast <int>(x) - 1, -1);
                 }
@@ -3222,7 +3222,7 @@ namespace scaler {
 
             // Next row
             if (y == src_height - 1) {
-                // Last row - use safeAccess
+                // Last row - use safe_access
                 for (size_t x = 0; x <= src_width + 1; ++x) {
                     next_row[x] = src.safe_access(static_cast <int>(x) - 1, static_cast <int>(y) + 1);
                 }

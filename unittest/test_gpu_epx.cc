@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "sdl_opengl_multi_scaler_compat.hh"
+#include "gpu_test_helper.hh"
 #include <../include/scaler/cpu/epx.hh>
 #include <scaler/sdl/sdl_image.hh>
 #include <SDL.h>
@@ -11,7 +11,7 @@
 #include "data/golden_test_pattern_epx.h"
 
 using namespace scaler;
-using namespace scaler::gpu;
+using namespace scaler::gpu::test;
 
 // Helper to create surface from raw data
 static SDL_Surface* createSurfaceFromRawData(const unsigned char* data, int width, int height) {
@@ -120,10 +120,10 @@ TEST_CASE("GPU EPX Implementation") {
         REQUIRE(cpu_surface != nullptr);
 
         // GPU EPX scaling
-        sdl_opengl_multi_scaler gpu_scaler;
-        REQUIRE(gpu_scaler.initialize(window));
+        gpu_test_helper gpu_helper;
+        REQUIRE(gpu_helper.initialize());
 
-        SDL_Surface* gpu_surface = gpu_scaler.scale_surface(input, 2.0f, sdl_opengl_multi_scaler::EPX);
+        SDL_Surface* gpu_surface = gpu_helper.scale_surface(input, algorithm::EPX, 2.0f);
         REQUIRE(gpu_surface != nullptr);
 
         // Compare dimensions
@@ -184,12 +184,12 @@ TEST_CASE("GPU EPX Implementation") {
         double cpu_ms = ((cpu_end - cpu_start) * 1000.0) / SDL_GetPerformanceFrequency();
 
         // GPU timing
-        sdl_opengl_multi_scaler gpu_scaler;
-        REQUIRE(gpu_scaler.initialize(window));
+        gpu_test_helper gpu_helper;
+        REQUIRE(gpu_helper.initialize());
 
         Uint64 gpu_start = SDL_GetPerformanceCounter();
         for (int i = 0; i < iterations; ++i) {
-            SDL_Surface* result = gpu_scaler.scale_surface(input, 2.0f, sdl_opengl_multi_scaler::EPX);
+            SDL_Surface* result = gpu_helper.scale_surface(input, algorithm::EPX, 2.0f);
             SDL_FreeSurface(result);
         }
         Uint64 gpu_end = SDL_GetPerformanceCounter();

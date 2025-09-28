@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "sdl_opengl_multi_scaler_compat.hh"
+#include "gpu_test_helper.hh"
 #include <../include/scaler/cpu/epx.hh>
 #include <scaler/sdl/sdl_image.hh>
 #include <SDL.h>
@@ -7,7 +7,7 @@
 #include <cmath>
 
 using namespace scaler;
-using namespace scaler::gpu;
+using namespace scaler::gpu::test;
 
 // Create simple test pattern
 static SDL_Surface* createTestPattern(int size = 8) {
@@ -125,8 +125,8 @@ TEST_CASE("Simple GPU EPX Test") {
         REQUIRE(cpu_surface != nullptr);
 
         // GPU EPX scaling
-        sdl_opengl_multi_scaler gpu_scaler;
-        bool init_success = gpu_scaler.initialize(window);
+        gpu_test_helper gpu_helper;
+        bool init_success = gpu_helper.initialize();
 
         if (!init_success) {
             INFO("GPU scaler initialization failed - OpenGL may not be available");
@@ -137,7 +137,7 @@ TEST_CASE("Simple GPU EPX Test") {
             return;
         }
 
-        SDL_Surface* gpu_surface = gpu_scaler.scale_surface(input, 2.0f, sdl_opengl_multi_scaler::EPX);
+        SDL_Surface* gpu_surface = gpu_helper.scale_surface(input, algorithm::EPX, 2.0f);
         REQUIRE(gpu_surface != nullptr);
 
         // Compare dimensions
@@ -170,15 +170,15 @@ TEST_CASE("Simple GPU EPX Test") {
             SDL_Surface* input = createTestPattern(size);
             REQUIRE(input != nullptr);
 
-            sdl_opengl_multi_scaler gpu_scaler;
-            bool init_success = gpu_scaler.initialize(window);
+            gpu_test_helper gpu_helper;
+            bool init_success = gpu_helper.initialize();
 
             if (!init_success) {
                 SDL_FreeSurface(input);
                 continue;
             }
 
-            SDL_Surface* gpu_surface = gpu_scaler.scale_surface(input, 2.0f, sdl_opengl_multi_scaler::EPX);
+            SDL_Surface* gpu_surface = gpu_helper.scale_surface(input, algorithm::EPX, 2.0f);
 
             if (gpu_surface) {
                 CHECK(gpu_surface->w == size * 2);

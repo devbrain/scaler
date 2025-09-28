@@ -1,10 +1,9 @@
 #pragma once
 
 #include <scaler/algorithm.hh>
-#include <scaler/gpu/opengl_texture_scaler.hh>
+#include <scaler/gpu/opengl_texture_scaler.hh>  // This includes opengl_utils.hh with platform detection
 #include <scaler/sdl/sdl_compat.hh>
 #include <SDL.h>
-#include <GL/glew.h>
 #include <stdexcept>
 #include <memory>
 
@@ -79,7 +78,8 @@ namespace scaler::gpu {
                 throw std::runtime_error("SDL renderer must be using OpenGL backend for GPU scaling");
             }
 
-            // Initialize GLEW if not already done
+            // Initialize GLEW if not already done (not needed on macOS)
+            #ifndef SCALER_PLATFORM_MACOS
             static bool glew_initialized = false;
             if (!glew_initialized) {
                 GLenum err = glewInit();
@@ -89,6 +89,7 @@ namespace scaler::gpu {
                 }
                 glew_initialized = true;
             }
+            #endif
         }
 
         /**

@@ -4,7 +4,7 @@
 #include <scaler/gpu/opengl_utils.hh>
 #include <scaler/gpu/shader_cache.hh>
 #include <scaler/gpu/algorithm_traits_impl.hh>
-#include <GL/glew.h>
+#include <scaler/gpu/gpu_exceptions.hh>
 #include <memory>
 #include <vector>
 #include <stdexcept>
@@ -21,6 +21,12 @@ namespace scaler::gpu {
         GLuint vao_ = 0;
         GLuint vbo_ = 0;
         bool initialized_ = false;
+
+        // Constants
+        static constexpr float DEFAULT_SCALE_2X = 2.0f;
+        static constexpr float DEFAULT_SCALE_3X = 3.0f;
+        static constexpr float DEFAULT_SCALE_4X = 4.0f;
+        static constexpr int DEFAULT_LOG_BUFFER_SIZE = 512;
 
         // Vertex data for full-screen quad
         static constexpr float quad_vertices[] = {
@@ -58,13 +64,85 @@ namespace scaler::gpu {
             initialized_ = true;
         }
 
+        /**
+         * Common rendering logic for scaling operations
+         * @param input_texture Source texture
+         * @param input_width Width of input texture
+         * @param input_height Height of input texture
+         * @param output_width Width of output
+         * @param output_height Height of output
+         * @param algo Algorithm to use
+         * @param clear_output Whether to clear output before rendering
+         */
+        void render_scaled_texture(
+            GLuint input_texture,
+            GLsizei input_width,
+            GLsizei input_height,
+            GLsizei output_width,
+            GLsizei output_height,
+            algorithm algo,
+            bool clear_output = false) {
+
+            // Calculate scale factor and validate
+            float scale_factor = static_cast<float>(output_width) / static_cast<float>(input_width);
+
+            if (!gpu_algorithm_traits::is_scale_supported_on_gpu(algo, scale_factor)) {
+                throw unsupported_operation_error(
+                    "Algorithm does not support scale factor " + std::to_string(scale_factor));
+            }
+
+            // Get or compile the appropriate shader
+            const auto& shader = get_or_compile_shader(algo, scale_factor);
+
+            // Save and set viewport
+            GLint old_viewport[4];
+            glGetIntegerv(GL_VIEWPORT, old_viewport);
+            glViewport(0, 0, output_width, output_height);
+
+            // Clear if requested
+            if (clear_output) {
+                glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+            }
+
+            // Use shader and set uniforms
+            shader.use();
+            glUniform1i(shader.u_texture, 0);
+            glUniform2f(shader.u_texture_size,
+                       static_cast<float>(input_width),
+                       static_cast<float>(input_height));
+            glUniform2f(shader.u_output_size,
+                       static_cast<float>(output_width),
+                       static_cast<float>(output_height));
+
+            // Bind and configure input texture
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, input_texture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            // Render the quad
+            glBindVertexArray(vao_);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glBindVertexArray(0);
+
+            // Cleanup
+            glUseProgram(0);
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            // Restore viewport
+            glViewport(old_viewport[0], old_viewport[1], old_viewport[2], old_viewport[3]);
+        }
+
         const shader_program& get_or_compile_shader(algorithm algo, float scale_factor) {
             // Get the appropriate shader source based on algorithm and scale
             const char* fragment_source = get_shader_for_algorithm_and_scale(algo, scale_factor);
             if (!fragment_source) {
-                throw std::runtime_error("No shader available for algorithm " +
-                                       std::to_string(static_cast<int>(algo)) +
-                                       " at scale " + std::to_string(scale_factor));
+                throw shader_error("No shader available for algorithm " +
+                                 std::to_string(static_cast<int>(algo)) +
+                                 " at scale " + std::to_string(scale_factor));
             }
 
             // Use the common vertex shader
@@ -146,18 +224,6 @@ namespace scaler::gpu {
 
             ensure_initialized();
 
-            // Calculate actual scale factor
-            float scale_factor = static_cast<float>(output_width) / static_cast<float>(input_width);
-
-            // Verify the algorithm supports this scale on GPU
-            if (!gpu_algorithm_traits::is_scale_supported_on_gpu(algo, scale_factor)) {
-                throw std::runtime_error("Algorithm does not support scale factor " +
-                                       std::to_string(scale_factor) + " on GPU");
-            }
-
-            // Get or compile the appropriate shader
-            const auto& shader = get_or_compile_shader(algo, scale_factor);
-
             // Create framebuffer for output
             GLuint fbo;
             glGenFramebuffers(1, &fbo);
@@ -170,53 +236,14 @@ namespace scaler::gpu {
             // Check framebuffer completeness
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
                 glDeleteFramebuffers(1, &fbo);
-                throw std::runtime_error("Framebuffer incomplete");
+                throw resource_error("Framebuffer incomplete");
             }
 
-            // Save and set viewport
-            GLint old_viewport[4];
-            glGetIntegerv(GL_VIEWPORT, old_viewport);
-            glViewport(0, 0, output_width, output_height);
+            // Render with common function
+            render_scaled_texture(input_texture, input_width, input_height,
+                                output_width, output_height, algo, true);
 
-            // Clear the output texture
-            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            // Use shader program
-            shader.use();
-
-            // Set uniforms
-            glUniform1i(shader.u_texture, 0);
-            glUniform2f(shader.u_texture_size,
-                       static_cast<float>(input_width),
-                       static_cast<float>(input_height));
-            glUniform2f(shader.u_output_size,
-                       static_cast<float>(output_width),
-                       static_cast<float>(output_height));
-
-            // Bind input texture
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, input_texture);
-
-            // Set texture parameters for pixel art
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-            // Render the quad
-            glBindVertexArray(vao_);
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            glBindVertexArray(0);
-
-            // Cleanup
-            glUseProgram(0);
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            // Restore viewport
-            glViewport(old_viewport[0], old_viewport[1], old_viewport[2], old_viewport[3]);
-
-            // Delete framebuffer
+            // Cleanup handled by scoped_framebuffer_bind destructor
             glDeleteFramebuffers(1, &fbo);
 
             detail::check_gl_error("After scale_texture_to_texture");
@@ -243,59 +270,12 @@ namespace scaler::gpu {
 
             ensure_initialized();
 
-            // Calculate scale factor
-            float scale_factor = static_cast<float>(fbo_width) / static_cast<float>(input_width);
-
-            // Verify the algorithm supports this scale on GPU
-            if (!gpu_algorithm_traits::is_scale_supported_on_gpu(algo, scale_factor)) {
-                throw std::runtime_error("Algorithm does not support scale factor " +
-                                       std::to_string(scale_factor) + " on GPU");
-            }
-
-            // Get or compile the appropriate shader
-            const auto& shader = get_or_compile_shader(algo, scale_factor);
-
             // Bind target framebuffer
             glBindFramebuffer(GL_FRAMEBUFFER, target_fbo);
 
-            // Save and set viewport
-            GLint old_viewport[4];
-            glGetIntegerv(GL_VIEWPORT, old_viewport);
-            glViewport(0, 0, fbo_width, fbo_height);
-
-            // Use shader program
-            shader.use();
-
-            // Set uniforms
-            glUniform1i(shader.u_texture, 0);
-            glUniform2f(shader.u_texture_size,
-                       static_cast<float>(input_width),
-                       static_cast<float>(input_height));
-            glUniform2f(shader.u_output_size,
-                       static_cast<float>(fbo_width),
-                       static_cast<float>(fbo_height));
-
-            // Bind input texture
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, input_texture);
-
-            // Set texture parameters
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-            // Render the quad
-            glBindVertexArray(vao_);
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            glBindVertexArray(0);
-
-            // Cleanup
-            glUseProgram(0);
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            // Restore viewport
-            glViewport(old_viewport[0], old_viewport[1], old_viewport[2], old_viewport[3]);
+            // Render with common function (don't clear for external framebuffers)
+            render_scaled_texture(input_texture, input_width, input_height,
+                                fbo_width, fbo_height, algo, false);
 
             detail::check_gl_error("After scale_texture_to_framebuffer");
         }
@@ -397,9 +377,9 @@ namespace scaler::gpu {
 
                 if (scales.empty() && gpu_algorithm_traits::supports_arbitrary_scale(algo)) {
                     // For arbitrary scale algorithms, precompile common scales
-                    precompile_shader(algo, 2.0f);
-                    precompile_shader(algo, 3.0f);
-                    precompile_shader(algo, 4.0f);
+                    precompile_shader(algo, DEFAULT_SCALE_2X);
+                    precompile_shader(algo, DEFAULT_SCALE_3X);
+                    precompile_shader(algo, DEFAULT_SCALE_4X);
                 } else {
                     // For fixed scale algorithms, precompile all supported scales
                     for (float scale : scales) {
