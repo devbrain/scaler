@@ -24,6 +24,9 @@ namespace scaler {
     // Array indices - always valid, non-negative
     using index_t = std::size_t;
 
+    // Padding - always non-negative
+    using padding_t = std::size_t;
+
     // Scale factors
     using scale_t = float;
 
@@ -34,6 +37,8 @@ namespace scaler {
                   "Coordinates must be signed for out-of-bounds handling");
     static_assert(std::is_unsigned_v<index_t>,
                   "Indices must be unsigned");
+    static_assert(std::is_unsigned_v<padding_t>,
+                  "Padding must be unsigned");
 
     /**
      * Helper functions for safe type conversions
