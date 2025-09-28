@@ -40,6 +40,7 @@
 #include <stdexcept>
 #include <functional>
 #include <cstring>  // For strstr
+#include <scaler/warning_macros.hh>
 
 namespace scaler::gpu::detail {
 
@@ -125,35 +126,35 @@ namespace scaler::gpu::detail {
     inline texture_resource make_texture() {
         GLuint id;
         glGenTextures(1, &id);
-        return texture_resource(id, [](GLuint id) { glDeleteTextures(1, &id); });
+        return texture_resource(id, [](GLuint tex_id) { glDeleteTextures(1, &tex_id); });
     }
 
     inline framebuffer_resource make_framebuffer() {
         GLuint id;
         glGenFramebuffers(1, &id);
-        return framebuffer_resource(id, [](GLuint id) { glDeleteFramebuffers(1, &id); });
+        return framebuffer_resource(id, [](GLuint fb_id) { glDeleteFramebuffers(1, &fb_id); });
     }
 
     inline shader_resource make_shader(GLenum type) {
         GLuint id = glCreateShader(type);
-        return shader_resource(id, [](GLuint id) { glDeleteShader(id); });
+        return shader_resource(id, [](GLuint shader_id) { glDeleteShader(shader_id); });
     }
 
     inline program_resource make_program() {
         GLuint id = glCreateProgram();
-        return program_resource(id, [](GLuint id) { glDeleteProgram(id); });
+        return program_resource(id, [](GLuint prog_id) { glDeleteProgram(prog_id); });
     }
 
     inline buffer_resource make_buffer() {
         GLuint id;
         glGenBuffers(1, &id);
-        return buffer_resource(id, [](GLuint id) { glDeleteBuffers(1, &id); });
+        return buffer_resource(id, [](GLuint buf_id) { glDeleteBuffers(1, &buf_id); });
     }
 
     inline vertex_array_resource make_vertex_array() {
         GLuint id;
         glGenVertexArrays(1, &id);
-        return vertex_array_resource(id, [](GLuint id) { glDeleteVertexArrays(1, &id); });
+        return vertex_array_resource(id, [](GLuint vao_id) { glDeleteVertexArrays(1, &vao_id); });
     }
 
     /**
@@ -246,7 +247,7 @@ namespace scaler::gpu::detail {
         }
 
         ~scoped_framebuffer_bind() {
-            glBindFramebuffer(GL_FRAMEBUFFER, previous_fbo_);
+            glBindFramebuffer(GL_FRAMEBUFFER, SCALER_GLINT_TO_GLUINT(previous_fbo_));
         }
     };
 

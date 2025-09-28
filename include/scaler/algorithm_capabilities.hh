@@ -1,6 +1,7 @@
 #pragma once
 
 #include <scaler/algorithm.hh>
+#include <scaler/warning_macros.hh>
 #include <vector>
 #include <map>
 #include <string>
@@ -171,10 +172,13 @@ namespace scaler {
             }
 
             // Special case: OmniScale with non-2x/3x scale - GPU only
+            SCALER_DISABLE_WARNING_PUSH
+            SCALER_DISABLE_WARNING_FLOAT_EQUAL
             if (algo == algorithm::OmniScale &&
                 scale_factor != 2.0f && scale_factor != 3.0f) {
                 return recommended_backend::GPU;
             }
+            SCALER_DISABLE_WARNING_POP
 
             // For small images, CPU is often faster due to GPU overhead
             if (pixels < 64 * 64) {

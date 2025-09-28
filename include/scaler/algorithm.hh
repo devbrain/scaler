@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cstddef>
+#include <scaler/warning_macros.hh>
 
 namespace scaler {
 
@@ -53,8 +54,8 @@ namespace scaler {
         float scale_factor) {
 
         // Most algorithms simply multiply by scale factor
-        size_t out_width = static_cast<size_t>(input_width * scale_factor);
-        size_t out_height = static_cast<size_t>(input_height * scale_factor);
+        size_t out_width = static_cast<size_t>(SCALER_SIZE_TO_FLOAT(input_width) * scale_factor);
+        size_t out_height = static_cast<size_t>(SCALER_SIZE_TO_FLOAT(input_height) * scale_factor);
 
         // Some algorithms may have specific requirements
         switch(algo) {

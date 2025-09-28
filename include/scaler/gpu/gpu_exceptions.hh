@@ -45,7 +45,7 @@ namespace scaler::gpu {
             constexpr char hex_chars[] = "0123456789ABCDEF";
             std::string result = "0000";
             for (int i = 3; i >= 0; --i) {
-                result[i] = hex_chars[value & 0xF];
+                result[static_cast<size_t>(i)] = hex_chars[value & 0xF];
                 value >>= 4;
             }
             return result;

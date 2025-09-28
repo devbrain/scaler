@@ -3,6 +3,7 @@
 #include <scaler/image_base.hh>
 #include <scaler/unified_scaler.hh>
 #include <scaler/algorithm_capabilities.hh>
+#include <scaler/warning_macros.hh>
 #include <vector>
 #include <functional>
 #include <string>
@@ -165,8 +166,8 @@ namespace scaler::test {
 
     // Common validation helpers
     inline bool validate_dimensions(const TestImage& output, const TestInputImageRGB& input, float scale) {
-        size_t expected_width = static_cast<size_t>(input.width() * scale);
-        size_t expected_height = static_cast<size_t>(input.height() * scale);
+        size_t expected_width = static_cast<size_t>(SCALER_SIZE_TO_FLOAT(input.width()) * scale);
+        size_t expected_height = static_cast<size_t>(SCALER_SIZE_TO_FLOAT(input.height()) * scale);
         return output.width() == expected_width && output.height() == expected_height;
     }
 

@@ -15,12 +15,12 @@ TEST_CASE("Unified Algorithm Tests - Basic Functionality") {
         std::function<void(const TestImage&, algorithm, float)> validator;
     };
 
-    auto basic_validator = [](const TestImage& output, algorithm algo, float scale) {
+    auto basic_validator = [](const TestImage& output, [[maybe_unused]] algorithm algo, [[maybe_unused]] float scale) {
         CHECK(output.width() > 0);
         CHECK(output.height() > 0);
     };
 
-    auto edge_validator = [](const TestImage& output, algorithm algo, float scale) {
+    auto edge_validator = [](const TestImage& output, algorithm algo, [[maybe_unused]] float scale) {
         // For edge-preserving algorithms with edge patterns, verify edges exist
         // But only if the output is expected to have edges (not for solid colors)
         if (is_edge_preserving_algorithm(algo)) {
@@ -74,7 +74,7 @@ TEST_CASE("Unified Algorithm Tests - Basic Functionality") {
         }
     };
 
-    auto single_pixel_validator = [](const TestImage& output, algorithm algo, float scale) {
+    auto single_pixel_validator = [](const TestImage& output, [[maybe_unused]] algorithm algo, float scale) {
         // Check that single pixel expands correctly
         size_t expected_size = static_cast<size_t>(scale);
         CHECK(output.width() == expected_size);
@@ -170,7 +170,7 @@ TEST_CASE("Unified Algorithm Tests - Color Preservation") {
 
             for (float scale : scales) {
                 for (const auto& color : test_colors) {
-                    INFO("Color: (" << (int)color.x << ", " << (int)color.y << ", " << (int)color.z << ")");
+                    INFO("Color: (" << static_cast<int>(color.x) << ", " << static_cast<int>(color.y) << ", " << static_cast<int>(color.z) << ")");
 
                     auto input = create_solid_color(2, 2, color);
                     auto output = Scaler<TestInputImageRGB, TestImage>::scale(input, algo, scale);
@@ -372,8 +372,8 @@ TEST_CASE("Algorithm Capabilities Check") {
         if (!scales.empty()) {
             // Fixed scale algorithms
             for (float scale : scales) {
-                CHECK(scale > 0);
-                CHECK(scale <= 4.0f);  // Reasonable upper bound
+                CHECK_GT(scale, 0.0f);
+                CHECK_LE(scale, 4.0f);  // Reasonable upper bound
             }
         }
 

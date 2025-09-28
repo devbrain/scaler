@@ -2,6 +2,7 @@
 
 #include <scaler/gpu/algorithm_traits.hh>
 #include <scaler/gpu/shader_source.hh>
+#include <scaler/warning_macros.hh>
 
 namespace scaler::gpu {
 
@@ -207,6 +208,8 @@ namespace scaler::gpu {
      */
     inline const char* get_shader_for_algorithm_and_scale(algorithm algo, float scale) {
         // Handle algorithms with scale-specific shaders
+        SCALER_DISABLE_WARNING_PUSH
+        SCALER_DISABLE_WARNING_FLOAT_EQUAL
         switch (algo) {
             case algorithm::Scale:
                 if (scale == 2.0f) return shader_source::scale2x_fragment_shader;
@@ -223,6 +226,7 @@ namespace scaler::gpu {
                 if (scale == 2.0f) return shader_source::aascale2x_fragment_shader;
                 if (scale == 4.0f) return shader_source::aascale4x_fragment_shader;
                 return nullptr;
+        SCALER_DISABLE_WARNING_POP
 
             default:
                 // Use the shader specified in the algorithm map

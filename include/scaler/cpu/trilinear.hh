@@ -2,6 +2,7 @@
 
 #include <scaler/cpu/bilinear.hh>
 #include <scaler/image_base.hh>
+#include <scaler/warning_macros.hh>
 #include <algorithm>
 #include <cmath>
 
@@ -27,8 +28,8 @@ namespace scaler {
         // For downscaling, we use mipmap levels
         const size_t src_width = src.width();
         const size_t src_height = src.height();
-        const auto dst_width = static_cast <size_t>(src_width * scale_factor);
-        const auto dst_height = static_cast <size_t>(src_height * scale_factor);
+        const auto dst_width = static_cast <size_t>(SCALER_SIZE_TO_FLOAT(src_width) * scale_factor);
+        const auto dst_height = static_cast <size_t>(SCALER_SIZE_TO_FLOAT(src_height) * scale_factor);
 
         // Handle edge cases
         if (src_width == 0 || src_height == 0) {
@@ -39,10 +40,10 @@ namespace scaler {
         const float log_scale = -std::log2(scale_factor);
         const int mip_level_0 = static_cast <int>(std::floor(log_scale));
         const int mip_level_1 = mip_level_0 + 1;
-        const float mip_blend = log_scale - mip_level_0;
+        const float mip_blend = log_scale - static_cast<float>(mip_level_0);
 
         // Generate mipmap level 0
-        float level_0_scale = std::pow(0.5f, mip_level_0);
+        float level_0_scale = static_cast<float>(std::pow(0.5f, mip_level_0));
         IntermediateImage mip_0 = (mip_level_0 == 0)
                                       ? IntermediateImage(src_width, src_height, src)
                                       : detail::generateMipmap <InputImage, IntermediateImage>(src, mip_level_0);
@@ -129,7 +130,7 @@ namespace scaler {
 
                     // Store average pixel
                     if (count > 0) {
-                        result.set_pixel(x, y, sum * (1.0f / count));
+                        result.set_pixel(x, y, sum * (1.0f / SCALER_SIZE_TO_FLOAT(count)));
                     }
                 }
             }

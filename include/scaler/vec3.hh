@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cmath>
+#include <scaler/warning_macros.hh>
 
 namespace scaler {
     template<typename T>
@@ -60,11 +61,14 @@ namespace scaler {
 
     template<typename T, typename S>
     vec3<T> operator * (const vec3<T>& v, S scalar) {
+        SCALER_DISABLE_WARNING_PUSH
+        SCALER_DISABLE_WARNING_CONVERSION
         return {
             static_cast<T>(v.x * scalar),
             static_cast<T>(v.y * scalar),
             static_cast<T>(v.z * scalar)
         };
+        SCALER_DISABLE_WARNING_POP
     }
 
     template<typename T, typename S>
@@ -91,8 +95,11 @@ namespace scaler {
     template<typename T, typename U>
     inline vec3 <T> mix(vec3 <T> const& x, vec3 <T> const& y, U const& a) noexcept {
         // Optimize for common cases
+        SCALER_DISABLE_WARNING_PUSH
+        SCALER_DISABLE_WARNING_FLOAT_EQUAL
         if (a == static_cast<U>(0)) return x;
         if (a == static_cast<U>(1)) return y;
+        SCALER_DISABLE_WARNING_POP
         // Inline the scalar mix to avoid function call overhead
         return {
             static_cast<T>(static_cast<U>(x.x) * (static_cast<U>(1) - a) + static_cast<U>(y.x) * a),

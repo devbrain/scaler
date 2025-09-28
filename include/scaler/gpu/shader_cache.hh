@@ -71,7 +71,7 @@ namespace scaler::gpu {
                 GLint log_length;
                 glGetShaderiv(shader.get(), GL_INFO_LOG_LENGTH, &log_length);
 
-                std::vector<char> error_log(log_length > 0 ? log_length : 512);
+                std::vector<char> error_log(log_length > 0 ? SCALER_GLINT_TO_SIZE(log_length) : 512);
                 glGetShaderInfoLog(shader.get(), static_cast<GLsizei>(error_log.size()),
                                   nullptr, error_log.data());
 
@@ -107,7 +107,7 @@ namespace scaler::gpu {
                 GLint log_length;
                 glGetProgramiv(result.program.get(), GL_INFO_LOG_LENGTH, &log_length);
 
-                std::vector<char> error_log(log_length > 0 ? log_length : 512);
+                std::vector<char> error_log(log_length > 0 ? SCALER_GLINT_TO_SIZE(log_length) : 512);
                 glGetProgramInfoLog(result.program.get(), static_cast<GLsizei>(error_log.size()),
                                    nullptr, error_log.data());
 

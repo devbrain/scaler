@@ -9,6 +9,7 @@
 
 // Include algorithm definitions (shared with GPU)
 #include <scaler/algorithm.hh>
+#include <scaler/warning_macros.hh>
 
 // Include all algorithm implementations
 #include <scaler/cpu/epx.hh>
@@ -260,10 +261,13 @@ namespace scaler {
                         return dispatch_xbr(input, scale_factor);
 
                     case algorithm::OmniScale:
+                        SCALER_DISABLE_WARNING_PUSH
+                        SCALER_DISABLE_WARNING_FLOAT_EQUAL
                         if (scale_factor == 2.0f) {
                             return scale_omni_scale_2x <InputImage, OutputImage>(input, 2);
                         } else if (scale_factor == 3.0f) {
                             return scale_omni_scale_3x <InputImage, OutputImage>(input, 3);
+                        SCALER_DISABLE_WARNING_POP
                         } else {
                             // For other scales, use repeated application or nearest neighbor
                             // This is a temporary solution
@@ -360,15 +364,15 @@ namespace scaler {
             // Simple nearest neighbor scaling (for any scale factor)
             template<typename AnyInput>
             static OutputImage scale_nearest(const AnyInput& input, float scale_factor) {
-                auto out_width = static_cast <size_t>(input.width() * scale_factor);
-                auto out_height = static_cast <size_t>(input.height() * scale_factor);
+                auto out_width = static_cast <size_t>(SCALER_SIZE_TO_FLOAT(input.width()) * scale_factor);
+                auto out_height = static_cast <size_t>(SCALER_SIZE_TO_FLOAT(input.height()) * scale_factor);
 
                 OutputImage output(out_width, out_height, input);
 
                 for (size_t y = 0; y < out_height; ++y) {
-                    auto src_y = static_cast <size_t>(y / scale_factor);
+                    auto src_y = static_cast <size_t>(SCALER_SIZE_TO_FLOAT(y) / scale_factor);
                     for (size_t x = 0; x < out_width; ++x) {
-                        auto src_x = static_cast <size_t>(x / scale_factor);
+                        auto src_x = static_cast <size_t>(SCALER_SIZE_TO_FLOAT(x) / scale_factor);
                         output.set_pixel(x, y, input.get_pixel(src_x, src_y));
                     }
                 }

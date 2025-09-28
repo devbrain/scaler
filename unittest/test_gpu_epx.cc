@@ -64,8 +64,8 @@ static bool compareSurfaces(SDL_Surface* surf1, SDL_Surface* surf2, int toleranc
         if (dr > tolerance || dg > tolerance || db > tolerance || da > tolerance) {
             if (mismatches < 10) {  // Report first few mismatches
                 INFO("Pixel " << i << " mismatch: "
-                     << "(" << (int)r1 << "," << (int)g1 << "," << (int)b1 << "," << (int)a1 << ") vs "
-                     << "(" << (int)r2 << "," << (int)g2 << "," << (int)b2 << "," << (int)a2 << ")");
+                     << "(" << static_cast<int>(r1) << "," << static_cast<int>(g1) << "," << static_cast<int>(b1) << "," << static_cast<int>(a1) << ") vs "
+                     << "(" << static_cast<int>(r2) << "," << static_cast<int>(g2) << "," << static_cast<int>(b2) << "," << static_cast<int>(a2) << ")");
             }
             mismatches++;
             matches = false;
@@ -181,7 +181,7 @@ TEST_CASE("GPU EPX Implementation") {
             auto result = scale_epx<SDLInputImage, SDLOutputImage>(input_img);
         }
         Uint64 cpu_end = SDL_GetPerformanceCounter();
-        double cpu_ms = ((cpu_end - cpu_start) * 1000.0) / SDL_GetPerformanceFrequency();
+        double cpu_ms = (static_cast<double>(cpu_end - cpu_start) * 1000.0) / static_cast<double>(SDL_GetPerformanceFrequency());
 
         // GPU timing
         gpu_test_helper gpu_helper;
@@ -193,7 +193,7 @@ TEST_CASE("GPU EPX Implementation") {
             SDL_FreeSurface(result);
         }
         Uint64 gpu_end = SDL_GetPerformanceCounter();
-        double gpu_ms = ((gpu_end - gpu_start) * 1000.0) / SDL_GetPerformanceFrequency();
+        double gpu_ms = (static_cast<double>(gpu_end - gpu_start) * 1000.0) / static_cast<double>(SDL_GetPerformanceFrequency());
 
         INFO("CPU EPX time: " << cpu_ms / iterations << " ms/frame");
         INFO("GPU EPX time: " << gpu_ms / iterations << " ms/frame");

@@ -7,6 +7,7 @@
 
 #include <scaler/gpu/opengl_texture_scaler.hh>
 #include <scaler/algorithm.hh>
+#include <scaler/warning_macros.hh>
 #include <SDL.h>
 #include <memory>
 #include <vector>
@@ -97,19 +98,19 @@ namespace scaler::gpu::test {
 
                 // Create output texture
                 GLuint output_texture = opengl_texture_scaler::create_output_texture(
-                    dims.width, dims.height
+                    SCALER_SIZE_TO_GLSIZEI(dims.width), SCALER_SIZE_TO_GLSIZEI(dims.height)
                 );
 
                 // Perform scaling
                 gl_scaler_->scale_texture_to_texture(
                     input_texture, input->w, input->h,
-                    output_texture, dims.width, dims.height,
+                    output_texture, SCALER_SIZE_TO_GLSIZEI(dims.width), SCALER_SIZE_TO_GLSIZEI(dims.height),
                     algo
                 );
 
                 // Create result surface
                 SDL_Surface* result = SDL_CreateRGBSurfaceWithFormat(
-                    0, dims.width, dims.height, 32, SDL_PIXELFORMAT_RGBA8888
+                    0, static_cast<int>(dims.width), static_cast<int>(dims.height), 32, SDL_PIXELFORMAT_RGBA8888
                 );
 
                 if (!result) {
@@ -127,14 +128,14 @@ namespace scaler::gpu::test {
 
                 // OpenGL reads pixels bottom-to-top, but SDL expects top-to-bottom
                 std::vector<Uint8> temp_pixels(dims.width * dims.height * 4);
-                glReadPixels(0, 0, dims.width, dims.height,
+                glReadPixels(0, 0, SCALER_SIZE_TO_GLSIZEI(dims.width), SCALER_SIZE_TO_GLSIZEI(dims.height),
                             GL_RGBA, GL_UNSIGNED_BYTE, temp_pixels.data());
 
                 // Flip vertically while copying to result
                 Uint8* dst = static_cast<Uint8*>(result->pixels);
-                for (int y = 0; y < dims.height; ++y) {
+                for (size_t y = 0; y < dims.height; ++y) {
                     const Uint8* src = temp_pixels.data() + (dims.height - 1 - y) * dims.width * 4;
-                    memcpy(dst + y * result->pitch, src, dims.width * 4);
+                    memcpy(dst + y * static_cast<size_t>(result->pitch), src, dims.width * 4);
                 }
 
                 // Cleanup

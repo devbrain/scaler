@@ -1,6 +1,7 @@
 #pragma once
 
 #include <scaler/types.hh>
+#include <scaler/warning_macros.hh>
 #include <vector>
 #include <array>
 #ifdef DEBUG
@@ -30,7 +31,7 @@ namespace scaler {
             [[nodiscard]] index_t row_to_buffer_index(coord_t src_row) const noexcept {
                 // Optimize modulo for positive numbers and power-of-2 sizes
                 // For non-power-of-2, use single modulo for positive src_row
-                int idx = src_row % window_height_;
+                int idx = SCALER_COORD_TO_INT(src_row) % window_height_;
                 // Handle negative case (only happens at image boundaries)
                 return static_cast<index_t>((idx < 0) ? (idx + window_height_) : idx);
             }
@@ -139,7 +140,7 @@ namespace scaler {
 
                 for (index_t x = 0; x < width_; ++x) {
                     coord_t src_x = static_cast<coord_t>(x) - static_cast<coord_t>(padding_);
-                    buffer_[buffer_idx][x] = src.safe_access(src_x, src_y);
+                    buffer_[buffer_idx][x] = src.safe_access(SCALER_COORD_TO_INT(src_x), SCALER_COORD_TO_INT(src_y));
                 }
             }
     };
@@ -235,7 +236,7 @@ namespace scaler {
         private:
             // Optimized modulo for size 3
             [[nodiscard]] index_t row_to_buffer_index(coord_t src_row) const noexcept {
-                int idx = src_row % 3;
+                int idx = SCALER_COORD_TO_INT(src_row) % 3;
                 return static_cast<index_t>((idx < 0) ? (idx + 3) : idx);
             }
     };
@@ -321,7 +322,7 @@ namespace scaler {
     class fast_sliding_window_3x3 {
     private:
         static constexpr int WINDOW_HEIGHT = 3;
-        static constexpr padding_t PADDING = 1;
+        static constexpr int PADDING = 1;
 
         // Fixed-size row buffers - stack allocated, no heap allocation
         alignas(64) std::array<PixelType, MaxWidth + 2> buffer_[WINDOW_HEIGHT];
@@ -331,7 +332,7 @@ namespace scaler {
         // Maps a source row index to buffer index (optimized for 3)
         [[nodiscard]] index_t row_to_buffer_index(coord_t src_row) const noexcept {
             // Optimized modulo for size 3
-            int idx = src_row % 3;
+            int idx = SCALER_COORD_TO_INT(src_row) % 3;
             return static_cast<index_t>((idx < 0) ? (idx + 3) : idx);
         }
         
@@ -351,7 +352,8 @@ namespace scaler {
             // Load all 3 rows
             for (int dy = -1; dy <= 1; ++dy) {
                 auto& row = buffer_[row_to_buffer_index(static_cast<int>(start_y) + dy)];
-                for (int x = -PADDING; x < static_cast<int>(width_ + PADDING); ++x) {
+                const int width_with_padding = static_cast<int>(width_) + PADDING;
+                for (int x = -PADDING; x < width_with_padding; ++x) {
                     row[static_cast<size_t>(x + PADDING)] = src.safe_access(x, static_cast<int>(start_y) + dy);
                 }
             }
@@ -361,10 +363,11 @@ namespace scaler {
         template<typename ImageType>
         void advance(const ImageType& src) {
             current_y_++;
-            
+
             // Load the new row (current_y + 1) into the buffer
             auto& new_row = buffer_[row_to_buffer_index(static_cast<int>(current_y_) + 1)];
-            for (int x = -PADDING; x < static_cast<int>(width_ + PADDING); ++x) {
+            const int width_with_padding = static_cast<int>(width_) + PADDING;
+            for (int x = -PADDING; x < width_with_padding; ++x) {
                 new_row[static_cast<size_t>(x + PADDING)] = src.safe_access(x, static_cast<int>(current_y_) + 1);
             }
         }

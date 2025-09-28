@@ -2,6 +2,7 @@
 
 #include <scaler/image_base.hh>
 #include <scaler/types.hh>
+#include <scaler/warning_macros.hh>
 #include <algorithm>
 #include <cmath>
 
@@ -15,8 +16,8 @@ namespace scaler {
         -> OutputImage {
         const dimension_t src_width = src.width();
         const dimension_t src_height = src.height();
-        const dimension_t dst_width = static_cast<dimension_t>(src_width * scale_factor);
-        const dimension_t dst_height = static_cast<dimension_t>(src_height * scale_factor);
+        const dimension_t dst_width = static_cast<dimension_t>(SCALER_SIZE_TO_FLOAT(src_width) * scale_factor);
+        const dimension_t dst_height = static_cast<dimension_t>(SCALER_SIZE_TO_FLOAT(src_height) * scale_factor);
 
         OutputImage result(dst_width, dst_height, src);
 
@@ -38,18 +39,16 @@ namespace scaler {
         // Inverse scale for mapping destination to source
         const float inv_scale = 1.0f / scale_factor;
 
-        using PixelType = decltype(src.get_pixel(0, 0));
-
         for (index_t dst_y = 0; dst_y < dst_height; ++dst_y) {
             // Map destination y to source space
-            const float src_y = (dst_y + 0.5f) * inv_scale - 0.5f;
+            const float src_y = (SCALER_SIZE_TO_FLOAT(dst_y) + 0.5f) * inv_scale - 0.5f;
             const index_t y0 = src_y >= 0 ? static_cast<index_t>(src_y) : 0;
             const index_t y1 = std::min(y0 + 1, src_height - 1);
             const float fy = src_y >= 0 ? src_y - static_cast<float>(y0) : 0.0f;
 
             for (index_t dst_x = 0; dst_x < dst_width; ++dst_x) {
                 // Map destination x to source space
-                const float src_x = (dst_x + 0.5f) * inv_scale - 0.5f;
+                const float src_x = (SCALER_SIZE_TO_FLOAT(dst_x) + 0.5f) * inv_scale - 0.5f;
                 const index_t x0 = src_x >= 0 ? static_cast<index_t>(src_x) : 0;
                 const index_t x1 = std::min(x0 + 1, src_width - 1);
                 const float fx = src_x >= 0 ? src_x - static_cast<float>(x0) : 0.0f;

@@ -5,6 +5,7 @@
 #include <scaler/gpu/shader_cache.hh>
 #include <scaler/gpu/algorithm_traits_impl.hh>
 #include <scaler/gpu/gpu_exceptions.hh>
+#include <scaler/warning_macros.hh>
 #include <memory>
 #include <vector>
 #include <stdexcept>
@@ -50,11 +51,11 @@ namespace scaler::gpu {
             glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), quad_vertices, GL_STATIC_DRAW);
 
             // Position attribute
-            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), static_cast<void*>(nullptr));
             glEnableVertexAttribArray(0);
 
             // Texture coordinate attribute
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
             glEnableVertexAttribArray(1);
 
             // Unbind
@@ -200,7 +201,9 @@ namespace scaler::gpu {
             GLsizei input_height,
             algorithm algo,
             float scale_factor) {
-            return calculate_output_size(input_width, input_height, algo, scale_factor);
+            return calculate_output_size(SCALER_GLSIZEI_TO_SIZE(input_width),
+                                        SCALER_GLSIZEI_TO_SIZE(input_height),
+                                        algo, scale_factor);
         }
 
         /**
@@ -297,7 +300,7 @@ namespace scaler::gpu {
             glBindTexture(GL_TEXTURE_2D, texture);
 
             // Allocate texture storage
-            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
+            glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(format), width, height, 0,
                         format, GL_UNSIGNED_BYTE, nullptr);
 
             // Set texture parameters
@@ -342,12 +345,13 @@ namespace scaler::gpu {
                 auto dims = get_output_size(input.width, input.height, algo, scale_factor);
 
                 // Create output texture
-                GLuint output = create_output_texture(dims.width, dims.height);
+                GLuint output = create_output_texture(SCALER_SIZE_TO_GLSIZEI(dims.width),
+                                                     SCALER_SIZE_TO_GLSIZEI(dims.height));
 
                 // Scale the texture
                 scale_texture_to_texture(
                     input.texture, input.width, input.height,
-                    output, dims.width, dims.height,
+                    output, SCALER_SIZE_TO_GLSIZEI(dims.width), SCALER_SIZE_TO_GLSIZEI(dims.height),
                     algo
                 );
 

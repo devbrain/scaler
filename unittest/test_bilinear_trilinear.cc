@@ -13,12 +13,12 @@ class TestImage : public scaler::input_image_base<TestImage<PixelType>, PixelTyp
                   public scaler::output_image_base<TestImage<PixelType>, PixelType> {
     std::vector<std::vector<PixelType>> data_;
 public:
-    TestImage(scaler::dimension_t width, scaler::dimension_t height) {
-        data_.resize(height, std::vector<PixelType>(width));
+    TestImage(scaler::dimension_t w, scaler::dimension_t h) {
+        data_.resize(h, std::vector<PixelType>(w));
     }
 
     template<typename T>
-    TestImage(scaler::dimension_t width, scaler::dimension_t height, const T&) : TestImage(width, height) {}
+    TestImage(scaler::dimension_t w, scaler::dimension_t h, const T&) : TestImage(w, h) {}
 
     TestImage(const std::vector<std::vector<PixelType>>& data) : data_(data) {}
 

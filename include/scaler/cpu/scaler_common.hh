@@ -41,7 +41,7 @@ namespace scaler {
         return mix(top_interp, bottom_interp, bottom_proportion);
     }
 
-    static uvec3 rgb_to_yuv(const uvec3& val) noexcept {
+    inline static uvec3 rgb_to_yuv(const uvec3& val) noexcept {
         // Use integer arithmetic with fixed-point representation (16-bit precision)
         // Coefficients multiplied by 65536 for precision
         constexpr int Y_R = 19595; // 0.299 * 65536

@@ -22,12 +22,12 @@ class BasicIOImage : public scaler::input_image_base<BasicIOImage<PixelType>, Pi
                      public scaler::output_image_base<BasicIOImage<PixelType>, PixelType> {
     std::vector<std::vector<PixelType>> data_;
 public:
-    BasicIOImage(size_t width, size_t height) {
-        data_.resize(height, std::vector<PixelType>(width));
+    BasicIOImage(size_t w, size_t h) {
+        data_.resize(h, std::vector<PixelType>(w));
     }
 
     template<typename T>
-    BasicIOImage(size_t width, size_t height, const T&) : BasicIOImage(width, height) {}
+    BasicIOImage(size_t w, size_t h, const T&) : BasicIOImage(w, h) {}
 
     // Disambiguate width() and height() by hiding base class versions
     using scaler::input_image_base<BasicIOImage<PixelType>, PixelType>::width;
