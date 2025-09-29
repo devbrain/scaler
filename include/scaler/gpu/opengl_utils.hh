@@ -142,6 +142,10 @@ namespace scaler::gpu::detail {
 
     inline program_resource make_program() {
         GLuint id = glCreateProgram();
+        if (id == 0) {
+            GLenum error = glGetError();
+            throw std::runtime_error("glCreateProgram failed with error: " + std::to_string(error));
+        }
         return program_resource(id, [](GLuint prog_id) { glDeleteProgram(prog_id); });
     }
 

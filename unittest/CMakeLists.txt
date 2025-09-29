@@ -7,6 +7,8 @@ add_executable(scaler_unittest
         test_unified_algorithms.cc
         # Unified scaler interface tests
         test_unified_scaler.cc
+        # Preallocated output tests
+        test_unified_preallocated.cc
         # SDL interface tests
         test_sdl_interface.cc
         # Golden data regression tests
@@ -23,10 +25,9 @@ add_executable(scaler_unittest
 # Add GPU tests if OpenGL is available
 if(OpenGL_FOUND)
     target_sources(scaler_unittest PRIVATE
-        test_gpu_simple.cc
-        test_gpu_epx.cc
-        test_gpu_algorithms_fidelity.cc
         test_platform_config.cc
+        test_unified_gpu.cc
+        test_unified_cpu_gpu.cc
     )
 endif()
 

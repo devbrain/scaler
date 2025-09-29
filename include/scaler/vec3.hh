@@ -51,12 +51,20 @@ namespace scaler {
 
     template<typename T>
     vec3<T> operator - (const vec3<T>& a, const vec3<T>& b) {
-        return {a.x-b.x, a.y-b.y, a.z-b.z};
+        return {
+            static_cast<T>(a.x - b.x),
+            static_cast<T>(a.y - b.y),
+            static_cast<T>(a.z - b.z)
+        };
     }
 
     template<typename T>
     vec3<T> operator + (const vec3<T>& a, const vec3<T>& b) {
-        return {a.x+b.x, a.y+b.y, a.z+b.z};
+        return {
+            static_cast<T>(a.x + b.x),
+            static_cast<T>(a.y + b.y),
+            static_cast<T>(a.z + b.z)
+        };
     }
 
     template<typename T, typename S>

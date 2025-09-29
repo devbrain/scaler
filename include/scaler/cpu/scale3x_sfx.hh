@@ -7,8 +7,7 @@ namespace scaler {
     // Improved Scale3x algorithm by Sp00kyFox
     // https://web.archive.org/web/20160527015550/https://libretro.com/forums/archive/index.php?t-1655.html
     template<typename InputImage, typename OutputImage>
-    OutputImage scale_scale_3x_sfx(const InputImage& src, size_t scale_factor = 3) {
-        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+    void scale_scale_3x_sfx(const InputImage& src, OutputImage& result, size_t scale_factor = 3) {
 
         // Use cache-friendly sliding window buffer for 5x5 neighborhood (needed for SFX variant)
         using PixelType = decltype(src.get_pixel(0, 0));
@@ -111,6 +110,13 @@ namespace scaler {
                 result.set_pixel(dst_x + 2, dst_y + 2, E8);
             }
         }
+    }
+
+    // Legacy wrapper that creates output (for backward compatibility)
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_scale_3x_sfx(const InputImage& src, size_t scale_factor = 3) {
+        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        scale_scale_3x_sfx(src, result, scale_factor);
         return result;
     }
 }

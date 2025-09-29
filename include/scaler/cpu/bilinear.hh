@@ -12,18 +12,15 @@ namespace scaler {
      * Smooth but can be blurry, good for photos and continuous-tone images
      */
     template<typename InputImage, typename OutputImage>
-    auto scale_bilinear(const InputImage& src, float scale_factor)
-        -> OutputImage {
+    void scale_bilinear(const InputImage& src, OutputImage& result, float scale_factor) {
         const dimension_t src_width = src.width();
         const dimension_t src_height = src.height();
-        const dimension_t dst_width = static_cast<dimension_t>(SCALER_SIZE_TO_FLOAT(src_width) * scale_factor);
-        const dimension_t dst_height = static_cast<dimension_t>(SCALER_SIZE_TO_FLOAT(src_height) * scale_factor);
-
-        OutputImage result(dst_width, dst_height, src);
+        const dimension_t dst_width = result.width();
+        const dimension_t dst_height = result.height();
 
         // Handle edge case of empty or single pixel images
         if (src_width == 0 || src_height == 0) {
-            return result;
+            return;
         }
 
         if (src_width == 1 && src_height == 1) {
@@ -33,7 +30,7 @@ namespace scaler {
                     result.set_pixel(x, y, pixel);
                 }
             }
-            return result;
+            return;
         }
 
         // Inverse scale for mapping destination to source
@@ -70,7 +67,15 @@ namespace scaler {
                 result.set_pixel(dst_x, dst_y, p);
             }
         }
+    }
 
+    // Legacy wrapper that creates output (for backward compatibility)
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_bilinear(const InputImage& src, float scale_factor) {
+        const dimension_t dst_width = static_cast<dimension_t>(SCALER_SIZE_TO_FLOAT(src.width()) * scale_factor);
+        const dimension_t dst_height = static_cast<dimension_t>(SCALER_SIZE_TO_FLOAT(src.height()) * scale_factor);
+        OutputImage result(dst_width, dst_height, src);
+        scale_bilinear(src, result, scale_factor);
         return result;
     }
 

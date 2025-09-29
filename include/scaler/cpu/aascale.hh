@@ -15,13 +15,9 @@ namespace scaler {
                     : src_(src) {
                 }
 
-                OutputImage operator()() const {
+                void operator()(OutputImage& dst) const {
                     const size_t src_width = src_.width();
                     const size_t src_height = src_.height();
-                    const size_t dst_width = src_width * 2;
-                    const size_t dst_height = src_height * 2;
-
-                    OutputImage dst(dst_width, dst_height, src_);
 
                     for (size_t y = 0; y < src_height; ++y) {
                         for (size_t x = 0; x < src_width; ++x) {
@@ -48,10 +44,11 @@ namespace scaler {
 
                             // Anti-aliasing: blend with original pixel (50% mix)
                             auto blend = [](auto pixel1, auto pixel2) {
+                                using T = typename decltype(pixel1)::value_type;
                                 return decltype(pixel1){
-                                    (pixel1.x + pixel2.x) / 2,
-                                    (pixel1.y + pixel2.y) / 2,
-                                    (pixel1.z + pixel2.z) / 2
+                                    static_cast<T>((pixel1.x + pixel2.x) / 2),
+                                    static_cast<T>((pixel1.y + pixel2.y) / 2),
+                                    static_cast<T>((pixel1.z + pixel2.z) / 2)
                                 };
                             };
 
@@ -67,8 +64,6 @@ namespace scaler {
                             dst.set_pixel(x * 2 + 1, y * 2 + 1, E3);
                         }
                     }
-
-                    return dst;
                 }
 
             private:
@@ -83,13 +78,9 @@ namespace scaler {
                     : src_(src) {
                 }
 
-                OutputImage operator()() const {
+                void operator()(OutputImage& dst) const {
                     const size_t src_width = src_.width();
                     const size_t src_height = src_.height();
-                    const size_t dst_width = src_width * 4;
-                    const size_t dst_height = src_height * 4;
-
-                    OutputImage dst(dst_width, dst_height, src_);
 
                     // Store intermediate result in a vector
                     using PixelType = decltype(src_.get_pixel(0, 0));
@@ -141,10 +132,11 @@ namespace scaler {
 
                             // Anti-aliasing: blend with the intermediate pixel (50% mix)
                             auto blend = [](auto pixel1, auto pixel2) {
+                                using T = typename PixelType::value_type;
                                 return PixelType{
-                                    (pixel1.x + pixel2.x) / 2,
-                                    (pixel1.y + pixel2.y) / 2,
-                                    (pixel1.z + pixel2.z) / 2
+                                    static_cast<T>((pixel1.x + pixel2.x) / 2),
+                                    static_cast<T>((pixel1.y + pixel2.y) / 2),
+                                    static_cast<T>((pixel1.z + pixel2.z) / 2)
                                 };
                             };
 
@@ -159,8 +151,6 @@ namespace scaler {
                             dst.set_pixel(x * 2 + 1, y * 2 + 1, E3);
                         }
                     }
-
-                    return dst;
                 }
 
             private:
@@ -175,13 +165,9 @@ namespace scaler {
                     : src_(src) {
                 }
 
-                OutputImage operator()() const {
+                void operator()(OutputImage& dst) const {
                     const size_t src_width = src_.width();
                     const size_t src_height = src_.height();
-                    const size_t dst_width = src_width * 4;
-                    const size_t dst_height = src_height * 4;
-
-                    OutputImage dst(dst_width, dst_height, src_);
 
                     // Store intermediate result in a vector
                     using PixelType = decltype(src_.get_pixel(0, 0));
@@ -237,8 +223,6 @@ namespace scaler {
                             dst.set_pixel(x * 2 + 1, y * 2 + 1, E3);
                         }
                     }
-
-                    return dst;
                 }
 
             private:
@@ -248,17 +232,39 @@ namespace scaler {
 
     // Public API functions
     template<typename InputImage, typename OutputImage>
-    auto scale_aa_scale_2x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 2) {
-        return detail::aa_scale_2x_impl <InputImage, OutputImage>{src}();
+    void scale_aa_scale_2x(const InputImage& src, OutputImage& dst, [[maybe_unused]] size_t scale_factor = 2) {
+        detail::aa_scale_2x_impl<InputImage, OutputImage>{src}(dst);
     }
 
     template<typename InputImage, typename OutputImage>
-    auto scale_aa_scale_4x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 4) {
-        return detail::aa_scale_4x_impl <InputImage, OutputImage>{src}();
+    void scale_aa_scale_4x(const InputImage& src, OutputImage& dst, [[maybe_unused]] size_t scale_factor = 4) {
+        detail::aa_scale_4x_impl<InputImage, OutputImage>{src}(dst);
     }
 
     template<typename InputImage, typename OutputImage>
-    auto scale_scale_4x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 4) {
-        return detail::scale_4x_impl <InputImage, OutputImage>{src}();
+    void scale_scale_4x(const InputImage& src, OutputImage& dst, [[maybe_unused]] size_t scale_factor = 4) {
+        detail::scale_4x_impl<InputImage, OutputImage>{src}(dst);
+    }
+
+    // Legacy wrappers for backward compatibility
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_aa_scale_2x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 2) {
+        OutputImage dst(src.width() * 2, src.height() * 2, src);
+        scale_aa_scale_2x(src, dst, scale_factor);
+        return dst;
+    }
+
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_aa_scale_4x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 4) {
+        OutputImage dst(src.width() * 4, src.height() * 4, src);
+        scale_aa_scale_4x(src, dst, scale_factor);
+        return dst;
+    }
+
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_scale_4x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 4) {
+        OutputImage dst(src.width() * 4, src.height() * 4, src);
+        scale_scale_4x(src, dst, scale_factor);
+        return dst;
     }
 } // namespace scaler

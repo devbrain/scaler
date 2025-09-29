@@ -9,8 +9,7 @@ namespace scaler {
     namespace detail {
         // Implementation template for EPX with any window type
         template<typename InputImage, typename OutputImage, typename WindowType>
-        OutputImage scale_epx_impl(const InputImage& src, WindowType& window, dimension_t scale_factor = 2) {
-            OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        void scale_epx_impl(const InputImage& src, OutputImage& result, WindowType& window, dimension_t scale_factor = 2) {
             window.initialize(src, 0);
 
             for (index_t y = 0; y < src.height(); y++) {
@@ -57,31 +56,37 @@ namespace scaler {
                     result.set_pixel(dst_x + 1, dst_y + 1, four);
                 }
             }
-            return result;
         }
     }
 
-    // Generic EPX scaler using CRTP - automatically uses fast path for small images
+    // Generic EPX scaler using CRTP - writes directly to output
     template<typename InputImage, typename OutputImage>
-    OutputImage scale_epx(const InputImage& src, dimension_t scale_factor = 2) {
+    void scale_epx(const InputImage& src, OutputImage& output, dimension_t scale_factor = 2) {
         using PixelType = decltype(src.get_pixel(0, 0));
 
         // Use fast sliding window for images <= 4096 pixels wide
         if (src.width() <= 4096) {
             fast_sliding_window_3x3 <PixelType, 4096> window(src.width());
-            return detail::scale_epx_impl <InputImage, OutputImage>(src, window, scale_factor);
+            detail::scale_epx_impl <InputImage, OutputImage>(src, output, window, scale_factor);
         } else {
             // Fall back to dynamic sliding window for very wide images
             sliding_window_3x3 <PixelType> window(src.width());
-            return detail::scale_epx_impl <InputImage, OutputImage>(src, window, scale_factor);
+            detail::scale_epx_impl <InputImage, OutputImage>(src, output, window, scale_factor);
         }
+    }
+
+    // Legacy wrapper that creates output (for backward compatibility)
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_epx(const InputImage& src, dimension_t scale_factor = 2) {
+        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        scale_epx(src, result, scale_factor);
+        return result;
     }
 
     namespace detail {
         // Implementation template for AdvMAME with any window type
         template<typename InputImage, typename OutputImage, typename WindowType>
-        OutputImage scale_adv_mame_impl(const InputImage& src, WindowType& window, dimension_t scale_factor = 2) {
-            OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        void scale_adv_mame_impl(const InputImage& src, OutputImage& result, WindowType& window, dimension_t scale_factor = 2) {
             window.initialize(src, 0);
 
             for (index_t y = 0; y < src.height(); y++) {
@@ -125,23 +130,30 @@ namespace scaler {
                     result.set_pixel(dst_x + 1, dst_y + 1, four);
                 }
             }
-            return result;
         }
     }
 
-    // Generic AdvMAME scaler using CRTP - automatically uses fast path for small images
+    // Generic AdvMAME scaler using CRTP - writes directly to output
     template<typename InputImage, typename OutputImage>
-    OutputImage scale_adv_mame(const InputImage& src, dimension_t scale_factor = 2) {
+    void scale_adv_mame(const InputImage& src, OutputImage& output, dimension_t scale_factor = 2) {
         using PixelType = decltype(src.get_pixel(0, 0));
 
         // Use fast sliding window for images <= 4096 pixels wide
         if (src.width() <= 4096) {
             fast_sliding_window_3x3 <PixelType, 4096> window(src.width());
-            return detail::scale_adv_mame_impl <InputImage, OutputImage>(src, window, scale_factor);
+            detail::scale_adv_mame_impl <InputImage, OutputImage>(src, output, window, scale_factor);
         } else {
             // Fall back to dynamic sliding window for very wide images
             sliding_window_3x3 <PixelType> window(src.width());
-            return detail::scale_adv_mame_impl <InputImage, OutputImage>(src, window, scale_factor);
+            detail::scale_adv_mame_impl <InputImage, OutputImage>(src, output, window, scale_factor);
         }
+    }
+
+    // Legacy wrapper that creates output (for backward compatibility)
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_adv_mame(const InputImage& src, dimension_t scale_factor = 2) {
+        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        scale_adv_mame(src, result, scale_factor);
+        return result;
     }
 }

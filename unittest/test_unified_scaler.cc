@@ -93,10 +93,12 @@ TEST_CASE("Unified Scaler Interface") {
         CHECK(scaler_capabilities::is_scale_supported(algorithm::EPX, 2.0f) == true);
         CHECK(scaler_capabilities::is_scale_supported(algorithm::EPX, 3.0f) == false);
 
-        // Check OmniScale capabilities
-        CHECK(scaler_capabilities::supports_arbitrary_scale(algorithm::OmniScale) == true);
-        CHECK(scaler_capabilities::is_scale_supported(algorithm::OmniScale, 2.5f) == true);
-        CHECK(scaler_capabilities::is_scale_supported(algorithm::OmniScale, 3.7f) == true);
+        // Check OmniScale capabilities - only 2x and 3x on CPU, arbitrary on GPU
+        CHECK(scaler_capabilities::supports_arbitrary_scale(algorithm::OmniScale) == false);  // CPU doesn't support arbitrary
+        CHECK(scaler_capabilities::is_scale_supported(algorithm::OmniScale, 2.0f) == true);
+        CHECK(scaler_capabilities::is_scale_supported(algorithm::OmniScale, 3.0f) == true);
+        CHECK(scaler_capabilities::is_scale_supported(algorithm::OmniScale, 2.5f) == false);  // Not supported on CPU
+        CHECK(scaler_capabilities::is_scale_supported(algorithm::OmniScale, 3.7f) == false);  // Not supported on CPU
     }
 
     SUBCASE("Get algorithms for specific scale") {
@@ -143,7 +145,8 @@ TEST_CASE("Unified Scaler Interface") {
             {algorithm::Scale, 3.0f, 6, 6},
             {algorithm::HQ, 2.0f, 4, 4},
             {algorithm::HQ, 3.0f, 6, 6},
-            {algorithm::OmniScale, 2.5f, 5, 5},
+            {algorithm::OmniScale, 2.0f, 4, 4},  // OmniScale only supports 2x and 3x on CPU
+            {algorithm::OmniScale, 3.0f, 6, 6},
             {algorithm::Nearest, 3.5f, 7, 7},
         };
 

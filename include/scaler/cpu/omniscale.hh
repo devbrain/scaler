@@ -362,8 +362,7 @@ namespace scaler {
     // OmniScale 2x implementation with pattern caching
     template<typename InputImage, typename OutputImage>
     SCALER_HOT
-    OutputImage scale_omni_scale_2x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 2) {
-        OutputImage result(src.width() * 2, src.height() * 2, src);
+    void scale_omni_scale_2x(const InputImage& src, OutputImage& result, [[maybe_unused]] size_t scale_factor = 2) {
 
         using PixelType = decltype(src.get_pixel(0, 0));
         using namespace omniscale_detail;
@@ -429,14 +428,21 @@ namespace scaler {
             }
         }
 
+    }
+
+    // Legacy wrapper that creates output (for backward compatibility)
+    template<typename InputImage, typename OutputImage>
+    SCALER_HOT
+    OutputImage scale_omni_scale_2x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 2) {
+        OutputImage result(src.width() * 2, src.height() * 2, src);
+        scale_omni_scale_2x(src, result, scale_factor);
         return result;
     }
 
     // OmniScale 3x implementation with pattern caching
     template<typename InputImage, typename OutputImage>
     SCALER_HOT
-    OutputImage scale_omni_scale_3x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 3) {
-        OutputImage result(src.width() * 3, src.height() * 3, src);
+    void scale_omni_scale_3x(const InputImage& src, OutputImage& result, [[maybe_unused]] size_t scale_factor = 3) {
 
         using PixelType = decltype(src.get_pixel(0, 0));
         using namespace omniscale_detail;
@@ -518,6 +524,14 @@ namespace scaler {
             }
         }
 
+    }
+
+    // Legacy wrapper that creates output (for backward compatibility)
+    template<typename InputImage, typename OutputImage>
+    SCALER_HOT
+    OutputImage scale_omni_scale_3x(const InputImage& src, [[maybe_unused]] size_t scale_factor = 3) {
+        OutputImage result(src.width() * 3, src.height() * 3, src);
+        scale_omni_scale_3x(src, result, scale_factor);
         return result;
     }
 }

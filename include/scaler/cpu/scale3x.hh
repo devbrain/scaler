@@ -7,8 +7,7 @@ namespace scaler {
     // Scale3x algorithm - 3x magnification version of Scale2x
     // http://www.scale2x.it/algorithm
     template<typename InputImage, typename OutputImage>
-    OutputImage scale_scale_3x(const InputImage& src, size_t scale_factor = 3) {
-        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+    void scale_scale_3x(const InputImage& src, OutputImage& result, size_t scale_factor = 3) {
 
         // Use cache-friendly sliding window buffer for 3x3 neighborhood
         using PixelType = decltype(src.get_pixel(0, 0));
@@ -82,6 +81,13 @@ namespace scaler {
                 result.set_pixel(dst_x + 2, dst_y + 2, E8);
             }
         }
+    }
+
+    // Legacy wrapper that creates output (for backward compatibility)
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_scale_3x(const InputImage& src, size_t scale_factor = 3) {
+        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        scale_scale_3x(src, result, scale_factor);
         return result;
     }
 }

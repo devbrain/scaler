@@ -307,6 +307,17 @@ set(CPACK_SOURCE_IGNORE_FILES
 
 include(CPack)
 
+# Build examples
+option(BUILD_EXAMPLES "Build example applications" ON)
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples/scaler_cli)
+
+    # Build GPU scaler example if OpenGL is available
+    if(OpenGL_FOUND AND GLEW_FOUND AND NOT SCALER_NO_SDL)
+        add_subdirectory(examples/gpu_scaler)
+    endif()
+endif()
+
 
 
 

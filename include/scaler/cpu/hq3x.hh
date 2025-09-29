@@ -3048,14 +3048,12 @@ namespace scaler {
 
     // Main HQ3x function - optimized with row caching
     template<typename InputImage, typename OutputImage>
-    SCALER_HOT OutputImage scale_hq_3x(const InputImage& src) {
+    SCALER_HOT void scale_hq_3x(const InputImage& src, OutputImage& result) {
         const auto src_width = src.width();
         const auto src_height = src.height();
 
-        OutputImage result(src_width * 3, src_height * 3, src);
-
         if (SCALER_UNLIKELY(src_width == 0 || src_height == 0)) {
-            return result;
+            return;
         }
 
         using PixelType = decltype(src.get_pixel(0, 0));
@@ -3166,7 +3164,13 @@ namespace scaler {
                 result.set_pixel(out_x + 2, out_y + 2, output[8]);
             }
         }
+    }
 
+    // Legacy wrapper that creates output (for backward compatibility)
+    template<typename InputImage, typename OutputImage>
+    SCALER_HOT OutputImage scale_hq_3x(const InputImage& src) {
+        OutputImage result(src.width() * 3, src.height() * 3, src);
+        scale_hq_3x(src, result);
         return result;
     }
 

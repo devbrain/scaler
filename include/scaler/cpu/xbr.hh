@@ -41,10 +41,9 @@ namespace scaler {
         }
     }
 
-    // Generic XBR scaler using CRTP - works with any image implementation
+    // Generic XBR scaler using CRTP - writes directly to output
     template<typename InputImage, typename OutputImage>
-    OutputImage scale_xbr(const InputImage& src, size_t scale_factor = 2) {
-        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+    void scale_xbr(const InputImage& src, OutputImage& result, size_t scale_factor = 2) {
 
         // Use cache-friendly sliding window buffer for 5x5 neighborhood
         using PixelType = decltype(src.get_pixel(0, 0));
@@ -214,6 +213,13 @@ namespace scaler {
                 result.set_pixel(dst_x + 1, dst_y + 1, bot_right_pixel);
             }
         }
+    }
+
+    // Legacy wrapper that creates output (for backward compatibility)
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_xbr(const InputImage& src, size_t scale_factor = 2) {
+        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        scale_xbr(src, result, scale_factor);
         return result;
     }
 }

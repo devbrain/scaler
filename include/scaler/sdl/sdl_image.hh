@@ -3,6 +3,7 @@
 #include <scaler/sdl/sdl_compat.hh>
 #include <scaler/image_base.hh>
 #include <scaler/vec3.hh>
+#include <algorithm>
 namespace scaler {
     class SDLOutputImage;  // Forward declaration
 
@@ -112,6 +113,10 @@ namespace scaler {
             SDLOutputImage(size_t width, size_t height, const SDLInputImage& template_img)
                 : SDLOutputImage(width, height, template_img.m_surface) {}
 
+            // Constructor with another SDLOutputImage as template
+            SDLOutputImage(size_t width, size_t height, const SDLOutputImage& template_img)
+                : SDLOutputImage(width, height, template_img.m_surface) {}
+
             ~SDLOutputImage() {
                 if (m_surface) {
                     SDL_DestroySurface(m_surface);
@@ -154,6 +159,32 @@ namespace scaler {
                 return m_surface ? static_cast<size_t>(m_surface->h) : 0;
             }
 
+            // Add get_pixel method for algorithms that need to read from output
+            [[nodiscard]] uvec3 get_pixel(size_t x, size_t y) const {
+                return get_pixel_impl(x, y);
+            }
+
+            // Add safe_access for algorithms that use output as intermediate input
+            [[nodiscard]] uvec3 safe_access(int x, int y,
+                                           out_of_bounds_strategy strategy = NEAREST) const {
+                const int w = static_cast<int>(width_impl());
+                const int h = static_cast<int>(height_impl());
+
+                // Handle out-of-bounds cases
+                if (x < 0 || x >= w || y < 0 || y >= h) {
+                    switch (strategy) {
+                        case ZERO:
+                            return {0, 0, 0};
+                        case NEAREST:
+                            x = std::max(0, std::min(w - 1, x));
+                            y = std::max(0, std::min(h - 1, y));
+                            break;
+                    }
+                }
+
+                return get_pixel_impl(static_cast<size_t>(x), static_cast<size_t>(y));
+            }
+
             void set_pixel_impl(size_t x, size_t y, const uvec3& pixel) {
                 Uint32 color = SDL_MapRGB(m_details, m_palette,
                                           static_cast<Uint8>(pixel.x),
@@ -189,6 +220,40 @@ namespace scaler {
                         // Should not happen with valid SDL surfaces
                         break;
                 }
+            }
+
+            [[nodiscard]] uvec3 get_pixel_impl(size_t x, size_t y) const {
+                const Uint8* const src_pixel = static_cast<const Uint8*>(m_surface->pixels)
+                                               + y * static_cast<size_t>(m_surface->pitch)
+                                               + x * m_bpp;
+
+                Uint32 pixel;
+                switch (m_bpp) {
+                    case 1:
+                        pixel = *src_pixel;
+                        break;
+                    case 2:
+                        pixel = *reinterpret_cast<const Uint16*>(src_pixel);
+                        break;
+                    case 3:
+                        if constexpr (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
+                            pixel = src_pixel[0] << 16 | src_pixel[1] << 8 | src_pixel[2];
+                        } else {
+                            pixel = src_pixel[0] | src_pixel[1] << 8 | src_pixel[2] << 16;
+                        }
+                        break;
+                    case 4:
+                        pixel = *reinterpret_cast<const Uint32*>(src_pixel);
+                        break;
+                    default:
+                        return {0, 0, 0};
+                }
+
+                Uint8 r, g, b;
+                SDL_GetRGB(pixel, m_details, m_palette, &r, &g, &b);
+                return {static_cast<unsigned int>(r),
+                        static_cast<unsigned int>(g),
+                        static_cast<unsigned int>(b)};
             }
 
             [[nodiscard]] SDL_Surface* get_surface() const {

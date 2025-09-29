@@ -28,11 +28,9 @@ namespace scaler {
         }
     }
 
-    // Generic 2xSaI scaler using CRTP - works with any image implementation
+    // Generic 2xSaI scaler using CRTP - writes directly to output
     template<typename InputImage, typename OutputImage>
-    auto scale_2x_sai(const InputImage& src, size_t scale_factor = 2)
-        -> OutputImage {
-        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+    void scale_2x_sai(const InputImage& src, OutputImage& result, size_t scale_factor = 2) {
 
         // Use cache-friendly sliding window buffer for 4x4 neighborhood
         using PixelType = decltype(src.get_pixel(0, 0));
@@ -152,6 +150,13 @@ namespace scaler {
                 result.set_pixel(dst_x + 1, dst_y + 1, bottom_right_interp);
             }
         }
+    }
+
+    // Legacy wrapper for backward compatibility
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_2x_sai(const InputImage& src, size_t scale_factor = 2) {
+        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        scale_2x_sai(src, result, scale_factor);
         return result;
     }
 }

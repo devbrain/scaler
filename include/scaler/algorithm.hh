@@ -28,7 +28,6 @@ namespace scaler {
 
         // Advanced algorithms
         xBR,            // Hyllian's xBR (2x, 3x, 4x)
-        xBRZ,           // Zenju's xBRZ variant (2x-6x)
 
         // Resolution independent
         OmniScale,      // Any scale factor

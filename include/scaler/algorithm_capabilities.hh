@@ -112,7 +112,6 @@ namespace scaler {
                 algorithm::HQ,
                 algorithm::AAScale,
                 algorithm::xBR,
-                algorithm::xBRZ,
                 algorithm::OmniScale
             };
         }
@@ -141,6 +140,35 @@ namespace scaler {
                 }
             }
             return result;
+        }
+
+        /**
+         * Get all GPU-accelerated algorithms
+         */
+        static std::vector<algorithm> get_gpu_algorithms() {
+            std::vector<algorithm> result;
+            for (algorithm algo : get_all_algorithms()) {
+                if (is_gpu_accelerated(algo)) {
+                    result.push_back(algo);
+                }
+            }
+            return result;
+        }
+
+        /**
+         * Get GPU-supported scales for a specific algorithm
+         */
+        static std::vector<float> get_gpu_scales_for_algorithm(algorithm algo) {
+            const auto& info = get_info(algo);
+            return info.gpu_supported_scales;
+        }
+
+        /**
+         * Check if algorithm supports arbitrary scale on GPU
+         */
+        static bool gpu_supports_arbitrary_scale(algorithm algo) {
+            const auto& info = get_info(algo);
+            return info.gpu_accelerated && info.gpu_arbitrary_scale;
         }
 
         /**
@@ -274,15 +302,8 @@ namespace scaler {
                     2.0f, 4.0f
                 }},
 
-                {algorithm::xBRZ, {
-                    "xBRZ", "Zenju's xBRZ - improved xBR",
-                    {2.0f, 3.0f, 4.0f, 5.0f, 6.0f}, false,  // CPU: 2x-6x
-                    {}, false, false, // GPU: not accelerated
-                    2.0f, 6.0f
-                }},
-
                 {algorithm::OmniScale, {
-                    "OmniScale", "OmniScale - resolution independent",
+                    "OmniScale", "OmniScale - resolution independent (GPU)",
                     {2.0f, 3.0f}, false,  // CPU: 2x, 3x only
                     {}, true, true,       // GPU: any scale, accelerated!
                     1.0f, 8.0f

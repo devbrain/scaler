@@ -1,6 +1,7 @@
 #pragma once
 
 #include <scaler/algorithm.hh>
+#include <scaler/algorithm_capabilities.hh>
 #include <scaler/gpu/opengl_utils.hh>
 #include <scaler/gpu/shader_cache.hh>
 #include <scaler/gpu/algorithm_traits_impl.hh>
@@ -11,401 +12,425 @@
 #include <stdexcept>
 
 namespace scaler::gpu {
-
     /**
      * Pure OpenGL texture scaler - no SDL dependencies
      * Designed for game engines with preallocated textures
      */
     class opengl_texture_scaler {
-    private:
-        shader_cache cache_;
-        GLuint vao_ = 0;
-        GLuint vbo_ = 0;
-        bool initialized_ = false;
+        private:
+            shader_cache cache_;
+            GLuint vao_ = 0;
+            GLuint vbo_ = 0;
+            bool initialized_ = false;
 
-        // Constants
-        static constexpr float DEFAULT_SCALE_2X = 2.0f;
-        static constexpr float DEFAULT_SCALE_3X = 3.0f;
-        static constexpr float DEFAULT_SCALE_4X = 4.0f;
-        static constexpr int DEFAULT_LOG_BUFFER_SIZE = 512;
+            // Constants
+            static constexpr float DEFAULT_SCALE_2X = 2.0f;
+            static constexpr float DEFAULT_SCALE_3X = 3.0f;
+            static constexpr float DEFAULT_SCALE_4X = 4.0f;
+            static constexpr int DEFAULT_LOG_BUFFER_SIZE = 512;
 
-        // Vertex data for full-screen quad
-        static constexpr float quad_vertices[] = {
-            // positions   // texCoords
-            -1.0f,  1.0f,  0.0f, 0.0f,  // top-left
-             1.0f,  1.0f,  1.0f, 0.0f,  // top-right
-            -1.0f, -1.0f,  0.0f, 1.0f,  // bottom-left
-             1.0f, -1.0f,  1.0f, 1.0f   // bottom-right
-        };
+            // Vertex data for full-screen quad
+            static constexpr float quad_vertices[] = {
+                // positions   // texCoords
+                -1.0f, 1.0f, 0.0f, 0.0f, // top-left
+                1.0f, 1.0f, 1.0f, 0.0f, // top-right
+                -1.0f, -1.0f, 0.0f, 1.0f, // bottom-left
+                1.0f, -1.0f, 1.0f, 1.0f // bottom-right
+            };
 
-        void ensure_initialized() {
-            if (initialized_) return;
+            void ensure_initialized() {
+                if (initialized_) return;
 
-            // Create and bind VAO
-            glGenVertexArrays(1, &vao_);
-            glBindVertexArray(vao_);
+                // Create and bind VAO
+                glGenVertexArrays(1, &vao_);
+                glBindVertexArray(vao_);
 
-            // Create and bind VBO
-            glGenBuffers(1, &vbo_);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), quad_vertices, GL_STATIC_DRAW);
+                // Create and bind VBO
+                glGenBuffers(1, &vbo_);
+                glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), quad_vertices, GL_STATIC_DRAW);
 
-            // Position attribute
-            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), static_cast<void*>(nullptr));
-            glEnableVertexAttribArray(0);
+                // Position attribute
+                glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), static_cast <void*>(nullptr));
+                glEnableVertexAttribArray(0);
 
-            // Texture coordinate attribute
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
-            glEnableVertexAttribArray(1);
+                // Texture coordinate attribute
+                glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                                      reinterpret_cast <void*>(2 * sizeof(float)));
+                glEnableVertexAttribArray(1);
 
-            // Unbind
-            glBindVertexArray(0);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
+                // Unbind
+                glBindVertexArray(0);
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-            initialized_ = true;
-        }
-
-        /**
-         * Common rendering logic for scaling operations
-         * @param input_texture Source texture
-         * @param input_width Width of input texture
-         * @param input_height Height of input texture
-         * @param output_width Width of output
-         * @param output_height Height of output
-         * @param algo Algorithm to use
-         * @param clear_output Whether to clear output before rendering
-         */
-        void render_scaled_texture(
-            GLuint input_texture,
-            GLsizei input_width,
-            GLsizei input_height,
-            GLsizei output_width,
-            GLsizei output_height,
-            algorithm algo,
-            bool clear_output = false) {
-
-            // Calculate scale factor and validate
-            float scale_factor = static_cast<float>(output_width) / static_cast<float>(input_width);
-
-            if (!gpu_algorithm_traits::is_scale_supported_on_gpu(algo, scale_factor)) {
-                throw unsupported_operation_error(
-                    "Algorithm does not support scale factor " + std::to_string(scale_factor));
+                initialized_ = true;
             }
 
-            // Get or compile the appropriate shader
-            const auto& shader = get_or_compile_shader(algo, scale_factor);
+            /**
+             * Common rendering logic for scaling operations
+             * @param input_texture Source texture
+             * @param input_width Width of input texture
+             * @param input_height Height of input texture
+             * @param output_width Width of output
+             * @param output_height Height of output
+             * @param algo Algorithm to use
+             * @param clear_output Whether to clear output before rendering
+             */
+            void render_scaled_texture(
+                GLuint input_texture,
+                GLsizei input_width,
+                GLsizei input_height,
+                GLsizei output_width,
+                GLsizei output_height,
+                algorithm algo,
+                bool clear_output = false) {
+                // Calculate scale factor and validate
+                float scale_factor = static_cast <float>(output_width) / static_cast <float>(input_width);
 
-            // Save and set viewport
-            GLint old_viewport[4];
-            glGetIntegerv(GL_VIEWPORT, old_viewport);
-            glViewport(0, 0, output_width, output_height);
+                if (!algorithm_capabilities::is_gpu_scale_supported(algo, scale_factor)) {
+                    throw unsupported_operation_error(
+                        "Algorithm does not support scale factor " + std::to_string(scale_factor));
+                }
 
-            // Clear if requested
-            if (clear_output) {
-                glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
+                // Get or compile the appropriate shader
+                const auto& shader = get_or_compile_shader(algo, scale_factor);
+
+                // Save and set viewport
+                GLint old_viewport[4];
+                glGetIntegerv(GL_VIEWPORT, old_viewport);
+                detail::check_gl_error("After glGetIntegerv viewport");
+                glViewport(0, 0, output_width, output_height);
+                detail::check_gl_error("After glViewport");
+
+                // Clear if requested
+                if (clear_output) {
+                    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                    glClear(GL_COLOR_BUFFER_BIT);
+                }
+
+                // Use shader and set uniforms
+                shader.use();
+                // Don't check error here - shader.use() already does it internally
+                glUniform1i(shader.u_texture, 0);
+                detail::check_gl_error("After glUniform1i");
+                glUniform2f(shader.u_texture_size,
+                            static_cast <float>(input_width),
+                            static_cast <float>(input_height));
+                detail::check_gl_error("After glUniform2f texture_size");
+                glUniform2f(shader.u_output_size,
+                            static_cast <float>(output_width),
+                            static_cast <float>(output_height));
+                detail::check_gl_error("After glUniform2f output_size");
+
+                // Bind and configure input texture
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, input_texture);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+                // Render the quad
+                glBindVertexArray(vao_);
+                detail::check_gl_error("After glBindVertexArray");
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                detail::check_gl_error("After glDrawArrays");
+                glBindVertexArray(0);
+                detail::check_gl_error("After glBindVertexArray(0)");
+
+                // Cleanup
+                glUseProgram(0);
+                glBindTexture(GL_TEXTURE_2D, 0);
+
+                // Restore viewport
+                glViewport(old_viewport[0], old_viewport[1], old_viewport[2], old_viewport[3]);
             }
 
-            // Use shader and set uniforms
-            shader.use();
-            glUniform1i(shader.u_texture, 0);
-            glUniform2f(shader.u_texture_size,
-                       static_cast<float>(input_width),
-                       static_cast<float>(input_height));
-            glUniform2f(shader.u_output_size,
-                       static_cast<float>(output_width),
-                       static_cast<float>(output_height));
+            const shader_program& get_or_compile_shader(algorithm algo, float scale_factor) {
+                // Get the appropriate shader source based on algorithm and scale
+                const char* fragment_source = get_shader_for_algorithm_and_scale(algo, scale_factor);
+                if (!fragment_source) {
+                    throw shader_error("No shader available for algorithm " +
+                                       std::to_string(static_cast <int>(algo)) +
+                                       " at scale " + std::to_string(scale_factor));
+                }
 
-            // Bind and configure input texture
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, input_texture);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                // Use the common vertex shader
+                const char* vertex_source = shader_source::vertex_shader_source;
 
-            // Render the quad
-            glBindVertexArray(vao_);
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            glBindVertexArray(0);
+                // Create a unique key for this algorithm/scale combination
+                std::string shader_key = "scaler_" + std::to_string(static_cast <int>(algo)) +
+                                         "_" + std::to_string(scale_factor);
 
-            // Cleanup
-            glUseProgram(0);
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            // Restore viewport
-            glViewport(old_viewport[0], old_viewport[1], old_viewport[2], old_viewport[3]);
-        }
-
-        const shader_program& get_or_compile_shader(algorithm algo, float scale_factor) {
-            // Get the appropriate shader source based on algorithm and scale
-            const char* fragment_source = get_shader_for_algorithm_and_scale(algo, scale_factor);
-            if (!fragment_source) {
-                throw shader_error("No shader available for algorithm " +
-                                 std::to_string(static_cast<int>(algo)) +
-                                 " at scale " + std::to_string(scale_factor));
+                return cache_.get_or_compile(shader_key, vertex_source, fragment_source);
             }
 
-            // Use the common vertex shader
-            const char* vertex_source = shader_source::vertex_shader_source;
+        public:
+            opengl_texture_scaler() = default;
 
-            // Create a unique key for this algorithm/scale combination
-            std::string shader_key = "scaler_" + std::to_string(static_cast<int>(algo)) +
-                                   "_" + std::to_string(scale_factor);
+            ~opengl_texture_scaler() {
+                if (vao_)
+                    glDeleteVertexArrays(1, &vao_);
+                if (vbo_)
+                    glDeleteBuffers(1, &vbo_);
+            }
 
-            return cache_.get_or_compile(shader_key, vertex_source, fragment_source);
-        }
+            // Non-copyable but moveable
+            opengl_texture_scaler(const opengl_texture_scaler&) = delete;
+            opengl_texture_scaler& operator=(const opengl_texture_scaler&) = delete;
 
-    public:
-        opengl_texture_scaler() = default;
-
-        ~opengl_texture_scaler() {
-            if (vao_) glDeleteVertexArrays(1, &vao_);
-            if (vbo_) glDeleteBuffers(1, &vbo_);
-        }
-
-        // Non-copyable but moveable
-        opengl_texture_scaler(const opengl_texture_scaler&) = delete;
-        opengl_texture_scaler& operator=(const opengl_texture_scaler&) = delete;
-        opengl_texture_scaler(opengl_texture_scaler&& other) noexcept
-            : cache_(std::move(other.cache_))
-            , vao_(other.vao_)
-            , vbo_(other.vbo_)
-            , initialized_(other.initialized_) {
-            other.vao_ = 0;
-            other.vbo_ = 0;
-            other.initialized_ = false;
-        }
-        opengl_texture_scaler& operator=(opengl_texture_scaler&& other) noexcept {
-            if (this != &other) {
-                if (vao_) glDeleteVertexArrays(1, &vao_);
-                if (vbo_) glDeleteBuffers(1, &vbo_);
-
-                cache_ = std::move(other.cache_);
-                vao_ = other.vao_;
-                vbo_ = other.vbo_;
-                initialized_ = other.initialized_;
-
+            opengl_texture_scaler(opengl_texture_scaler&& other) noexcept
+                : cache_(std::move(other.cache_))
+                  , vao_(other.vao_)
+                  , vbo_(other.vbo_)
+                  , initialized_(other.initialized_) {
                 other.vao_ = 0;
                 other.vbo_ = 0;
                 other.initialized_ = false;
             }
-            return *this;
-        }
 
-        /**
-         * Calculate output dimensions for preallocating textures
-         */
-        static output_dimensions get_output_size(
-            GLsizei input_width,
-            GLsizei input_height,
-            algorithm algo,
-            float scale_factor) {
-            return calculate_output_size(SCALER_GLSIZEI_TO_SIZE(input_width),
-                                        SCALER_GLSIZEI_TO_SIZE(input_height),
-                                        algo, scale_factor);
-        }
+            opengl_texture_scaler& operator=(opengl_texture_scaler&& other) noexcept {
+                if (this != &other) {
+                    if (vao_)
+                        glDeleteVertexArrays(1, &vao_);
+                    if (vbo_)
+                        glDeleteBuffers(1, &vbo_);
 
-        /**
-         * Scale texture to preallocated texture
-         * @param input_texture Source texture to scale
-         * @param input_width Width of input texture
-         * @param input_height Height of input texture
-         * @param output_texture Target texture (must be preallocated as render target)
-         * @param output_width Width of output texture
-         * @param output_height Height of output texture
-         * @param algo Scaling algorithm to use
-         */
-        void scale_texture_to_texture(
-            GLuint input_texture,
-            GLsizei input_width,
-            GLsizei input_height,
-            GLuint output_texture,
-            GLsizei output_width,
-            GLsizei output_height,
-            algorithm algo) {
+                    cache_ = std::move(other.cache_);
+                    vao_ = other.vao_;
+                    vbo_ = other.vbo_;
+                    initialized_ = other.initialized_;
 
-            ensure_initialized();
+                    other.vao_ = 0;
+                    other.vbo_ = 0;
+                    other.initialized_ = false;
+                }
+                return *this;
+            }
 
-            // Create framebuffer for output
-            GLuint fbo;
-            glGenFramebuffers(1, &fbo);
-            detail::scoped_framebuffer_bind fb_bind(fbo);
+            /**
+             * Calculate output dimensions for preallocating textures
+             */
+            static output_dimensions get_output_size(
+                GLsizei input_width,
+                GLsizei input_height,
+                algorithm algo,
+                float scale_factor) {
+                return calculate_output_size(SCALER_GLSIZEI_TO_SIZE(input_width),
+                                             SCALER_GLSIZEI_TO_SIZE(input_height),
+                                             algo, scale_factor);
+            }
 
-            // Attach output texture to framebuffer
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                  GL_TEXTURE_2D, output_texture, 0);
+            /**
+             * Scale texture to preallocated texture
+             * @param input_texture Source texture to scale
+             * @param input_width Width of input texture
+             * @param input_height Height of input texture
+             * @param output_texture Target texture (must be preallocated as render target)
+             * @param output_width Width of output texture
+             * @param output_height Height of output texture
+             * @param algo Scaling algorithm to use
+             */
+            void scale_texture_to_texture(
+                GLuint input_texture,
+                GLsizei input_width,
+                GLsizei input_height,
+                GLuint output_texture,
+                GLsizei output_width,
+                GLsizei output_height,
+                algorithm algo) {
+                ensure_initialized();
 
-            // Check framebuffer completeness
-            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+                // Clear any existing GL errors
+                while (glGetError() != GL_NO_ERROR) {
+                }
+
+                // Create framebuffer for output
+                GLuint fbo;
+                glGenFramebuffers(1, &fbo);
+                detail::check_gl_error("After glGenFramebuffers");
+
+                detail::scoped_framebuffer_bind fb_bind(fbo);
+                detail::check_gl_error("After framebuffer bind");
+
+                // Attach output texture to framebuffer
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                       GL_TEXTURE_2D, output_texture, 0);
+                detail::check_gl_error("After glFramebufferTexture2D");
+
+                // Check framebuffer completeness
+                GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+                if (status != GL_FRAMEBUFFER_COMPLETE) {
+                    glDeleteFramebuffers(1, &fbo);
+                    throw resource_error("Framebuffer incomplete: " + std::to_string(status));
+                }
+
+                // Render with common function
+                render_scaled_texture(input_texture, input_width, input_height,
+                                      output_width, output_height, algo, true);
+
+                // Cleanup handled by scoped_framebuffer_bind destructor
                 glDeleteFramebuffers(1, &fbo);
-                throw resource_error("Framebuffer incomplete");
+
+                detail::check_gl_error("After scale_texture_to_texture");
             }
 
-            // Render with common function
-            render_scaled_texture(input_texture, input_width, input_height,
-                                output_width, output_height, algo, true);
+            /**
+             * Scale texture to framebuffer (for render-to-texture)
+             * @param input_texture Source texture to scale
+             * @param input_width Width of input texture
+             * @param input_height Height of input texture
+             * @param target_fbo Target framebuffer (0 for default framebuffer)
+             * @param fbo_width Width of framebuffer viewport
+             * @param fbo_height Height of framebuffer viewport
+             * @param algo Scaling algorithm to use
+             */
+            void scale_texture_to_framebuffer(
+                GLuint input_texture,
+                GLsizei input_width,
+                GLsizei input_height,
+                GLuint target_fbo,
+                GLsizei fbo_width,
+                GLsizei fbo_height,
+                algorithm algo) {
+                ensure_initialized();
 
-            // Cleanup handled by scoped_framebuffer_bind destructor
-            glDeleteFramebuffers(1, &fbo);
+                // Bind target framebuffer
+                glBindFramebuffer(GL_FRAMEBUFFER, target_fbo);
 
-            detail::check_gl_error("After scale_texture_to_texture");
-        }
+                // Render with common function (don't clear for external framebuffers)
+                render_scaled_texture(input_texture, input_width, input_height,
+                                      fbo_width, fbo_height, algo, false);
 
-        /**
-         * Scale texture to framebuffer (for render-to-texture)
-         * @param input_texture Source texture to scale
-         * @param input_width Width of input texture
-         * @param input_height Height of input texture
-         * @param target_fbo Target framebuffer (0 for default framebuffer)
-         * @param fbo_width Width of framebuffer viewport
-         * @param fbo_height Height of framebuffer viewport
-         * @param algo Scaling algorithm to use
-         */
-        void scale_texture_to_framebuffer(
-            GLuint input_texture,
-            GLsizei input_width,
-            GLsizei input_height,
-            GLuint target_fbo,
-            GLsizei fbo_width,
-            GLsizei fbo_height,
-            algorithm algo) {
-
-            ensure_initialized();
-
-            // Bind target framebuffer
-            glBindFramebuffer(GL_FRAMEBUFFER, target_fbo);
-
-            // Render with common function (don't clear for external framebuffers)
-            render_scaled_texture(input_texture, input_width, input_height,
-                                fbo_width, fbo_height, algo, false);
-
-            detail::check_gl_error("After scale_texture_to_framebuffer");
-        }
-
-        /**
-         * Helper to create properly sized output texture
-         * @param width Width of texture
-         * @param height Height of texture
-         * @param format Pixel format (default GL_RGBA)
-         * @return OpenGL texture ID
-         */
-        static GLuint create_output_texture(
-            GLsizei width,
-            GLsizei height,
-            GLenum format = GL_RGBA) {
-
-            GLuint texture;
-            glGenTextures(1, &texture);
-            glBindTexture(GL_TEXTURE_2D, texture);
-
-            // Allocate texture storage
-            glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(format), width, height, 0,
-                        format, GL_UNSIGNED_BYTE, nullptr);
-
-            // Set texture parameters
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            detail::check_gl_error("After create_output_texture");
-
-            return texture;
-        }
-
-        /**
-         * Batch processing for multiple textures
-         */
-        struct texture_info {
-            GLuint texture;
-            GLsizei width;
-            GLsizei height;
-        };
-
-        /**
-         * Process multiple textures efficiently
-         * @param inputs Vector of input texture information
-         * @param algo Scaling algorithm to use
-         * @param scale_factor Scale factor to apply
-         * @return Vector of output texture IDs (caller owns these textures)
-         */
-        std::vector<GLuint> scale_batch(
-            const std::vector<texture_info>& inputs,
-            algorithm algo,
-            float scale_factor) {
-
-            std::vector<GLuint> outputs;
-            outputs.reserve(inputs.size());
-
-            for (const auto& input : inputs) {
-                // Calculate output dimensions
-                auto dims = get_output_size(input.width, input.height, algo, scale_factor);
-
-                // Create output texture
-                GLuint output = create_output_texture(SCALER_SIZE_TO_GLSIZEI(dims.width),
-                                                     SCALER_SIZE_TO_GLSIZEI(dims.height));
-
-                // Scale the texture
-                scale_texture_to_texture(
-                    input.texture, input.width, input.height,
-                    output, SCALER_SIZE_TO_GLSIZEI(dims.width), SCALER_SIZE_TO_GLSIZEI(dims.height),
-                    algo
-                );
-
-                outputs.push_back(output);
+                detail::check_gl_error("After scale_texture_to_framebuffer");
             }
 
-            return outputs;
-        }
+            /**
+             * Helper to create properly sized output texture
+             * @param width Width of texture
+             * @param height Height of texture
+             * @param format Pixel format (default GL_RGBA)
+             * @return OpenGL texture ID
+             */
+            static GLuint create_output_texture(
+                GLsizei width,
+                GLsizei height,
+                GLenum format = GL_RGBA) {
+                GLuint texture;
+                glGenTextures(1, &texture);
+                glBindTexture(GL_TEXTURE_2D, texture);
 
-        /**
-         * Precompile shaders for faster first use
-         * @param algo Algorithm to precompile shaders for
-         * @param scale_factor Scale factor to precompile for
-         */
-        void precompile_shader(algorithm algo, float scale_factor) {
-            get_or_compile_shader(algo, scale_factor);
-        }
+                // Allocate texture storage
+                // Use sized internal format (GL_RGBA8) instead of unsized format (GL_RGBA)
+                GLint internal_format = (format == GL_RGBA)
+                                            ? GL_RGBA8
+                                            : (format == GL_RGB)
+                                                  ? GL_RGB8
+                                                  : static_cast <GLint>(format);
+                glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0,
+                             format, GL_UNSIGNED_BYTE, nullptr);
 
-        /**
-         * Precompile all GPU-accelerated shaders
-         */
-        void precompile_all_shaders() {
-            auto algorithms = gpu_algorithm_traits::get_gpu_algorithms();
+                // Set texture parameters
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-            for (algorithm algo : algorithms) {
-                auto scales = gpu_algorithm_traits::get_gpu_supported_scales(algo);
+                glBindTexture(GL_TEXTURE_2D, 0);
 
-                if (scales.empty() && gpu_algorithm_traits::supports_arbitrary_scale(algo)) {
-                    // For arbitrary scale algorithms, precompile common scales
-                    precompile_shader(algo, DEFAULT_SCALE_2X);
-                    precompile_shader(algo, DEFAULT_SCALE_3X);
-                    precompile_shader(algo, DEFAULT_SCALE_4X);
-                } else {
-                    // For fixed scale algorithms, precompile all supported scales
-                    for (float scale : scales) {
-                        precompile_shader(algo, scale);
+                detail::check_gl_error("After create_output_texture");
+
+                return texture;
+            }
+
+            /**
+             * Batch processing for multiple textures
+             */
+            struct texture_info {
+                GLuint texture;
+                GLsizei width;
+                GLsizei height;
+            };
+
+            /**
+             * Process multiple textures efficiently
+             * @param inputs Vector of input texture information
+             * @param algo Scaling algorithm to use
+             * @param scale_factor Scale factor to apply
+             * @return Vector of output texture IDs (caller owns these textures)
+             */
+            std::vector <GLuint> scale_batch(
+                const std::vector <texture_info>& inputs,
+                algorithm algo,
+                float scale_factor) {
+                std::vector <GLuint> outputs;
+                outputs.reserve(inputs.size());
+
+                for (const auto& input : inputs) {
+                    // Calculate output dimensions
+                    auto dims = get_output_size(input.width, input.height, algo, scale_factor);
+
+                    // Create output texture
+                    GLuint output = create_output_texture(SCALER_SIZE_TO_GLSIZEI(dims.width),
+                                                          SCALER_SIZE_TO_GLSIZEI(dims.height));
+
+                    // Scale the texture
+                    scale_texture_to_texture(
+                        input.texture, input.width, input.height,
+                        output, SCALER_SIZE_TO_GLSIZEI(dims.width), SCALER_SIZE_TO_GLSIZEI(dims.height),
+                        algo
+                    );
+
+                    outputs.push_back(output);
+                }
+
+                return outputs;
+            }
+
+            /**
+             * Precompile shaders for faster first use
+             * @param algo Algorithm to precompile shaders for
+             * @param scale_factor Scale factor to precompile for
+             */
+            void precompile_shader(algorithm algo, float scale_factor) {
+                get_or_compile_shader(algo, scale_factor);
+            }
+
+            /**
+             * Precompile all GPU-accelerated shaders
+             */
+            void precompile_all_shaders() {
+                auto algorithms = algorithm_capabilities::get_gpu_algorithms();
+
+                for (algorithm algo : algorithms) {
+                    auto scales = algorithm_capabilities::get_gpu_scales_for_algorithm(algo);
+
+                    if (scales.empty() && algorithm_capabilities::gpu_supports_arbitrary_scale(algo)) {
+                        // For arbitrary scale algorithms, precompile common scales
+                        precompile_shader(algo, DEFAULT_SCALE_2X);
+                        precompile_shader(algo, DEFAULT_SCALE_3X);
+                        precompile_shader(algo, DEFAULT_SCALE_4X);
+                    } else {
+                        // For fixed scale algorithms, precompile all supported scales
+                        for (float scale : scales) {
+                            precompile_shader(algo, scale);
+                        }
                     }
                 }
             }
-        }
 
-        /**
-         * Check if an algorithm is available for GPU acceleration
-         */
-        static bool is_algorithm_available(algorithm algo) {
-            return gpu_algorithm_traits::is_gpu_accelerated(algo);
-        }
+            /**
+             * Check if an algorithm is available for GPU acceleration
+             */
+            static bool is_algorithm_available(algorithm algo) {
+                return algorithm_capabilities::is_gpu_accelerated(algo);
+            }
 
-        /**
-         * Check if a specific scale is supported for an algorithm
-         */
-        static bool is_scale_supported(algorithm algo, float scale) {
-            return gpu_algorithm_traits::is_scale_supported_on_gpu(algo, scale);
-        }
+            /**
+             * Check if a specific scale is supported for an algorithm
+             */
+            static bool is_scale_supported(algorithm algo, float scale) {
+                return algorithm_capabilities::is_gpu_scale_supported(algo, scale);
+            }
     };
-
 } // namespace scaler::gpu

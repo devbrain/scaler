@@ -31,8 +31,26 @@ namespace scaler::gpu {
         }
 
         void use() const {
-            if (is_valid()) {
-                glUseProgram(program.get());
+            if (!is_valid()) {
+                throw std::runtime_error("Attempting to use invalid shader program");
+            }
+
+            GLuint prog_id = program.get();
+            if (prog_id == 0) {
+                throw std::runtime_error("Shader program ID is 0 - invalid program");
+            }
+
+            // Clear any existing GL error
+            while (glGetError() != GL_NO_ERROR) {}
+
+            glUseProgram(prog_id);
+
+            GLenum error = glGetError();
+            if (error != GL_NO_ERROR) {
+                throw std::runtime_error("glUseProgram failed with program ID " +
+                                       std::to_string(prog_id) +
+                                       ", GL error: 0x" +
+                                       std::to_string(error));
             }
         }
     };
@@ -114,6 +132,9 @@ namespace scaler::gpu {
                 throw std::runtime_error("Failed to link shader program: " +
                                        std::string(error_log.data()));
             }
+
+            // Note: glValidateProgram is not called here because it can fail
+            // if no framebuffer is bound, even if the program is valid
 
             // Detach shaders after linking
             glDetachShader(result.program.get(), vertex.get());

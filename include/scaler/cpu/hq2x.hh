@@ -38,9 +38,9 @@ namespace scaler {
             // This gives us (5*c1 + 3*c2) >> 3
             if (w1 == 5 && w2 == 3 && s == 3) {
                 return T{
-                    static_cast <unsigned int>((c1.x * 5 + c2.x * 3) >> 3),
-                    static_cast <unsigned int>((c1.y * 5 + c2.y * 3) >> 3),
-                    static_cast <unsigned int>((c1.z * 5 + c2.z * 3) >> 3)
+                    static_cast<typename T::value_type>((c1.x * 5 + c2.x * 3) >> 3),
+                    static_cast<typename T::value_type>((c1.y * 5 + c2.y * 3) >> 3),
+                    static_cast<typename T::value_type>((c1.z * 5 + c2.z * 3) >> 3)
                 };
             }
 
@@ -48,9 +48,9 @@ namespace scaler {
             // This gives us (7*c1 + c2) >> 3
             if (w1 == 7 && w2 == 1 && s == 3) {
                 return T{
-                    static_cast <unsigned int>((c1.x * 7 + c2.x) >> 3),
-                    static_cast <unsigned int>((c1.y * 7 + c2.y) >> 3),
-                    static_cast <unsigned int>((c1.z * 7 + c2.z) >> 3)
+                    static_cast<typename T::value_type>((c1.x * 7 + c2.x) >> 3),
+                    static_cast<typename T::value_type>((c1.y * 7 + c2.y) >> 3),
+                    static_cast<typename T::value_type>((c1.z * 7 + c2.z) >> 3)
                 };
             }
 
@@ -58,9 +58,9 @@ namespace scaler {
             // This gives us (3*c1 + c2) >> 2
             if (w1 == 3 && w2 == 1 && s == 2) {
                 return T{
-                    static_cast <unsigned int>((c1.x * 3 + c2.x) >> 2),
-                    static_cast <unsigned int>((c1.y * 3 + c2.y) >> 2),
-                    static_cast <unsigned int>((c1.z * 3 + c2.z) >> 2)
+                    static_cast<typename T::value_type>((c1.x * 3 + c2.x) >> 2),
+                    static_cast<typename T::value_type>((c1.y * 3 + c2.y) >> 2),
+                    static_cast<typename T::value_type>((c1.z * 3 + c2.z) >> 2)
                 };
             }
 
@@ -68,17 +68,17 @@ namespace scaler {
             // This gives us (c1 + c2) >> 1 (simple average)
             if (w1 == 1 && w2 == 1 && s == 1) {
                 return T{
-                    static_cast <unsigned int>((c1.x + c2.x) >> 1),
-                    static_cast <unsigned int>((c1.y + c2.y) >> 1),
-                    static_cast <unsigned int>((c1.z + c2.z) >> 1)
+                    static_cast<typename T::value_type>((c1.x + c2.x) >> 1),
+                    static_cast<typename T::value_type>((c1.y + c2.y) >> 1),
+                    static_cast<typename T::value_type>((c1.z + c2.z) >> 1)
                 };
             }
 
             // General case for any other combination
             return T{
-                static_cast <unsigned int>((static_cast <int32_t>(c1.x) * w1 + static_cast <int32_t>(c2.x) * w2) >> s),
-                static_cast <unsigned int>((static_cast <int32_t>(c1.y) * w1 + static_cast <int32_t>(c2.y) * w2) >> s),
-                static_cast <unsigned int>((static_cast <int32_t>(c1.z) * w1 + static_cast <int32_t>(c2.z) * w2) >> s)
+                static_cast<typename T::value_type>((static_cast <int32_t>(c1.x) * w1 + static_cast <int32_t>(c2.x) * w2) >> s),
+                static_cast<typename T::value_type>((static_cast <int32_t>(c1.y) * w1 + static_cast <int32_t>(c2.y) * w2) >> s),
+                static_cast<typename T::value_type>((static_cast <int32_t>(c1.z) * w1 + static_cast <int32_t>(c2.z) * w2) >> s)
             };
         }
 
@@ -89,18 +89,18 @@ namespace scaler {
             if (w1 == 2 && w2 == 1 && w3 == 1 && s == 2) {
                 // (2*c1 + c2 + c3) >> 2 = (c1 + c1 + c2 + c3) >> 2
                 return T{
-                    static_cast <unsigned int>((c1.x + c1.x + c2.x + c3.x) >> 2),
-                    static_cast <unsigned int>((c1.y + c1.y + c2.y + c3.y) >> 2),
-                    static_cast <unsigned int>((c1.z + c1.z + c2.z + c3.z) >> 2)
+                    static_cast<typename T::value_type>((c1.x + c1.x + c2.x + c3.x) >> 2),
+                    static_cast<typename T::value_type>((c1.y + c1.y + c2.y + c3.y) >> 2),
+                    static_cast<typename T::value_type>((c1.z + c1.z + c2.z + c3.z) >> 2)
                 };
             }
 
             return T{
-                static_cast <unsigned int>((static_cast <int32_t>(c1.x) * w1 + static_cast <int32_t>(c2.x) * w2 +
+                static_cast<typename T::value_type>((static_cast <int32_t>(c1.x) * w1 + static_cast <int32_t>(c2.x) * w2 +
                                             static_cast <int32_t>(c3.x) * w3) >> s),
-                static_cast <unsigned int>((static_cast <int32_t>(c1.y) * w1 + static_cast <int32_t>(c2.y) * w2 +
+                static_cast<typename T::value_type>((static_cast <int32_t>(c1.y) * w1 + static_cast <int32_t>(c2.y) * w2 +
                                             static_cast <int32_t>(c3.y) * w3) >> s),
-                static_cast <unsigned int>((static_cast <int32_t>(c1.z) * w1 + static_cast <int32_t>(c2.z) * w2 +
+                static_cast<typename T::value_type>((static_cast <int32_t>(c1.z) * w1 + static_cast <int32_t>(c2.z) * w2 +
                                             static_cast <int32_t>(c3.z) * w3) >> s)
             };
         }
@@ -122,9 +122,7 @@ namespace scaler {
 
         // Generic HQ2x scaler with buffer policy
         template<typename InputImage, typename OutputImage, typename BufferPolicy>
-        auto scale_hq2x_with_policy(const InputImage& src, size_t scale_factor = 2)
-            -> OutputImage {
-            OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        void scale_hq2x_with_policy(const InputImage& src, OutputImage& result, size_t scale_factor = 2) {
 
             using PixelType = decltype(src.get_pixel(0, 0));
             row_buffer_manager <PixelType, BufferPolicy> buffers(src.width());
@@ -321,31 +319,46 @@ namespace scaler {
                 // Rotate rows for next iteration
                 buffers.rotate_rows();
             }
-            return result;
         }
     }
 
-    // Main HQ2x scaler - automatically selects best buffer policy
+    // Main HQ2x scaler - writes directly to output
     template<typename InputImage, typename OutputImage>
-    OutputImage scale_hq2x(const InputImage& src, size_t scale_factor = 2) {
+    void scale_hq2x(const InputImage& src, OutputImage& result, size_t scale_factor = 2) {
         using PixelType = decltype(src.get_pixel(0, 0));
 
         // Use fixed buffer for images up to 4096 pixels wide
         if (src.width() <= 4096) {
             using Policy = fixed_buffer_policy <PixelType, 4096>;
-            return detail::scale_hq2x_with_policy <InputImage, OutputImage, Policy>(src, scale_factor);
+            detail::scale_hq2x_with_policy <InputImage, OutputImage, Policy>(src, result, scale_factor);
         } else {
             // Fall back to dynamic buffer for very wide images
             using Policy = dynamic_buffer_policy <PixelType>;
-            return detail::scale_hq2x_with_policy <InputImage, OutputImage, Policy>(src, scale_factor);
+            detail::scale_hq2x_with_policy <InputImage, OutputImage, Policy>(src, result, scale_factor);
         }
     }
 
-    // Fast version explicitly uses fixed buffers
+    // Legacy wrapper that creates output (for backward compatibility)
     template<typename InputImage, typename OutputImage>
-    OutputImage scale_hq2x_fast(const InputImage& src, size_t scale_factor = 2) {
+    OutputImage scale_hq2x(const InputImage& src, size_t scale_factor = 2) {
+        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        scale_hq2x(src, result, scale_factor);
+        return result;
+    }
+
+    // Fast version explicitly uses fixed buffers - writes directly to output
+    template<typename InputImage, typename OutputImage>
+    void scale_hq2x_fast(const InputImage& src, OutputImage& result, size_t scale_factor = 2) {
         using PixelType = decltype(src.get_pixel(0, 0));
         using Policy = fixed_buffer_policy <PixelType, 4096>;
-        return detail::scale_hq2x_with_policy <InputImage, OutputImage, Policy>(src, scale_factor);
+        detail::scale_hq2x_with_policy <InputImage, OutputImage, Policy>(src, result, scale_factor);
+    }
+
+    // Legacy wrapper for fast version
+    template<typename InputImage, typename OutputImage>
+    OutputImage scale_hq2x_fast(const InputImage& src, size_t scale_factor = 2) {
+        OutputImage result(src.width() * scale_factor, src.height() * scale_factor, src);
+        scale_hq2x_fast(src, result, scale_factor);
+        return result;
     }
 }

@@ -226,7 +226,6 @@ namespace scaler::test {
             case algorithm::Super2xSaI:
             case algorithm::HQ:
             case algorithm::xBR:
-            case algorithm::xBRZ:
                 return true;
             default:
                 return false;
