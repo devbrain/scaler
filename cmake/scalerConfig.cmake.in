@@ -2,13 +2,26 @@
 
 include(CMakeFindDependencyMacro)
 
-# Optional SDL dependency
+# Store build configuration
+set(SCALER_SDL_VERSION @SCALER_SDL_VERSION@)
 set(SCALER_HAS_SDL @NOT SCALER_NO_SDL@)
+set(SCALER_HAS_OPENGL @OpenGL_FOUND@)
+set(SCALER_HAS_GLEW @GLEW_FOUND@)
+
+# Optional SDL dependency
 if(SCALER_HAS_SDL)
     if(@SCALER_USE_SDL3@)
         find_dependency(SDL3)
     elseif(@SCALER_USE_SDL2@)
         find_dependency(SDL2)
+    endif()
+endif()
+
+# Optional OpenGL dependency
+if(SCALER_HAS_OPENGL)
+    find_dependency(OpenGL)
+    if(SCALER_HAS_GLEW)
+        find_dependency(GLEW)
     endif()
 endif()
 

@@ -49,9 +49,36 @@ Scaler provides efficient implementations of popular pixel art and image scaling
 
 ### Installation
 
+#### Method 1: Using FetchContent (Recommended)
+
+Add directly to your CMakeLists.txt - no manual installation needed:
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    scaler
+    GIT_REPOSITORY https://github.com/yourusername/scaler.git
+    GIT_TAG main
+)
+FetchContent_MakeAvailable(scaler)
+
+target_link_libraries(your_target PRIVATE scaler::scaler)
+```
+
+#### Method 2: Manual Installation
+
 ```bash
 git clone https://github.com/yourusername/scaler.git
 cd scaler
+cmake -B build -DCMAKE_INSTALL_PREFIX=/your/install/path
+cmake --build build
+cmake --install build
+```
+
+Then in your CMakeLists.txt:
+```cmake
+find_package(scaler REQUIRED)
+target_link_libraries(your_target PRIVATE scaler::scaler)
 ```
 
 ### Basic Usage - Unified Interface
