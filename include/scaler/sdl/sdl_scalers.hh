@@ -22,76 +22,76 @@ namespace scaler {
     // optimizations using fixed-size arrays instead of dynamic vectors.
 
     inline SDL_Surface* scaleEpxSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
-        auto output = scale_epx<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(src);
+        auto output = scale_epx<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scaleAdvMameSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
-        auto output = scale_adv_mame<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(src);
+        auto output = scale_adv_mame<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scaleEagleSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
-        auto output = scale_eagle<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(src);
+        auto output = scale_eagle<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scale2xSaISDL(SDL_Surface* src) {
-        SDLInputImage input(src);
-        auto output = scale_2x_sai<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(src);
+        auto output = scale_2x_sai<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scaleXbrSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
-        auto output = scale_xbr<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(src);
+        auto output = scale_xbr<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scaleHq2xSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
+        sdl_input_image input(src);
         // Automatically uses optimized fixed buffers for images <= 4096 pixels wide
-        auto output = scale_hq2x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_hq2x<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scaleHq3xSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
+        sdl_input_image input(src);
         // Automatically uses optimized fixed buffers for images <= 4096 pixels wide
-        auto output = scale_hq_3x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_hq_3x<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scaleScale2xSFXSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
-        auto output = scale_scale_2x_sfx<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(src);
+        auto output = scale_scale_2x_sfx<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scaleScale3xSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
-        auto output = scale_scale_3x<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(src);
+        auto output = scale_scale_3x<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scaleScale3xSFXSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
-        auto output = scale_scale_3x_sfx<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(src);
+        auto output = scale_scale_3x_sfx<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scaleOmniScale2xSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
-        auto output = scale_omni_scale_2x<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(src);
+        auto output = scale_omni_scale_2x<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 
     inline SDL_Surface* scaleOmniScale3xSDL(SDL_Surface* src) {
-        SDLInputImage input(src);
-        auto output = scale_omni_scale_3x<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(src);
+        auto output = scale_omni_scale_3x<sdl_input_image, sdl_output_image>(input);
         return output.release();
     }
 }

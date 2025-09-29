@@ -258,10 +258,10 @@ BenchmarkStats benchmark_algorithm(
     Timer timer;
 
     // Create unified scaler
-    scaler::unified_scaler<SDLInputImage, SDLOutputImage> scaler;
+    scaler::unified_scaler<sdl_input_image, sdl_output_image> scaler;
 
     // Wrap input surface
-    SDLInputImage input_img(input);
+    sdl_input_image input_img(input);
 
     // Calculate output dimensions for 2x scaling
     size_t out_width = input_img.width() * 2;
@@ -270,7 +270,7 @@ BenchmarkStats benchmark_algorithm(
     // Warmup runs
     if (verbose) std::cout << "  Warming up " << name << "..." << std::flush;
     for (int i = 0; i < warmup_runs; ++i) {
-        SDLOutputImage output_img(out_width, out_height, input);
+        sdl_output_image output_img(out_width, out_height, input);
         scaler.scale(input_img, output_img, algo);
         // Free the output surface
         SDL_Surface* surf = output_img.release();
@@ -281,7 +281,7 @@ BenchmarkStats benchmark_algorithm(
     // Benchmark runs
     if (verbose) std::cout << "  Benchmarking " << name << "..." << std::flush;
     for (int i = 0; i < bench_runs; ++i) {
-        SDLOutputImage output_img(out_width, out_height, input);
+        sdl_output_image output_img(out_width, out_height, input);
         timer.start();
         scaler.scale(input_img, output_img, algo);
         double elapsed = timer.elapsed_ms();

@@ -38,8 +38,8 @@ TEST_CASE("HQ3x Exact Golden Data Comparison") {
     REQUIRE(input_surface->format->BitsPerPixel == 24);
     
     // Apply exact HQ3x scaling using CRTP interface
-    scaler::SDLInputImage input_image(input_surface);
-    auto scaled = scaler::scale_hq_3x<scaler::SDLInputImage, scaler::SDLOutputImage>(input_image);
+    scaler::sdl_input_image input_image(input_surface);
+    auto scaled = scaler::scale_hq_3x<scaler::sdl_input_image, scaler::sdl_output_image>(input_image);
     
     // Get SDL surface from output
     SDL_Surface* scaled_surface = scaled.get_surface();

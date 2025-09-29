@@ -55,7 +55,9 @@ public:
      * @param filename Path to image file
      * @throws std::runtime_error if loading fails
      */
-    explicit stb_image(const char* filename) {
+    explicit stb_image(const char* filename)
+        : m_stb_allocated(true)
+        , m_data(nullptr, smart_deleter(true)) {
         int w, h, channels;
         unsigned char* data = stbi_load(filename, &w, &h, &channels, 0);
 
@@ -84,7 +86,8 @@ public:
         : m_width(width)
         , m_height(height)
         , m_channels(channels)
-        , m_data(new unsigned char[width * height * channels]()) {
+        , m_stb_allocated(false)
+        , m_data(new unsigned char[width * height * channels](), smart_deleter(false)) {
     }
 
     /**
@@ -95,7 +98,8 @@ public:
         : m_width(width)
         , m_height(height)
         , m_channels(3)  // Default to RGB
-        , m_data(new unsigned char[width * height * 3]()) {
+        , m_stb_allocated(false)
+        , m_data(new unsigned char[width * height * 3](), smart_deleter(false)) {
     }
 
     /**
@@ -105,7 +109,8 @@ public:
         : m_width(other.m_width)
         , m_height(other.m_height)
         , m_channels(other.m_channels)
-        , m_data(new unsigned char[m_width * m_height * m_channels]) {
+        , m_stb_allocated(false)  // Always use new[] for copies
+        , m_data(new unsigned char[m_width * m_height * m_channels], smart_deleter(false)) {
         std::memcpy(m_data.get(), other.m_data.get(),
                     m_width * m_height * m_channels);
     }
@@ -123,7 +128,10 @@ public:
             m_width = other.m_width;
             m_height = other.m_height;
             m_channels = other.m_channels;
-            m_data.reset(new unsigned char[m_width * m_height * m_channels]);
+            m_stb_allocated = false;  // Always use new[] for copies
+            m_data = std::unique_ptr<unsigned char[], smart_deleter>(
+                new unsigned char[m_width * m_height * m_channels],
+                smart_deleter(false));
             std::memcpy(m_data.get(), other.m_data.get(),
                         m_width * m_height * m_channels);
         }
@@ -267,23 +275,37 @@ private:
             new_data[i * 3 + 2] = value; // B
         }
 
-        m_data.reset(new_data);
+        // Update with new[] allocated data
+        m_stb_allocated = false;
+        m_data = std::unique_ptr<unsigned char[], smart_deleter>(
+            new_data, smart_deleter(false));
         m_channels = 3;
     }
 
     size_t m_width = 0;
     size_t m_height = 0;
     int m_channels = 0;
+    bool m_stb_allocated = false;  // Track allocation source
 
-    // Custom deleter for STB allocated memory
-    struct stb_deleter {
+    // Custom deleter that handles both STB and new[] allocations
+    struct smart_deleter {
+        bool is_stb_allocated;
+
+        explicit smart_deleter(bool stb = false) : is_stb_allocated(stb) {}
+
         void operator()(unsigned char* p) const {
-            if (p) stbi_image_free(p);
+            if (p) {
+                if (is_stb_allocated) {
+                    stbi_image_free(p);
+                } else {
+                    delete[] p;
+                }
+            }
         }
     };
 
     // Use unique_ptr with custom deleter for RAII
-    std::unique_ptr<unsigned char[], stb_deleter> m_data;
+    std::unique_ptr<unsigned char[], smart_deleter> m_data;
 };
 
 } // namespace scaler

@@ -5,12 +5,12 @@
 #include <scaler/vec3.hh>
 #include <algorithm>
 namespace scaler {
-    class SDLOutputImage;  // Forward declaration
+    class sdl_output_image;  // Forward declaration
 
-    class SDLInputImage : public input_image_base<SDLInputImage, uvec3> {
-        friend class SDLOutputImage;
+    class sdl_input_image : public input_image_base<sdl_input_image, uvec3> {
+        friend class sdl_output_image;
         public:
-            explicit SDLInputImage(SDL_Surface* surface)
+            explicit sdl_input_image(SDL_Surface* surface)
                 : m_surface(surface),
         #ifdef SCALER_HAS_SDL3
                   m_bpp(static_cast<unsigned int>(SDL_BYTESPERPIXEL(surface->format))),
@@ -70,10 +70,10 @@ namespace scaler {
             SDL_Palette* m_palette;
     };
 
-    class SDLOutputImage : public output_image_base<SDLOutputImage, uvec3> {
+    class sdl_output_image : public output_image_base<sdl_output_image, uvec3> {
         public:
             // Constructor with SDL_Surface template
-            SDLOutputImage(size_t width, size_t height, const SDL_Surface* template_surface)
+            sdl_output_image(size_t width, size_t height, const SDL_Surface* template_surface)
                 : m_surface(nullptr),
                   m_palette(nullptr),
                   m_details(nullptr),
@@ -109,22 +109,22 @@ namespace scaler {
                 }
             }
 
-            // Constructor with SDLInputImage template
-            SDLOutputImage(size_t width, size_t height, const SDLInputImage& template_img)
-                : SDLOutputImage(width, height, template_img.m_surface) {}
+            // Constructor with sdl_input_image template
+            sdl_output_image(size_t width, size_t height, const sdl_input_image& template_img)
+                : sdl_output_image(width, height, template_img.m_surface) {}
 
-            // Constructor with another SDLOutputImage as template
-            SDLOutputImage(size_t width, size_t height, const SDLOutputImage& template_img)
-                : SDLOutputImage(width, height, template_img.m_surface) {}
+            // Constructor with another sdl_output_image as template
+            sdl_output_image(size_t width, size_t height, const sdl_output_image& template_img)
+                : sdl_output_image(width, height, template_img.m_surface) {}
 
-            ~SDLOutputImage() {
+            ~sdl_output_image() {
                 if (m_surface) {
                     SDL_DestroySurface(m_surface);
                 }
             }
 
             // Move constructor
-            SDLOutputImage(SDLOutputImage&& other) noexcept
+            sdl_output_image(sdl_output_image&& other) noexcept
                 : m_surface(other.m_surface),
                   m_palette(other.m_palette),
                   m_details(other.m_details),
@@ -133,7 +133,7 @@ namespace scaler {
             }
 
             // Move assignment
-            SDLOutputImage& operator=(SDLOutputImage&& other) noexcept {
+            sdl_output_image& operator=(sdl_output_image&& other) noexcept {
                 if (this != &other) {
                     if (m_surface) {
                         SDL_DestroySurface(m_surface);
@@ -148,8 +148,8 @@ namespace scaler {
             }
 
             // Delete copy operations
-            SDLOutputImage(const SDLOutputImage&) = delete;
-            SDLOutputImage& operator=(const SDLOutputImage&) = delete;
+            sdl_output_image(const sdl_output_image&) = delete;
+            sdl_output_image& operator=(const sdl_output_image&) = delete;
 
             [[nodiscard]] size_t width_impl() const {
                 return m_surface ? static_cast<size_t>(m_surface->w) : 0;

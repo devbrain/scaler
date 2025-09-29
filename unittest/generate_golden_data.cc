@@ -130,39 +130,39 @@ void generateTestPattern() {
     writeGoldenData("test_pattern_source", 4, 4, patternData);
     
     // Generate golden data for each algorithm with test pattern
-    SDLInputImage input(pattern);
+    sdl_input_image input(pattern);
     
     // EPX
     {
-        auto output = scale_epx<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_epx<sdl_input_image, sdl_output_image>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("test_pattern_epx", output.width(), output.height(), data);
     }
     
     // Eagle
     {
-        auto output = scale_eagle<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_eagle<sdl_input_image, sdl_output_image>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("test_pattern_eagle", output.width(), output.height(), data);
     }
     
     // 2xSaI
     {
-        auto output = scale_2x_sai<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_2x_sai<sdl_input_image, sdl_output_image>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("test_pattern_2xsai", output.width(), output.height(), data);
     }
     
     // XBR
     {
-        auto output = scale_xbr<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_xbr<sdl_input_image, sdl_output_image>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("test_pattern_xbr", output.width(), output.height(), data);
     }
     
     // HQ2x
     {
-        auto output = scale_hq2x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_hq2x<sdl_input_image, sdl_output_image>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("test_pattern_hq2x", output.width(), output.height(), data);
     }
@@ -205,42 +205,42 @@ int main() {
     std::cout << "Loaded image: " << rgba_surface->w << "x" << rgba_surface->h << std::endl;
     
     // Create input image
-    SDLInputImage input(rgba_surface);
+    sdl_input_image input(rgba_surface);
     
     // Generate golden data for each algorithm
     std::cout << "\nGenerating golden data for full image...\n";
     
     // EPX
     {
-        auto output = scale_epx<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_epx<sdl_input_image, sdl_output_image>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("epx", output.width(), output.height(), data);
     }
     
     // Eagle
     {
-        auto output = scale_eagle<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_eagle<sdl_input_image, sdl_output_image>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("eagle", output.width(), output.height(), data);
     }
     
     // 2xSaI
     {
-        auto output = scale_2x_sai<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_2x_sai<sdl_input_image, sdl_output_image>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("2xsai", output.width(), output.height(), data);
     }
     
     // XBR
     {
-        auto output = scale_xbr<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_xbr<sdl_input_image, sdl_output_image>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("xbr", output.width(), output.height(), data);
     }
     
     // HQ2x
     {
-        auto output = scale_hq2x<SDLInputImage, SDLOutputImage>(input);
+        auto output = scale_hq2x<sdl_input_image, sdl_output_image>(input);
         auto data = extractPixelData(output.get_surface());
         writeGoldenData("hq2x", output.width(), output.height(), data);
     }

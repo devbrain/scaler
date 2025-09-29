@@ -78,8 +78,8 @@ TEST_CASE("SDL Interface Tests") {
         // Test EPX: Direct CRTP vs convenience function
         {
             // Direct CRTP usage
-            SDLInputImage input_img(input_32bit.get());
-            auto output_crtp = scale_epx<SDLInputImage, SDLOutputImage>(input_img);
+            sdl_input_image input_img(input_32bit.get());
+            auto output_crtp = scale_epx<sdl_input_image, sdl_output_image>(input_img);
             
             // Convenience function
             SDL_Surface* output_conv = scaleEpxSDL(input_32bit.get());
@@ -92,8 +92,8 @@ TEST_CASE("SDL Interface Tests") {
         
         // Test Eagle: Direct CRTP vs convenience function
         {
-            SDLInputImage input_img(input_32bit.get());
-            auto output_crtp = scale_eagle<SDLInputImage, SDLOutputImage>(input_img);
+            sdl_input_image input_img(input_32bit.get());
+            auto output_crtp = scale_eagle<sdl_input_image, sdl_output_image>(input_img);
             
             SDL_Surface* output_conv = scaleEagleSDL(input_32bit.get());
             REQUIRE(output_conv != nullptr);
@@ -104,8 +104,8 @@ TEST_CASE("SDL Interface Tests") {
         
         // Test 2xSaI: Direct CRTP vs convenience function
         {
-            SDLInputImage input_img(input_32bit.get());
-            auto output_crtp = scale_2x_sai<SDLInputImage, SDLOutputImage>(input_img);
+            sdl_input_image input_img(input_32bit.get());
+            auto output_crtp = scale_2x_sai<sdl_input_image, sdl_output_image>(input_img);
             
             SDL_Surface* output_conv = scale2xSaISDL(input_32bit.get());
             REQUIRE(output_conv != nullptr);
@@ -116,8 +116,8 @@ TEST_CASE("SDL Interface Tests") {
         
         // Test XBR: Direct CRTP vs convenience function
         {
-            SDLInputImage input_img(input_32bit.get());
-            auto output_crtp = scale_xbr<SDLInputImage, SDLOutputImage>(input_img);
+            sdl_input_image input_img(input_32bit.get());
+            auto output_crtp = scale_xbr<sdl_input_image, sdl_output_image>(input_img);
             
             SDL_Surface* output_conv = scaleXbrSDL(input_32bit.get());
             REQUIRE(output_conv != nullptr);
@@ -128,8 +128,8 @@ TEST_CASE("SDL Interface Tests") {
         
         // Test HQ2x: Direct CRTP vs convenience function
         {
-            SDLInputImage input_img(input_32bit.get());
-            auto output_crtp = scale_hq2x<SDLInputImage, SDLOutputImage>(input_img);
+            sdl_input_image input_img(input_32bit.get());
+            auto output_crtp = scale_hq2x<sdl_input_image, sdl_output_image>(input_img);
             
             SDL_Surface* output_conv = scaleHq2xSDL(input_32bit.get());
             REQUIRE(output_conv != nullptr);

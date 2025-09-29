@@ -109,8 +109,8 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     REQUIRE(source != nullptr);
     
     SUBCASE("EPX algorithm matches golden data") {
-        SDLInputImage input(source.get());
-        auto output = scale_epx<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_epx<sdl_input_image, sdl_output_image>(input);
         
         CHECK(output.width() == GOLDEN_TEST_PATTERN_EPX_WIDTH);
         CHECK(output.height() == GOLDEN_TEST_PATTERN_EPX_HEIGHT);
@@ -123,8 +123,8 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     }
     
     SUBCASE("Eagle algorithm matches golden data") {
-        SDLInputImage input(source.get());
-        auto output = scale_eagle<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_eagle<sdl_input_image, sdl_output_image>(input);
         
         CHECK(output.width() == GOLDEN_TEST_PATTERN_EAGLE_WIDTH);
         CHECK(output.height() == GOLDEN_TEST_PATTERN_EAGLE_HEIGHT);
@@ -137,8 +137,8 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     }
     
     SUBCASE("2xSaI algorithm matches golden data") {
-        SDLInputImage input(source.get());
-        auto output = scale_2x_sai<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_2x_sai<sdl_input_image, sdl_output_image>(input);
         
         CHECK(output.width() == GOLDEN_TEST_PATTERN_2XSAI_WIDTH);
         CHECK(output.height() == GOLDEN_TEST_PATTERN_2XSAI_HEIGHT);
@@ -151,8 +151,8 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     }
     
     SUBCASE("XBR algorithm matches golden data") {
-        SDLInputImage input(source.get());
-        auto output = scale_xbr<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_xbr<sdl_input_image, sdl_output_image>(input);
         
         CHECK(output.width() == GOLDEN_TEST_PATTERN_XBR_WIDTH);
         CHECK(output.height() == GOLDEN_TEST_PATTERN_XBR_HEIGHT);
@@ -165,8 +165,8 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     }
     
     SUBCASE("HQ2x algorithm matches golden data") {
-        SDLInputImage input(source.get());
-        auto output = scale_hq2x<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_hq2x<sdl_input_image, sdl_output_image>(input);
         
         CHECK(output.width() == GOLDEN_TEST_PATTERN_HQ2X_WIDTH);
         CHECK(output.height() == GOLDEN_TEST_PATTERN_HQ2X_HEIGHT);
@@ -242,8 +242,8 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
         // Include the full golden data for spot checks
         #include "data/golden_epx.h"
         
-        SDLInputImage input(source.get());
-        auto output = scale_epx<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_epx<sdl_input_image, sdl_output_image>(input);
         
         CHECK(output.width() == GOLDEN_EPX_WIDTH);
         CHECK(output.height() == GOLDEN_EPX_HEIGHT);
@@ -264,8 +264,8 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     SUBCASE("Eagle full image spot check") {
         #include "data/golden_eagle.h"
         
-        SDLInputImage input(source.get());
-        auto output = scale_eagle<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_eagle<sdl_input_image, sdl_output_image>(input);
         
         CHECK(output.width() == GOLDEN_EAGLE_WIDTH);
         CHECK(output.height() == GOLDEN_EAGLE_HEIGHT);
@@ -285,8 +285,8 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     SUBCASE("2xSaI full image spot check") {
         #include "data/golden_2xsai.h"
         
-        SDLInputImage input(source.get());
-        auto output = scale_2x_sai<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_2x_sai<sdl_input_image, sdl_output_image>(input);
         
         CHECK(output.width() == GOLDEN_2XSAI_WIDTH);
         CHECK(output.height() == GOLDEN_2XSAI_HEIGHT);
@@ -306,8 +306,8 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     SUBCASE("XBR full image spot check") {
         #include "data/golden_xbr.h"
         
-        SDLInputImage input(source.get());
-        auto output = scale_xbr<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_xbr<sdl_input_image, sdl_output_image>(input);
         
         CHECK(output.width() == GOLDEN_XBR_WIDTH);
         CHECK(output.height() == GOLDEN_XBR_HEIGHT);
@@ -327,8 +327,8 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     SUBCASE("HQ2x full image spot check") {
         #include "data/golden_hq2x.h"
         
-        SDLInputImage input(source.get());
-        auto output = scale_hq2x<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_hq2x<sdl_input_image, sdl_output_image>(input);
         
         CHECK(output.width() == GOLDEN_HQ2X_WIDTH);
         CHECK(output.height() == GOLDEN_HQ2X_HEIGHT);

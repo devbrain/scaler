@@ -103,8 +103,8 @@ TEST_CASE("OmniScale Golden Data Tests") {
         REQUIRE(golden != nullptr);
         
         // Run OmniScale 2x on the source image
-        SDLInputImage input(source.get());
-        auto output = scale_omni_scale_2x<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_omni_scale_2x<sdl_input_image, sdl_output_image>(input);
         
         // Check dimensions
         CHECK(output.width() == golden->w);
@@ -138,8 +138,8 @@ TEST_CASE("OmniScale Golden Data Tests") {
         REQUIRE(golden != nullptr);
         
         // Run OmniScale 3x on the source image
-        SDLInputImage input(source.get());
-        auto output = scale_omni_scale_3x<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(source.get());
+        auto output = scale_omni_scale_3x<sdl_input_image, sdl_output_image>(input);
         
         // Check dimensions
         CHECK(output.width() == golden->w);
@@ -186,8 +186,8 @@ TEST_CASE("OmniScale Golden Data Tests") {
         }
         
         // Scale it
-        SDLInputImage input(pattern);
-        auto output = scale_omni_scale_2x<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(pattern);
+        auto output = scale_omni_scale_2x<sdl_input_image, sdl_output_image>(input);
         
         // Check dimensions
         CHECK(output.width() == 8);
@@ -217,8 +217,8 @@ TEST_CASE("OmniScale Golden Data Tests") {
         pixels[7] = white; // bottom center
         
         // Scale it
-        SDLInputImage input(pattern);
-        auto output = scale_omni_scale_3x<SDLInputImage, SDLOutputImage>(input);
+        sdl_input_image input(pattern);
+        auto output = scale_omni_scale_3x<sdl_input_image, sdl_output_image>(input);
         
         // Check dimensions
         CHECK(output.width() == 9);

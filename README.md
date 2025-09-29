@@ -1,202 +1,252 @@
 # Scaler
 
-A high-performance, header-only C++ library for pixel art scaling algorithms.
+A high-performance C++ library providing unified CPU and GPU implementations of pixel art scaling algorithms.
 
-## 🆕 GPU Scaler Now Available!
-The GPU scaler has been completely refactored with a cleaner, modular architecture:
-- **Pure OpenGL core** with optional SDL integration
-- **Preallocated texture pattern** for game engines (no runtime allocations)
-- **Unified algorithm system** shared between CPU and GPU
-- **Batch processing** for multiple textures
-- See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for migration details
+## 🆕 Unified Architecture
+The library now features a completely unified interface for both CPU and GPU scaling:
+- **Single API** for all algorithms across CPU and GPU backends
+- **Algorithm database** with capability discovery
+- **Type-safe template interface** with compile-time validation
+- **Zero-cost abstractions** using CRTP design
+- **Automatic scale factor inference** from dimensions
+
 
 ## Overview
 
-Scaler provides efficient implementations of popular pixel art scaling algorithms including 2xSAI, Eagle, EPX, HQ2x, HQ3x, XBR, and Omniscale. The library features a framework-agnostic design using CRTP (Curiously Recurring Template Pattern) with zero runtime overhead.
+Scaler provides efficient implementations of popular pixel art and image scaling algorithms with a unified interface that works seamlessly across CPU and GPU. The library features framework-agnostic design, comprehensive algorithm support, and optimal performance through cache-optimized implementations.
 
 ## Features
 
-- **Header-only library** - No compilation required, just include and use
+- **Unified CPU/GPU Interface** - Same API for both CPU and GPU implementations
+- **Algorithm Database** - Runtime capability discovery and algorithm information
+- **Header-only Core** - No compilation required for CPU algorithms
+- **GPU Acceleration** - OpenGL-based GPU scaling with shader caching
 - **Framework-agnostic** - Works with any image backend through CRTP interfaces
-- **High performance** - Cache-optimized with sliding window buffers
-- **Multiple algorithms** - 2xSAI, Eagle, EPX/AdvMAME, HQ2x, HQ3x, XBR, Omniscale, Scale2x/3x
-- **SDL integration** - Optional SDL2/SDL3 backend provided
-- **Comprehensive testing** - Extensive unit tests with golden data validation
-- **Cross-platform** - Works on Linux, macOS, and Windows
-- **Modern C++** - Requires C++17 or later
+- **High Performance** - Cache-optimized CPU code and efficient GPU shaders
+- **Multiple Algorithms** - 13+ algorithms including EPX, HQ, xBR, and OmniScale
+- **SDL Integration** - Optional SDL2/SDL3 backend support
+- **Modern C++17** - Template-based design with compile-time safety
+- **Cross-platform** - Linux, macOS, and Windows support
 
 ## Supported Algorithms
 
-| Algorithm | Scale Factor | Description |
-|-----------|--------------|-------------|
-| 2xSAI | 2x | Smooth anti-aliased scaling |
-| Eagle | 2x | Sharp pixel art scaling |
-| EPX/AdvMAME | 2x | Simple and fast scaling |
-| HQ2x | 2x | High quality with edge detection |
-| HQ3x | 3x | High quality 3x scaling |
-| XBR | 2x | Advanced edge-directed interpolation |
-| Omniscale | 2x-6x | Multi-factor scaling algorithm |
-| Scale2x/3x | 2x/3x | Fast integer scaling |
-| Scale2x-SFX | 2x | Improved Scale2x variant |
-| Scale3x-SFX | 3x | Improved Scale3x variant |
+| Algorithm | CPU Scales | GPU Scales | Description |
+|-----------|------------|------------|-------------|
+| Nearest | Any | Any | Nearest neighbor (pixelated) |
+| Bilinear | Any | Any | Smooth bilinear interpolation |
+| Trilinear | Any | - | Two-pass bilinear scaling |
+| EPX/AdvMAME | 2x, 3x, 4x | 2x, 3x, 4x | Fast pixel art scaling |
+| Eagle | 2x | 2x | Sharp edges for pixel art |
+| Scale2x/3x | 2x, 3x | 2x, 3x | Eric's Pixel Expansion |
+| ScaleFX | 2x, 3x | - | Enhanced Scale algorithm |
+| Super2xSaI | 2x | 2x | Smooth anti-aliased scaling |
+| HQ2x/3x/4x | 2x, 3x, 4x | 2x, 3x, 4x | High quality with edge detection |
+| AAScale | 2x, 3x | - | Anti-aliased scaling |
+| xBR | 2x, 3x, 4x | 2x, 3x, 4x | Advanced edge interpolation |
+| OmniScale | 2x | 2x | Advanced pattern recognition |
 
 ## Quick Start
 
 ### Installation
 
-Clone the repository:
 ```bash
 git clone https://github.com/yourusername/scaler.git
 cd scaler
 ```
 
-### Integration into Your Project
-
-#### Method 1: Using FetchContent (Recommended)
-
-Add to your CMakeLists.txt:
-```cmake
-include(FetchContent)
-FetchContent_Declare(
-    scaler
-    GIT_REPOSITORY https://github.com/yourusername/scaler.git
-    GIT_TAG main
-)
-FetchContent_MakeAvailable(scaler)
-
-target_link_libraries(your_target PRIVATE scaler::scaler)
-```
-
-#### Method 2: Using find_package
-
-First install the library:
-```bash
-cmake -B build -DCMAKE_INSTALL_PREFIX=/your/install/path
-cmake --build build
-cmake --install build
-```
-
-Then in your CMakeLists.txt:
-```cmake
-find_package(scaler REQUIRED)
-target_link_libraries(your_target PRIVATE scaler::scaler)
-```
-
-#### Method 3: Using add_subdirectory
-
-```cmake
-add_subdirectory(path/to/scaler)
-target_link_libraries(your_target PRIVATE scaler::scaler)
-```
-
-### Building (Optional)
-
-The library is header-only, but you can build tests and tools:
-```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-```
-
-### Basic Usage
-
-#### Using the Framework-Agnostic Interface
+### Basic Usage - Unified Interface
 
 ```cpp
-#include <scaler/epx.hh>
-#include <scaler/image_base.hh>
+#include <scaler/unified_scaler.hh>
+#include <scaler/algorithm_capabilities.hh>
 
-// Define your image class
-class MyImage : public scaler::InputImageBase<MyImage, RGB>,
-                public scaler::OutputImageBase<MyImage, RGB> {
-    // Implement required methods
-    size_t width_impl() const;
-    size_t height_impl() const;
-    RGB get_pixel_impl(size_t x, size_t y) const;
-    void set_pixel_impl(size_t x, size_t y, const RGB& pixel);
-};
+// Query available algorithms
+auto algorithms = scaler::algorithm_capabilities::get_all_algorithms();
+for (auto algo : algorithms) {
+    const auto& info = scaler::algorithm_capabilities::get_info(algo);
+    std::cout << info.name << " - " << info.description << "\n";
+}
 
-// Scale an image
+// Scale using unified interface (CPU)
 MyImage input = LoadImage("input.png");
-auto output = scaler::scaleEpx<MyImage, MyImage>(input);
+auto output = scaler::unified_scaler<MyImage, MyImage>::scale(
+    input, scaler::algorithm::EPX, 2.0f
+);
+
+// Scale into preallocated buffer (scale inferred from dimensions)
+MyImage output2(input.width() * 3, input.height() * 3);
+scaler::unified_scaler<MyImage, MyImage>::scale(
+    input, output2, scaler::algorithm::HQ
+);
 ```
 
-#### Using the SDL Backend
+### GPU Scaling
 
 ```cpp
-#include <scaler/sdl/sdl_scalers.hh>
-#include <SDL.h>
+#include <scaler/gpu/unified_gpu_scaler.hh>
+#include <GL/glew.h>
 
-SDL_Surface* input = SDL_LoadBMP("input.bmp");
-SDL_Surface* scaled = scaler::scaleEpxSDL(input);
-// Use scaled surface...
-SDL_FreeSurface(scaled);
+// Initialize OpenGL context first
+glewInit();
+
+// Create GPU scaler
+scaler::gpu::unified_gpu_scaler scaler;
+
+// Scale texture
+GLuint scaled_texture = scaler.scale_texture(
+    input_texture, width, height,
+    scaler::algorithm::xBR, 2.0f
+);
+
+// Or scale into existing texture
+scaler.scale_texture_into(
+    input_texture, output_texture,
+    width, height, scaler::algorithm::HQ
+);
+```
+
+### Using Algorithm Database
+
+```cpp
+#include <scaler/algorithm_capabilities.hh>
+
+// Check if algorithm supports a scale
+if (scaler::algorithm_capabilities::is_cpu_scale_supported(
+    scaler::algorithm::EPX, 2.0f)) {
+    // Scale is supported
+}
+
+// Get supported scales for an algorithm
+auto scales = scaler::algorithm_capabilities::get_cpu_supported_scales(
+    scaler::algorithm::HQ
+);
+
+// Find algorithms that support specific scale
+auto algos = scaler::algorithm_capabilities::get_cpu_algorithms_for_scale(3.0f);
+```
+
+### SDL Integration
+
+```cpp
+#include <scaler/sdl/sdl_image.hh>
+#include <scaler/unified_scaler.hh>
+
+// Wrap SDL surface
+SDL_Surface* surface = SDL_LoadBMP("input.bmp");
+scaler::sdl_input_image input(surface);
+
+// Scale using unified interface
+scaler::sdl_output_image output(
+    input.width() * 2, input.height() * 2, surface
+);
+scaler::unified_scaler<scaler::sdl_input_image,
+                       scaler::sdl_output_image>::scale(
+    input, output, scaler::algorithm::Eagle
+);
+
+SDL_Surface* scaled = output.release();
+```
+
+## Examples
+
+The repository includes several example applications:
+
+### CLI Scaler Tool
+```bash
+# Build the CLI tool
+cmake -B build -DSCALER_BUILD_EXAMPLES=ON
+cmake --build build
+
+# Scale an image
+./build/bin/scaler_cli input.png output.png -a xBR -s 2
+
+# List available algorithms
+./build/bin/scaler_cli --list
+```
+
+### GPU Scaler Demo
+Interactive demo with ImGui interface for testing GPU scaling algorithms:
+```bash
+./build/bin/gpu_scaler
 ```
 
 ## Architecture
 
-The library uses a CRTP-based design for maximum flexibility and performance:
+### Unified Design
+- **Algorithm Enum** - Single enumeration for all algorithms
+- **Capability Database** - Runtime queryable algorithm properties
+- **Template Interface** - Type-safe scaling with compile-time validation
+- **Static Dispatch** - Zero-cost abstractions via templates
 
-- **InputImageBase/OutputImageBase** - Base classes providing the interface
-- **Algorithm headers** - Each algorithm in its own header (e.g., `epx.hh`, `xbr.hh`)
-- **SDL integration** - Optional SDL backend in `sdl/` subdirectory
-- **Optimizations** - Cache-friendly sliding window buffers for efficient processing
+### CPU Implementation
+- **CRTP Base Classes** - `input_image_base` and `output_image_base`
+- **Sliding Window Buffers** - Cache-optimized processing
+- **Header-only** - No compilation required
 
-## Building with Options
+### GPU Implementation
+- **OpenGL Core** - Pure OpenGL with GLSL shaders
+- **Shader Cache** - Compiled shaders cached for performance
+- **Texture Management** - Efficient texture creation and reuse
+- **Batch Processing** - Process multiple textures efficiently
+
+## Building
 
 ```bash
-# Build with tests
+# Basic build
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+
+# With tests
 cmake -B build -DSCALER_BUILD_TEST=ON
 cmake --build build
+ctest --test-dir build
 
-# Run tests
-./build/bin/scaler_unittest
-
-# Build with sanitizers (debug)
-cmake -B build -DSCALER_ENABLE_SANITIZERS=ON -DCMAKE_BUILD_TYPE=Debug
+# With examples and benchmarks
+cmake -B build \
+    -DSCALER_BUILD_EXAMPLES=ON \
+    -DSCALER_BUILD_BENCHMARK=ON
 cmake --build build
-
-# Build benchmarks
-cmake -B build -DSCALER_BUILD_BENCHMARK=ON
-cmake --build build
-./build/bin/benchmark_scalers
 ```
 
 ## Requirements
 
-- C++17 compatible compiler (GCC 7+, Clang 5+, MSVC 2017+)
-- CMake 3.20+ (for building tests/tools)
-- SDL3 (optional, for SDL backend)
+- **C++17** compatible compiler (GCC 7+, Clang 5+, MSVC 2017+)
+- **CMake 3.20+** for building
+- **OpenGL 3.3+** for GPU scaling (optional)
+- **SDL2/SDL3** for SDL integration (optional)
 
 ## Project Structure
 
 ```
 scaler/
-├── include/scaler/        # Header-only library
-│   ├── image_base.hh      # CRTP base classes
-│   ├── 2xsai.hh           # 2xSAI algorithm
-│   ├── eagle.hh           # Eagle algorithm
-│   ├── epx.hh             # EPX algorithm
-│   ├── hq2x.hh            # HQ2x algorithm
-│   ├── hq3x.hh            # HQ3x algorithm
-│   ├── xbr.hh             # XBR algorithm
-│   ├── omniscale.hh       # Omniscale algorithm
-│   └── sdl/               # SDL integration
-│       ├── sdl_image.hh   # SDL image wrapper
-│       └── sdl_scalers.hh # Convenience functions
-├── unittest/              # Unit tests
-├── benchmark/             # Performance benchmarks
-└── tools/                 # Command-line tools
+├── include/scaler/
+│   ├── algorithm.hh              # Algorithm enumeration
+│   ├── algorithm_capabilities.hh # Capability database
+│   ├── unified_scaler.hh         # CPU unified interface
+│   ├── cpu/                      # CPU algorithm implementations
+│   │   ├── epx.hh
+│   │   ├── hq2x.hh
+│   │   ├── xbr.hh
+│   │   └── ...
+│   ├── gpu/                      # GPU implementation
+│   │   ├── unified_gpu_scaler.hh
+│   │   ├── opengl_texture_scaler.hh
+│   │   └── shader_cache.hh
+│   └── sdl/                      # SDL integration
+│       └── sdl_image.hh
+├── examples/                     # Example applications
+│   ├── scaler_cli/               # Command-line tool
+│   └── gpu_scaler/               # GPU demo with ImGui
+├── unittest/                     # Comprehensive tests
+└── benchmark/                    # Performance benchmarks
 ```
 
 ## Performance
 
-The library is optimized for performance with:
-- Cache-friendly sliding window buffers
-- Minimal memory allocations
-- SIMD-friendly data layouts
-- Zero-cost CRTP abstractions
-
-Benchmark results on typical hardware show processing speeds of 100+ megapixels/second for most algorithms.
+The library is optimized for maximum performance:
+- **CPU**: Cache-friendly algorithms, SIMD-ready layouts, sliding window buffers
+- **GPU**: Optimized shaders, texture caching, minimal state changes
+- **Benchmarks**: 100+ MP/s on modern CPUs, 1000+ MP/s on GPUs
 
 ## Contributing
 
@@ -209,12 +259,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 - Algorithm implementations based on research from the emulation and pixel art communities
-- Test images from various open-source projects
+- GLSL shader implementations optimized for modern GPUs
+- Test framework using Google Test
 - Inspired by similar scaling libraries like hqx and xBR
 
 ## References
 
-- [2xSAI](http://vdnoort.home.xs4all.nl/emulation/2xsai/)
-- [HQx](https://en.wikipedia.org/wiki/Hqx)
-- [XBR Algorithm](https://forums.libretro.com/t/xbr-algorithm-tutorial/123)
-- [Scale2x](https://www.scale2x.it/)
+- [EPX/Scale2x](https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#EPX/Scale2×/AdvMAME2×)
+- [HQx Algorithm](https://en.wikipedia.org/wiki/Hqx)
+- [xBR Algorithm](https://forums.libretro.com/t/xbr-algorithm-tutorial/123)
+- [OmniScale](https://github.com/libretro/glsl-shaders/blob/master/omniscale)
