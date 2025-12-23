@@ -48,7 +48,7 @@ TEST_CASE("Platform Configuration") {
 
         int flags = platform_info::get_recommended_gl_flags();
         #ifdef __APPLE__
-        CHECK(flags == SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+        CHECK(flags == SDL_GL_CONTEXT_FORWARD_COMPATIBLE);
         #else
         CHECK(flags == 0);
         #endif

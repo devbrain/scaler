@@ -102,9 +102,9 @@ namespace scaler {
             }
 
             // Each level halves the dimensions
-            const size_t scale_divisor = 1 << level; // 2^level
-            const size_t mip_width = std::max(size_t(1), src.width() / scale_divisor);
-            const size_t mip_height = std::max(size_t(1), src.height() / scale_divisor);
+            const size_t scale_divisor = static_cast<size_t>(1) << level; // 2^level
+            const size_t mip_width = std::max(static_cast<size_t>(1), src.width() / scale_divisor);
+            const size_t mip_height = std::max(static_cast<size_t>(1), src.height() / scale_divisor);
 
             OutputImage result(mip_width, mip_height, src);
 

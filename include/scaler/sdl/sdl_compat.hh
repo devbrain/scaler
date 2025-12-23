@@ -13,6 +13,11 @@
 #ifdef SCALER_HAS_SDL2
     // SDL2 compatibility definitions
     using SDL_PixelFormatDetails = SDL_PixelFormat;
+
+    // SDL2 GL context flag compatibility - SDL3 renamed this
+    #ifndef SDL_GL_CONTEXT_FORWARD_COMPATIBLE
+        #define SDL_GL_CONTEXT_FORWARD_COMPATIBLE SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG
+    #endif
     
     // SDL2 doesn't have these functions, provide alternatives
     inline SDL_Palette* SDL_GetSurfacePalette(SDL_Surface* surface) {

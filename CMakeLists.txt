@@ -97,6 +97,10 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         list(APPEND SCALER_WARNING_FLAGS
                 -Wno-c++98-compat           # Don't warn about C++11/14/17 features
                 -Wno-c++98-compat-pedantic  # Don't warn about C++98 incompatibilities in pedantic mode
+                -Wno-newline-eof            # Don't require newline at end of file
+                -Wno-switch-default         # Don't require default in switch (enums are exhaustive)
+                -Wno-missing-prototypes     # Not applicable in C++
+                -Wno-unsafe-buffer-usage    # Pointer arithmetic is normal for low-level image code
         )
     endif ()
 
@@ -111,13 +115,18 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
             /permissive-    # Strict standard conformance
             /Zc:__cplusplus # Report correct __cplusplus value
     )
-    # Prevent Windows.h from defining min/max macros
-    add_compile_definitions(NOMINMAX)
-
     # Treat warnings as errors
     if (SCALER_STRICT_WARNINGS)
         list(APPEND SCALER_WARNING_FLAGS /WX)
     endif ()
+endif ()
+
+# Windows-specific definitions (applies to both MSVC and Clang-CL)
+if (WIN32)
+    # Prevent Windows.h from defining min/max macros
+    add_compile_definitions(NOMINMAX)
+    # Suppress deprecation warnings for standard C functions like getenv
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif ()
 
 # Sanitizer flags

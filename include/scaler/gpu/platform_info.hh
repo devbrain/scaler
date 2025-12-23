@@ -6,6 +6,7 @@
  */
 
 #include <scaler/gpu/opengl_utils.hh>
+#include <scaler/sdl/sdl_compat.hh>
 #include <string>
 
 namespace scaler::gpu {
@@ -70,7 +71,7 @@ namespace scaler::gpu {
         static int get_recommended_gl_flags() {
             #ifdef SCALER_PLATFORM_MACOS
                 // macOS requires forward-compatible context
-                return SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+                return SDL_GL_CONTEXT_FORWARD_COMPATIBLE;
             #else
                 // Other platforms don't require special flags
                 return 0;
