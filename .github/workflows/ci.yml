@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux GCC
+          - os: ubuntu-latest
+            compiler: gcc
+            version: 11
+            build_type: Release
+          - os: ubuntu-latest
+            compiler: gcc
+            version: 13
+            build_type: Release
+
+          # Linux Clang
+          - os: ubuntu-latest
+            compiler: clang
+            version: 16
+            build_type: Release
+          - os: ubuntu-latest
+            compiler: clang
+            version: 18
+            build_type: Release
+
+          # macOS (Apple Clang)
+          - os: macos-15
+            compiler: apple-clang
+            build_type: Release
+
+          # Windows MSVC
+          - os: windows-latest
+            compiler: msvc
+            build_type: Release
+
+          # Windows Clang
+          - os: windows-latest
+            compiler: clang-cl
+            build_type: Release
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup GCC
+        if: matrix.compiler == 'gcc'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-${{ matrix.version }}
+          echo "CXX=g++-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "CC=gcc-${{ matrix.version }}" >> $GITHUB_ENV
+
+      - name: Setup Clang (Linux)
+        if: matrix.compiler == 'clang' && runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-${{ matrix.version }}
+          echo "CXX=clang++-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "CC=clang-${{ matrix.version }}" >> $GITHUB_ENV
+
+      - name: Configure (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DSCALER_BUILD_TEST=ON \
+            -DSCALER_BUILD_BENCHMARK=OFF \
+            -DBUILD_EXAMPLES=OFF
+
+      - name: Configure (Windows MSVC)
+        if: matrix.compiler == 'msvc'
+        run: |
+          cmake -B build `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DSCALER_BUILD_TEST=ON `
+            -DSCALER_BUILD_BENCHMARK=OFF `
+            -DBUILD_EXAMPLES=OFF
+
+      - name: Configure (Windows Clang)
+        if: matrix.compiler == 'clang-cl'
+        run: |
+          cmake -B build `
+            -T ClangCL `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DSCALER_BUILD_TEST=ON `
+            -DSCALER_BUILD_BENCHMARK=OFF `
+            -DBUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Test (Unix)
+        if: runner.os != 'Windows'
+        run: ctest --test-dir build --build-config ${{ matrix.build_type }} --output-on-failure
+
+      - name: Test (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $env:PATH = "${{ github.workspace }}\build\bin\${{ matrix.build_type }};${{ github.workspace }}\build\lib\${{ matrix.build_type }};$env:PATH"
+          ctest --test-dir build --build-config ${{ matrix.build_type }} --output-on-failure
+
+  # Debug build for additional coverage
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup GCC 13
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-13
+          echo "CXX=g++-13" >> $GITHUB_ENV
+          echo "CC=gcc-13" >> $GITHUB_ENV
+
+      - name: Configure
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DSCALER_BUILD_TEST=ON \
+            -DSCALER_BUILD_BENCHMARK=OFF \
+            -DBUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build --config Debug
+
+      - name: Test
+        run: ctest --test-dir build --build-config Debug --output-on-failure
