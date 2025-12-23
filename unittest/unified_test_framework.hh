@@ -96,7 +96,10 @@ namespace patterns {
      * Generate a solid color pattern
      * @param width Pattern width
      * @param height Pattern height
-     * @param r,g,b,a Color components
+     * @param r Red component
+     * @param g Green component
+     * @param b Blue component
+     * @param a Alpha component
      * @return Vector of RGBA pixel data
      */
     inline std::vector<uint8_t> generate_solid(int width, int height,
