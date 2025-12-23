@@ -15,11 +15,11 @@
 
 // Platform-specific OpenGL headers
 #ifdef SCALER_PLATFORM_WINDOWS
-    // Windows requires windows.h before GL headers
+    // Windows requires Windows.h before GL headers
     #ifndef WIN32_LEAN_AND_MEAN
         #define WIN32_LEAN_AND_MEAN
     #endif
-    #include <windows.h>
+    #include <Windows.h>
     #include <GL/glew.h>  // GLEW handles extension loading on Windows
 #elif defined(SCALER_PLATFORM_MACOS)
     // macOS uses different OpenGL headers and doesn't need GLEW for core functionality
