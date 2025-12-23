@@ -41,7 +41,7 @@ namespace scaler::gpu {
 
         // GPU textures don't support direct pixel access
         // This is only used for CPU algorithms which won't be called for GPU
-        uvec3 get_pixel_impl([[maybe_unused]] size_t x, [[maybe_unused]] size_t y) const {
+        [[noreturn]] uvec3 get_pixel_impl([[maybe_unused]] size_t x, [[maybe_unused]] size_t y) const {
             throw std::runtime_error("GPU textures don't support direct pixel access");
         }
 
@@ -79,11 +79,11 @@ namespace scaler::gpu {
         size_t height_impl() const { return tex_.height; }
 
         // GPU textures don't support direct pixel access
-        uvec3 get_pixel_impl([[maybe_unused]] size_t x, [[maybe_unused]] size_t y) const {
+        [[noreturn]] uvec3 get_pixel_impl([[maybe_unused]] size_t x, [[maybe_unused]] size_t y) const {
             throw std::runtime_error("GPU textures don't support direct pixel access");
         }
 
-        void set_pixel_impl([[maybe_unused]] size_t x, [[maybe_unused]] size_t y,
+        [[noreturn]] void set_pixel_impl([[maybe_unused]] size_t x, [[maybe_unused]] size_t y,
                            [[maybe_unused]] const uvec3& pixel) {
             throw std::runtime_error("GPU textures don't support direct pixel write");
         }
