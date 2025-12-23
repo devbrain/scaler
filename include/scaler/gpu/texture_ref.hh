@@ -3,14 +3,7 @@
 #include <scaler/image_base.hh>
 #include <scaler/types.hh>
 #include <scaler/warning_macros.hh>
-
-// OpenGL headers
-#ifdef SCALER_PLATFORM_MACOS
-    #include <OpenGL/gl3.h>
-#else
-    #include <GL/glew.h>
-    #include <GL/gl.h>
-#endif
+#include <scaler/gpu/opengl_utils.hh>
 
 namespace scaler::gpu {
 
