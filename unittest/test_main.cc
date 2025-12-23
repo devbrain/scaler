@@ -5,16 +5,29 @@
 #include <cstdlib>
 #include <iostream>
 
+#ifdef _WIN32
+#include <stdlib.h>
+#define scaler_setenv(name, value) _putenv_s(name, value)
+#define scaler_getenv(name) std::getenv(name)
+#else
+#define scaler_setenv(name, value) setenv(name, value, 1)
+#define scaler_getenv(name) std::getenv(name)
+#endif
+
 int main(int argc, char** argv) {
     // Set SDL to use dummy audio driver for testing
     // This avoids needing actual audio hardware
-    setenv("SDL_AUDIODRIVER", "dummy", 1);
+    scaler_setenv("SDL_AUDIODRIVER", "dummy");
 
     // Only set video driver if not already set (allows CI to override)
     // Use x11 video driver for GPU tests (needs OpenGL support)
     // The dummy driver doesn't support OpenGL
-    if (getenv("SDL_VIDEODRIVER") == nullptr) {
-        setenv("SDL_VIDEODRIVER", "x11", 1);
+    if (scaler_getenv("SDL_VIDEODRIVER") == nullptr) {
+#ifdef _WIN32
+        scaler_setenv("SDL_VIDEODRIVER", "windows");
+#else
+        scaler_setenv("SDL_VIDEODRIVER", "x11");
+#endif
     }
 
     // Initialize SDL once for all tests

@@ -2,6 +2,11 @@
 #include "app.hh"
 #include "image_loader.hh"
 
+#include <scaler/warning_macros.hh>
+
+// Disable warnings for third-party imgui headers
+SCALER_DISABLE_ALL_WARNINGS_PUSH
+
 #include <imgui.h>
 #if SCALER_SDL_VERSION == 3
 #include <imgui_impl_sdl3.h>
@@ -9,6 +14,8 @@
 #include <imgui_impl_sdl2.h>
 #endif
 #include <imgui_impl_opengl3.h>
+
+SCALER_DISABLE_ALL_WARNINGS_POP
 
 #include <scaler/sdl/sdl_compat.hh>
 #include <scaler/algorithm_capabilities.hh>
@@ -105,7 +112,7 @@ void GUI::draw_control_panel() {
     ImGui::Text("Scaling Algorithm:");
     ImGui::Separator();
 
-    if (ImGui::BeginCombo("Algorithm", get_algorithm_name(gpu_algorithms_[selected_algorithm_idx_]).c_str())) {
+    if (ImGui::BeginCombo("Algorithm", get_algorithm_name(gpu_algorithms_[static_cast<size_t>(selected_algorithm_idx_)]).c_str())) {
         for (size_t i = 0; i < gpu_algorithms_.size(); ++i) {
             bool is_selected = (selected_algorithm_idx_ == static_cast<int>(i));
             if (ImGui::Selectable(get_algorithm_name(gpu_algorithms_[i]).c_str(), is_selected)) {
@@ -136,7 +143,7 @@ void GUI::draw_control_panel() {
     ImGui::Text("Scale Factor:");
     ImGui::Separator();
 
-    auto scales = get_supported_scales(gpu_algorithms_[selected_algorithm_idx_]);
+    auto scales = get_supported_scales(gpu_algorithms_[static_cast<size_t>(selected_algorithm_idx_)]);
 
     // Show radio buttons for fixed scales
     if (!scales.empty()) {
@@ -174,8 +181,8 @@ void GUI::draw_control_panel() {
     if (loader) {
         ImGui::Text("Original: %dx%d", loader->get_width(), loader->get_height());
         ImGui::Text("Scaled: %dx%d",
-                    static_cast<int>(loader->get_width() * selected_scale_),
-                    static_cast<int>(loader->get_height() * selected_scale_));
+                    static_cast<int>(static_cast<float>(loader->get_width()) * selected_scale_),
+                    static_cast<int>(static_cast<float>(loader->get_height()) * selected_scale_));
     }
 
     ImGui::End();
@@ -207,8 +214,8 @@ void GUI::draw_image_viewer() {
         if (tex_id != 0) {
             auto* loader = app_->get_image_loader();
             if (loader) {
-                tex_width = static_cast<int>(loader->get_width() * app_->get_current_scale());
-                tex_height = static_cast<int>(loader->get_height() * app_->get_current_scale());
+                tex_width = static_cast<int>(static_cast<float>(loader->get_width()) * app_->get_current_scale());
+                tex_height = static_cast<int>(static_cast<float>(loader->get_height()) * app_->get_current_scale());
             }
         }
     }
@@ -385,8 +392,8 @@ std::vector<float> GUI::get_supported_scales(scaler::algorithm algo) {
         scales = {1.0f, 1.5f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
     } else {
         // Use fixed scales
-        for (int scale : info.gpu_supported_scales) {
-            scales.push_back(static_cast<float>(scale));
+        for (float scale : info.gpu_supported_scales) {
+            scales.push_back(scale);
         }
     }
 

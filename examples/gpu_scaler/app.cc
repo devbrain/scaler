@@ -248,8 +248,8 @@ void App::update_scaled_texture() {
     // Calculate output dimensions
     const int src_width = image_loader_->get_width();
     const int src_height = image_loader_->get_height();
-    const int dst_width = static_cast<int>(src_width * current_scale_);
-    const int dst_height = static_cast<int>(src_height * current_scale_);
+    const int dst_width = static_cast<int>(static_cast<float>(src_width) * current_scale_);
+    const int dst_height = static_cast<int>(static_cast<float>(src_height) * current_scale_);
 
     // Create output texture
     glGenTextures(1, &scaled_texture_);

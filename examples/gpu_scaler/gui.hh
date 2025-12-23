@@ -41,8 +41,8 @@ public:
 
     // Get the currently selected algorithm
     [[nodiscard]] scaler::algorithm get_selected_algorithm() const {
-        if (selected_algorithm_idx_ >= 0 && selected_algorithm_idx_ < static_cast<int>(gpu_algorithms_.size())) {
-            return gpu_algorithms_[selected_algorithm_idx_];
+        if (selected_algorithm_idx_ >= 0 && static_cast<size_t>(selected_algorithm_idx_) < gpu_algorithms_.size()) {
+            return gpu_algorithms_[static_cast<size_t>(selected_algorithm_idx_)];
         }
         return scaler::algorithm::Nearest;
     }
@@ -81,10 +81,10 @@ private:
     // Available algorithms (GPU-capable only)
     std::vector<scaler::algorithm> gpu_algorithms_;
 
-    // Texture display
-    unsigned int display_texture_ = 0;
-    int display_width_ = 0;
-    int display_height_ = 0;
+    // Reserved for future texture display functionality
+    // unsigned int display_texture_ = 0;
+    // int display_width_ = 0;
+    // int display_height_ = 0;
 
     // Shutdown state
     bool is_shutdown_ = false;

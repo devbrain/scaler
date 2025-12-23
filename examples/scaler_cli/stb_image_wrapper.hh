@@ -13,30 +13,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
-// Define local macro for suppressing STB warnings
-#if defined(SCALER_COMPILER_MSVC)
-    // MSVC doesn't warn about this
-    #define SCALER_LOCAL_DISABLE_MISSING_FIELD_INIT
-#elif defined(SCALER_COMPILER_CLANG)
-    #define SCALER_LOCAL_DISABLE_MISSING_FIELD_INIT _Pragma("clang diagnostic ignored \"-Wmissing-field-initializers\"")
-#elif defined(SCALER_COMPILER_GCC)
-    #define SCALER_LOCAL_DISABLE_MISSING_FIELD_INIT _Pragma("GCC diagnostic ignored \"-Wmissing-field-initializers\"")
-#else
-    #define SCALER_LOCAL_DISABLE_MISSING_FIELD_INIT
-#endif
-
-// Disable warnings for third-party STB headers
-SCALER_DISABLE_WARNING_PUSH
-SCALER_LOCAL_DISABLE_MISSING_FIELD_INIT
+// Disable all warnings for third-party STB headers
+SCALER_DISABLE_ALL_WARNINGS_PUSH
 
 #include "stb_image.h"
 #include "stb_image_write.h"
 
 // Re-enable warnings
-SCALER_DISABLE_WARNING_POP
-
-// Clean up local macro
-#undef SCALER_LOCAL_DISABLE_MISSING_FIELD_INIT
+SCALER_DISABLE_ALL_WARNINGS_POP
 
 namespace scaler {
 
@@ -87,7 +71,7 @@ public:
         , m_height(height)
         , m_channels(channels)
         , m_stb_allocated(false)
-        , m_data(new unsigned char[width * height * channels](), smart_deleter(false)) {
+        , m_data(new unsigned char[width * height * static_cast<size_t>(channels)](), smart_deleter(false)) {
     }
 
     /**
@@ -110,9 +94,9 @@ public:
         , m_height(other.m_height)
         , m_channels(other.m_channels)
         , m_stb_allocated(false)  // Always use new[] for copies
-        , m_data(new unsigned char[m_width * m_height * m_channels], smart_deleter(false)) {
+        , m_data(new unsigned char[m_width * m_height * static_cast<size_t>(m_channels)], smart_deleter(false)) {
         std::memcpy(m_data.get(), other.m_data.get(),
-                    m_width * m_height * m_channels);
+                    m_width * m_height * static_cast<size_t>(m_channels));
     }
 
     /**
@@ -130,10 +114,10 @@ public:
             m_channels = other.m_channels;
             m_stb_allocated = false;  // Always use new[] for copies
             m_data = std::unique_ptr<unsigned char[], smart_deleter>(
-                new unsigned char[m_width * m_height * m_channels],
+                new unsigned char[m_width * m_height * static_cast<size_t>(m_channels)],
                 smart_deleter(false));
             std::memcpy(m_data.get(), other.m_data.get(),
-                        m_width * m_height * m_channels);
+                        m_width * m_height * static_cast<size_t>(m_channels));
         }
         return *this;
     }
@@ -168,7 +152,7 @@ public:
             return pixel_type{0, 0, 0};
         }
 
-        size_t idx = (y * m_width + x) * m_channels;
+        size_t idx = (y * m_width + x) * static_cast<size_t>(m_channels);
 
         return pixel_type{
             m_data[idx],
@@ -188,14 +172,14 @@ public:
             return;
         }
 
-        size_t idx = (y * m_width + x) * m_channels;
+        size_t idx = (y * m_width + x) * static_cast<size_t>(m_channels);
 
         m_data[idx] = pixel.x;     // R
         m_data[idx + 1] = pixel.y; // G
         m_data[idx + 2] = pixel.z; // B
 
         // Preserve alpha if present
-        if (m_channels == 4 && idx + 3 < m_width * m_height * m_channels) {
+        if (m_channels == 4 && idx + 3 < m_width * m_height * static_cast<size_t>(m_channels)) {
             // Keep existing alpha value
         }
     }
@@ -269,7 +253,7 @@ private:
         unsigned char* new_data = new unsigned char[new_size];
 
         for (size_t i = 0; i < m_width * m_height; ++i) {
-            unsigned char value = m_data[i * m_channels];
+            unsigned char value = m_data[i * static_cast<size_t>(m_channels)];
             new_data[i * 3] = value;     // R
             new_data[i * 3 + 1] = value; // G
             new_data[i * 3 + 2] = value; // B

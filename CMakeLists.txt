@@ -92,6 +92,14 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         )
     endif ()
 
+    # Clang-specific flags
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        list(APPEND SCALER_WARNING_FLAGS
+                -Wno-c++98-compat           # Don't warn about C++11/14/17 features
+                -Wno-c++98-compat-pedantic  # Don't warn about C++98 incompatibilities in pedantic mode
+        )
+    endif ()
+
     # Treat warnings as errors
     if (SCALER_STRICT_WARNINGS)
         list(APPEND SCALER_WARNING_FLAGS -Werror)
@@ -103,6 +111,8 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
             /permissive-    # Strict standard conformance
             /Zc:__cplusplus # Report correct __cplusplus value
     )
+    # Prevent Windows.h from defining min/max macros
+    add_compile_definitions(NOMINMAX)
 
     # Treat warnings as errors
     if (SCALER_STRICT_WARNINGS)

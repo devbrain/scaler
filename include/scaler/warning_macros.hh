@@ -113,3 +113,38 @@
 // Convert size_t to float (for graphics calculations)
 #define SCALER_SIZE_TO_FLOAT(size) \
     (static_cast<float>(size))
+
+/**
+ * Disable all warnings for third-party headers
+ * Use this to wrap includes of external libraries we don't control
+ */
+#if defined(SCALER_COMPILER_MSVC)
+    #define SCALER_DISABLE_ALL_WARNINGS_PUSH \
+        __pragma(warning(push, 0))
+    #define SCALER_DISABLE_ALL_WARNINGS_POP \
+        __pragma(warning(pop))
+#elif defined(SCALER_COMPILER_CLANG)
+    #define SCALER_DISABLE_ALL_WARNINGS_PUSH \
+        _Pragma("clang diagnostic push") \
+        _Pragma("clang diagnostic ignored \"-Weverything\"")
+    #define SCALER_DISABLE_ALL_WARNINGS_POP \
+        _Pragma("clang diagnostic pop")
+#elif defined(SCALER_COMPILER_GCC)
+    #define SCALER_DISABLE_ALL_WARNINGS_PUSH \
+        _Pragma("GCC diagnostic push") \
+        _Pragma("GCC diagnostic ignored \"-Wall\"") \
+        _Pragma("GCC diagnostic ignored \"-Wextra\"") \
+        _Pragma("GCC diagnostic ignored \"-Wpedantic\"") \
+        _Pragma("GCC diagnostic ignored \"-Wconversion\"") \
+        _Pragma("GCC diagnostic ignored \"-Wsign-conversion\"") \
+        _Pragma("GCC diagnostic ignored \"-Wold-style-cast\"") \
+        _Pragma("GCC diagnostic ignored \"-Wcast-qual\"") \
+        _Pragma("GCC diagnostic ignored \"-Wuseless-cast\"") \
+        _Pragma("GCC diagnostic ignored \"-Wmissing-field-initializers\"") \
+        _Pragma("GCC diagnostic ignored \"-Wzero-as-null-pointer-constant\"")
+    #define SCALER_DISABLE_ALL_WARNINGS_POP \
+        _Pragma("GCC diagnostic pop")
+#else
+    #define SCALER_DISABLE_ALL_WARNINGS_PUSH
+    #define SCALER_DISABLE_ALL_WARNINGS_POP
+#endif

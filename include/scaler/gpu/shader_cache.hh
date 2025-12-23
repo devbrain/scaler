@@ -228,7 +228,7 @@ namespace scaler::gpu {
                 shader_program program = compile(vertex_source, fragment_source);
                 auto [inserted_it, success] = algo_cache_.emplace(algo, std::move(program));
                 return &inserted_it->second;
-            } catch (const std::exception& e) {
+            } catch (const std::exception&) {
                 // Log error and return nullptr
                 // In production, use proper logging
                 return nullptr;

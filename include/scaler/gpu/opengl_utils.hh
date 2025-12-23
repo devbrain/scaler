@@ -207,7 +207,7 @@ namespace scaler::gpu::detail {
         ~scoped_gl_error_check() {
             try {
                 check_gl_error(operation_);
-            } catch (const std::exception& e) {
+            } catch (const std::exception&) {
                 // Log error but don't throw from destructor
                 // In production, you'd use a proper logging system
             }

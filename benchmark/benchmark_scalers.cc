@@ -193,7 +193,7 @@ SDL_Surface* create_test_image(int width, int height, const std::string& pattern
 
     if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
 
-    Uint32* pixels = (Uint32*)surface->pixels;
+    Uint32* pixels = static_cast<Uint32*>(surface->pixels);
     std::mt19937 rng(42);  // Fixed seed for reproducibility
 
     if (pattern == "random") {
@@ -204,9 +204,9 @@ SDL_Surface* create_test_image(int width, int height, const std::string& pattern
     } else if (pattern == "gradient") {
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
-                Uint8 r = (x * 255) / width;
-                Uint8 g = (y * 255) / height;
-                Uint8 b = ((x + y) * 255) / (width + height);
+                Uint8 r = static_cast<Uint8>((x * 255) / width);
+                Uint8 g = static_cast<Uint8>((y * 255) / height);
+                Uint8 b = static_cast<Uint8>(((x + y) * 255) / (width + height));
 #if SCALER_SDL_VERSION == 3
                 pixels[y * width + x] = SDL_MapRGBA(SDL_GetPixelFormatDetails(surface->format),
                                                     nullptr, r, g, b, 255);
@@ -339,8 +339,8 @@ void benchmark_all_algorithms(SDL_Surface* input, const std::string& description
         // Skip algorithms that don't support the required scale
         // For benchmarking, we'll test 2x scaling primarily
         bool supports_2x = false;
-        for (int scale : info.cpu_supported_scales) {
-            if (scale == 2) {
+        for (float scale : info.cpu_supported_scales) {
+            if (static_cast<int>(scale) == 2) {
                 supports_2x = true;
                 break;
             }
@@ -406,12 +406,12 @@ void benchmark_memory_usage(SDL_Surface* input) {
     std::cout << "\n=== Memory Usage Analysis ===" << std::endl;
     std::cout << "Input image: " << input->w << "x" << input->h << std::endl;
 
-    size_t input_size = input->w * input->h * 4;  // RGBA
-    size_t output_size = (input->w * 2) * (input->h * 2) * 4;  // 2x scaling
+    size_t input_size = static_cast<size_t>(input->w) * static_cast<size_t>(input->h) * 4;  // RGBA
+    size_t output_size = static_cast<size_t>(input->w * 2) * static_cast<size_t>(input->h * 2) * 4;  // 2x scaling
 
-    std::cout << "Input memory: " << (input_size / 1024.0) << " KB" << std::endl;
-    std::cout << "Output memory: " << (output_size / 1024.0) << " KB" << std::endl;
-    std::cout << "Total working set: " << ((input_size + output_size) / 1024.0) << " KB" << std::endl;
+    std::cout << "Input memory: " << (static_cast<double>(input_size) / 1024.0) << " KB" << std::endl;
+    std::cout << "Output memory: " << (static_cast<double>(output_size) / 1024.0) << " KB" << std::endl;
+    std::cout << "Total working set: " << (static_cast<double>(input_size + output_size) / 1024.0) << " KB" << std::endl;
 
     // Estimate cache usage
     std::cout << "\nCache Analysis:" << std::endl;
@@ -750,8 +750,8 @@ int main(int argc, char* argv[]) {
 
                 // Check if algorithm supports 2x scaling
                 bool supports_2x = false;
-                for (int scale : info.cpu_supported_scales) {
-                    if (scale == 2) {
+                for (float scale : info.cpu_supported_scales) {
+                    if (static_cast<int>(scale) == 2) {
                         supports_2x = true;
                         break;
                     }

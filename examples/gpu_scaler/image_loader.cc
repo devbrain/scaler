@@ -125,7 +125,7 @@ SDL_Surface* ImageLoader::flip_surface_vertically(SDL_Surface* surface) {
         // Copy from bottom to top
         std::memcpy(dst_pixels + y * pitch,
                     src_pixels + (surface->h - 1 - y) * pitch,
-                    pitch);
+                    static_cast<size_t>(pitch));
     }
 
     // Unlock surfaces
