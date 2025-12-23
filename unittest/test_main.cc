@@ -1,6 +1,8 @@
 // Main test runner for scaler unit tests
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
+// Bypass SDL_main on Windows - we handle main ourselves
+#define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <cstdlib>
 #include <iostream>
@@ -29,6 +31,9 @@ int main(int argc, char** argv) {
         scaler_setenv("SDL_VIDEODRIVER", "x11");
 #endif
     }
+
+    // Tell SDL we're handling main ourselves
+    SDL_SetMainReady();
 
     // Initialize SDL once for all tests
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
