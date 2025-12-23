@@ -1,4 +1,6 @@
 // Program to generate golden data for all scaling algorithms
+// Bypass SDL_main on Windows - this is a utility program
+#define SDL_MAIN_HANDLED
 #include <scaler/sdl/sdl_compat.hh>
 #include <scaler/sdl/sdl_image.hh>
 #include <../include/scaler/cpu/epx.hh>
@@ -171,6 +173,9 @@ void generateTestPattern() {
 }
 
 int main() {
+    // Tell SDL we're handling main ourselves
+    SDL_SetMainReady();
+
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         std::cerr << "SDL initialization failed: " << SDL_GetError() << std::endl;
