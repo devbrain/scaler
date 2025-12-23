@@ -44,9 +44,9 @@ namespace scaler {
                         break;
                     case 3:
                         if constexpr (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-                            pixel = src_pixel[0] << 16 | src_pixel[1] << 8 | src_pixel[2];
+                            pixel = static_cast<Uint32>(src_pixel[0]) << 16 | static_cast<Uint32>(src_pixel[1]) << 8 | static_cast<Uint32>(src_pixel[2]);
                         } else {
-                            pixel = src_pixel[0] | src_pixel[1] << 8 | src_pixel[2] << 16;
+                            pixel = static_cast<Uint32>(src_pixel[0]) | static_cast<Uint32>(src_pixel[1]) << 8 | static_cast<Uint32>(src_pixel[2]) << 16;
                         }
                         break;
                     case 4:
@@ -237,9 +237,9 @@ namespace scaler {
                         break;
                     case 3:
                         if constexpr (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-                            pixel = src_pixel[0] << 16 | src_pixel[1] << 8 | src_pixel[2];
+                            pixel = static_cast<Uint32>(src_pixel[0]) << 16 | static_cast<Uint32>(src_pixel[1]) << 8 | static_cast<Uint32>(src_pixel[2]);
                         } else {
-                            pixel = src_pixel[0] | src_pixel[1] << 8 | src_pixel[2] << 16;
+                            pixel = static_cast<Uint32>(src_pixel[0]) | static_cast<Uint32>(src_pixel[1]) << 8 | static_cast<Uint32>(src_pixel[2]) << 16;
                         }
                         break;
                     case 4:

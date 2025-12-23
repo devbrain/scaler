@@ -116,8 +116,9 @@ namespace scaler {
             const bool w7_diff = yuv_difference(w[4], w[8]);
             const bool w8_diff = yuv_difference(w[4], w[0]);
 
-            return (w1_diff << 0) | (w2_diff << 1) | (w3_diff << 2) | (w4_diff << 3) |
-                   (w5_diff << 4) | (w6_diff << 5) | (w7_diff << 6) | (w8_diff << 7);
+            return static_cast<uint8_t>(
+                   (w1_diff << 0) | (w2_diff << 1) | (w3_diff << 2) | (w4_diff << 3) |
+                   (w5_diff << 4) | (w6_diff << 5) | (w7_diff << 6) | (w8_diff << 7));
         }
 
         // Generic HQ2x scaler with buffer policy

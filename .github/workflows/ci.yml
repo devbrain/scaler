@@ -56,7 +56,7 @@ jobs:
         if: matrix.compiler == 'gcc'
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++-${{ matrix.version }}
+          sudo apt-get install -y g++-${{ matrix.version }} libsdl2-dev libglew-dev
           echo "CXX=g++-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CC=gcc-${{ matrix.version }}" >> $GITHUB_ENV
 
@@ -64,9 +64,19 @@ jobs:
         if: matrix.compiler == 'clang' && runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-${{ matrix.version }}
+          sudo apt-get install -y clang-${{ matrix.version }} libsdl2-dev libglew-dev
           echo "CXX=clang++-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CC=clang-${{ matrix.version }}" >> $GITHUB_ENV
+
+      - name: Setup macOS dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install sdl2 glew
+
+      - name: Setup Windows dependencies
+        if: runner.os == 'Windows'
+        run: |
+          vcpkg install sdl2:x64-windows glew:x64-windows
 
       - name: Configure (Unix)
         if: runner.os != 'Windows'
@@ -82,6 +92,7 @@ jobs:
         run: |
           cmake -B build `
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
             -DSCALER_BUILD_TEST=ON `
             -DSCALER_BUILD_BENCHMARK=OFF `
             -DBUILD_EXAMPLES=OFF
@@ -92,6 +103,7 @@ jobs:
           cmake -B build `
             -T ClangCL `
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
             -DSCALER_BUILD_TEST=ON `
             -DSCALER_BUILD_BENCHMARK=OFF `
             -DBUILD_EXAMPLES=OFF
@@ -99,12 +111,25 @@ jobs:
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
 
-      - name: Test (Unix)
-        if: runner.os != 'Windows'
+      - name: Test (Linux)
+        if: runner.os == 'Linux'
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+        run: ctest --test-dir build --build-config ${{ matrix.build_type }} --output-on-failure
+
+      - name: Test (macOS)
+        if: runner.os == 'macOS'
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
         run: ctest --test-dir build --build-config ${{ matrix.build_type }} --output-on-failure
 
       - name: Test (Windows)
         if: runner.os == 'Windows'
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
         run: |
           $env:PATH = "${{ github.workspace }}\build\bin\${{ matrix.build_type }};${{ github.workspace }}\build\lib\${{ matrix.build_type }};$env:PATH"
           ctest --test-dir build --build-config ${{ matrix.build_type }} --output-on-failure
@@ -118,7 +143,7 @@ jobs:
       - name: Setup GCC 13
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++-13
+          sudo apt-get install -y g++-13 libsdl2-dev libglew-dev
           echo "CXX=g++-13" >> $GITHUB_ENV
           echo "CC=gcc-13" >> $GITHUB_ENV
 
@@ -134,4 +159,7 @@ jobs:
         run: cmake --build build --config Debug
 
       - name: Test
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
         run: ctest --test-dir build --build-config Debug --output-on-failure

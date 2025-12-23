@@ -53,6 +53,9 @@ endif()
 
 target_compile_options(scaler_unittest PRIVATE ${SCALER_WARNING_FLAGS})
 
+# Register test with CTest
+add_test(NAME scaler_unittest COMMAND scaler_unittest)
+
 # Golden data generator executable
 add_executable(generate_golden_data
         generate_golden_data.cc
@@ -62,3 +65,5 @@ target_link_libraries(generate_golden_data
         PRIVATE
         scaler
 )
+
+target_compile_options(generate_golden_data PRIVATE ${SCALER_WARNING_FLAGS})

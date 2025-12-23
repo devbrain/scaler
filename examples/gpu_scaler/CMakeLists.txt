@@ -101,11 +101,7 @@ target_link_libraries(gpu_scaler PRIVATE
 target_compile_features(gpu_scaler PRIVATE cxx_std_17)
 
 # Add compile options
-if(MSVC)
-    target_compile_options(gpu_scaler PRIVATE /W4)
-else()
-    target_compile_options(gpu_scaler PRIVATE -Wall -Wextra -Wpedantic)
-endif()
+target_compile_options(gpu_scaler PRIVATE ${SCALER_WARNING_FLAGS})
 
 # Install target
 install(TARGETS gpu_scaler

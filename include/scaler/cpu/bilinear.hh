@@ -102,7 +102,7 @@ namespace scaler {
 
         for (index_t y = 0; y < src_height; ++y) {
             for (index_t dst_x = 0; dst_x < dst_width; ++dst_x) {
-                const float src_x = (dst_x + 0.5f) * inv_scale_x - 0.5f;
+                const float src_x = (static_cast<float>(dst_x) + 0.5f) * inv_scale_x - 0.5f;
                 const index_t x0 = src_x >= 0 ? static_cast<index_t>(src_x) : 0;
                 const index_t x1 = std::min(x0 + 1, src_width - 1);
                 const float fx = src_x >= 0 ? src_x - static_cast<float>(x0) : 0.0f;
@@ -120,7 +120,7 @@ namespace scaler {
         const float inv_scale_y = 1.0f / scale_factor;
 
         for (index_t dst_y = 0; dst_y < dst_height; ++dst_y) {
-            const float src_y = (dst_y + 0.5f) * inv_scale_y - 0.5f;
+            const float src_y = (static_cast<float>(dst_y) + 0.5f) * inv_scale_y - 0.5f;
             const index_t y0 = src_y >= 0 ? static_cast<index_t>(src_y) : 0;
             const index_t y1 = std::min(y0 + 1, src_height - 1);
             const float fy = src_y >= 0 ? src_y - static_cast<float>(y0) : 0.0f;

@@ -60,6 +60,7 @@ mark_as_advanced(
 option(SCALER_BUILD_TEST "Build unittests for scaler" ON)
 option(SCALER_BUILD_BENCHMARK "Build benchmarks for scaler" ON)
 option(SCALER_BUILD_TOOLS "Build command-line tools" ON)
+option(SCALER_STRICT_WARNINGS "Treat warnings as errors" ON)
 
 # Set visibility settings for shared libraries
 
@@ -71,7 +72,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
             -Wcast-align    # Warn about potential performance problem casts
             -Wcast-qual     # Warn about casts that remove qualifiers
             -Wconversion    # Warn about type conversions that may lose data
-            -Wdouble-promotion  # Warn about float to double promotion
             -Wformat=2      # Additional format string warnings
             -Wnon-virtual-dtor  # Warn about non-virtual destructors
             -Wold-style-cast    # Warn about C-style casts
@@ -81,25 +81,34 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
             -Wundef         # Warn about undefined identifiers in #if
             -Wunused        # Warn about unused entities
             -Wzero-as-null-pointer-constant # Warn about using 0 as nullptr
-            -Wstringop-overflow
     )
 
+    # GCC-specific flags
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         list(APPEND SCALER_WARNING_FLAGS
                 -Wlogical-op    # Warn about logical operations being used where bitwise were probably wanted
                 -Wuseless-cast  # Warn about useless casts
+                -Wstringop-overflow
         )
     endif ()
+
+    # Treat warnings as errors
+    if (SCALER_STRICT_WARNINGS)
+        list(APPEND SCALER_WARNING_FLAGS -Werror)
+    endif ()
+
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(SCALER_WARNING_FLAGS
             /W4             # Highest warning level
             /permissive-    # Strict standard conformance
             /Zc:__cplusplus # Report correct __cplusplus value
     )
-endif ()
 
-# Treat warnings as errors in CI/Release builds (optional)
-# list(APPEND SCALER_WARNING_FLAGS -Werror)
+    # Treat warnings as errors
+    if (SCALER_STRICT_WARNINGS)
+        list(APPEND SCALER_WARNING_FLAGS /WX)
+    endif ()
+endif ()
 
 # Sanitizer flags
 if (SCALER_ENABLE_SANITIZERS)
@@ -201,6 +210,7 @@ if(OpenGL_FOUND)
 endif()
 
 if (SCALER_BUILD_TEST)
+    enable_testing()
     add_subdirectory(unittest)
 endif()
 

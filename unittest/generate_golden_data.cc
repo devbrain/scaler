@@ -23,69 +23,69 @@ struct PixelData {
 // Helper to extract pixel data from a surface
 std::vector<PixelData> extractPixelData(SDL_Surface* surface) {
     std::vector<PixelData> data;
-    data.reserve(surface->w * surface->h);
-    
+    data.reserve(static_cast<size_t>(surface->w) * static_cast<size_t>(surface->h));
+
     // Lock surface if needed
     if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
-    
+
     for (int y = 0; y < surface->h; ++y) {
         for (int x = 0; x < surface->w; ++x) {
-            Uint32* pixels = (Uint32*)surface->pixels;
+            auto* pixels = static_cast<Uint32*>(surface->pixels);
             Uint32 pixel = pixels[y * surface->w + x];
-            
+
             PixelData pd;
             SDL_GetRGBA(pixel, surface->format, &pd.r, &pd.g, &pd.b, &pd.a);
             data.push_back(pd);
         }
     }
-    
+
     if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
-    
+
     return data;
 }
 
 // Helper to write golden data as C header
-void writeGoldenData(const std::string& algorithm_name, 
-                     int width, int height,
+void writeGoldenData(const std::string& algorithm_name,
+                     size_t width, size_t height,
                      const std::vector<PixelData>& data) {
     std::string filename = "golden_" + algorithm_name + ".h";
     std::ofstream file(filename);
-    
+
     // Convert to uppercase for define
     std::string upper_name = algorithm_name;
-    for (auto& c : upper_name) c = std::toupper(c);
-    
+    for (auto& c : upper_name) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+
     file << "#pragma once\n";
     file << "// Golden data for " << algorithm_name << " algorithm\n";
     file << "// Generated from rotozoom.bmp\n\n";
-    
+
     file << "const int GOLDEN_" << upper_name << "_WIDTH = " << width << ";\n";
     file << "const int GOLDEN_" << upper_name << "_HEIGHT = " << height << ";\n\n";
-    
+
     // Write as RGBA array
     file << "const unsigned char GOLDEN_" << upper_name << "_DATA[] = {\n";
-    
+
     for (size_t i = 0; i < data.size(); ++i) {
         if (i % 4 == 0) file << "    ";
-        
-        file << "0x" << std::hex << std::setfill('0') << std::setw(2) 
-             << (int)data[i].r << ", ";
-        file << "0x" << std::hex << std::setfill('0') << std::setw(2) 
-             << (int)data[i].g << ", ";
-        file << "0x" << std::hex << std::setfill('0') << std::setw(2) 
-             << (int)data[i].b << ", ";
-        file << "0x" << std::hex << std::setfill('0') << std::setw(2) 
-             << (int)data[i].a;
-        
+
+        file << "0x" << std::hex << std::setfill('0') << std::setw(2)
+             << static_cast<int>(data[i].r) << ", ";
+        file << "0x" << std::hex << std::setfill('0') << std::setw(2)
+             << static_cast<int>(data[i].g) << ", ";
+        file << "0x" << std::hex << std::setfill('0') << std::setw(2)
+             << static_cast<int>(data[i].b) << ", ";
+        file << "0x" << std::hex << std::setfill('0') << std::setw(2)
+             << static_cast<int>(data[i].a);
+
         if (i < data.size() - 1) file << ", ";
         if ((i + 1) % 4 == 0 || i == data.size() - 1) file << "\n";
     }
-    
+
     file << "};\n\n";
-    file << "const size_t GOLDEN_" << upper_name << "_SIZE = sizeof(GOLDEN_" 
+    file << "const size_t GOLDEN_" << upper_name << "_SIZE = sizeof(GOLDEN_"
          << upper_name << "_DATA);\n";
-    
-    std::cout << "Generated " << filename << " (" << width << "x" << height 
+
+    std::cout << "Generated " << filename << " (" << width << "x" << height
               << ", " << data.size() << " pixels)\n";
 }
 
@@ -95,8 +95,8 @@ void generateTestPattern() {
     SDL_Surface* pattern = SDL_CreateRGBSurfaceWithFormat(0, 4, 4, 32, SDL_PIXELFORMAT_RGBA8888);
     
     if (SDL_MUSTLOCK(pattern)) SDL_LockSurface(pattern);
-    
-    Uint32* pixels = (Uint32*)pattern->pixels;
+
+    auto* pixels = static_cast<Uint32*>(pattern->pixels);
     
     // Create a pattern with various colors and patterns
     // Row 0: Red gradient

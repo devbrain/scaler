@@ -32,11 +32,7 @@ target_link_libraries(scaler_cli PRIVATE
 target_compile_features(scaler_cli PRIVATE cxx_std_17)
 
 # Add compile options
-if(MSVC)
-    target_compile_options(scaler_cli PRIVATE /W4)
-else()
-    target_compile_options(scaler_cli PRIVATE -Wall -Wextra -Wpedantic)
-endif()
+target_compile_options(scaler_cli PRIVATE ${SCALER_WARNING_FLAGS})
 
 # Install target
 install(TARGETS scaler_cli

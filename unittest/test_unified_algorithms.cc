@@ -349,8 +349,8 @@ TEST_CASE("Algorithm Performance Comparison") {
 
     // Report timings
     INFO("Algorithm Performance (64x64 -> 128x128):");
-    for (const auto& [name, time] : timings) {
-        INFO("  " << name << ": " << time << " ms");
+    for (const auto& timing : timings) {
+        INFO("  " << timing.first << ": " << timing.second << " ms");
     }
 
     // Verify that at least some algorithms were tested
