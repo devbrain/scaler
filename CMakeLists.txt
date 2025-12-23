@@ -99,8 +99,13 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
                 -Wno-c++98-compat-pedantic  # Don't warn about C++98 incompatibilities in pedantic mode
                 -Wno-newline-eof            # Don't require newline at end of file
                 -Wno-switch-default         # Don't require default in switch (enums are exhaustive)
+                -Wno-switch-enum            # Don't require all enum values in switch (use default)
                 -Wno-missing-prototypes     # Not applicable in C++
                 -Wno-unsafe-buffer-usage    # Pointer arithmetic is normal for low-level image code
+                -Wno-float-equal            # Float comparisons are intentional in vector math
+                -Wno-exit-time-destructors  # Static initialization is normal in C++
+                -Wno-covered-switch-default # Default case is defensive programming
+                -Wno-implicit-int-float-conversion  # Intentional in graphics code
         )
     endif ()
 
