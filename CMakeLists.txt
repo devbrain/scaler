@@ -106,6 +106,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
                 -Wno-exit-time-destructors  # Static initialization is normal in C++
                 -Wno-covered-switch-default # Default case is defensive programming
                 -Wno-implicit-int-float-conversion  # Intentional in graphics code
+                -Wno-double-promotion       # Float to double in doctest macros is fine
         )
     endif ()
 
