@@ -19,6 +19,14 @@
 #include "data/golden_test_pattern_2xsai.h"
 #include "data/golden_test_pattern_xbr.h"
 #include "data/golden_test_pattern_hq2x.h"
+
+// Include full image golden data at file scope to avoid stack overflow
+// These are large arrays (~800KB each) that must be in static storage
+#include "data/golden_epx.h"
+#include "data/golden_eagle.h"
+#include "data/golden_2xsai.h"
+#include "data/golden_xbr.h"
+#include "data/golden_hq2x.h"
 using namespace scaler;
 // Helper to create SDL surface from raw RGBA data
 std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> 
@@ -239,9 +247,6 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     std::vector<int> test_indices;
     
     SUBCASE("EPX full image spot check") {
-        // Include the full golden data for spot checks
-        #include "data/golden_epx.h"
-        
         sdl_input_image input(source.get());
         auto output = scale_epx<sdl_input_image, sdl_output_image>(input);
         
@@ -262,8 +267,6 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     }
     
     SUBCASE("Eagle full image spot check") {
-        #include "data/golden_eagle.h"
-        
         sdl_input_image input(source.get());
         auto output = scale_eagle<sdl_input_image, sdl_output_image>(input);
         
@@ -283,8 +286,6 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     }
     
     SUBCASE("2xSaI full image spot check") {
-        #include "data/golden_2xsai.h"
-        
         sdl_input_image input(source.get());
         auto output = scale_2x_sai<sdl_input_image, sdl_output_image>(input);
         
@@ -304,8 +305,6 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     }
     
     SUBCASE("XBR full image spot check") {
-        #include "data/golden_xbr.h"
-        
         sdl_input_image input(source.get());
         auto output = scale_xbr<sdl_input_image, sdl_output_image>(input);
         
@@ -325,8 +324,6 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     }
     
     SUBCASE("HQ2x full image spot check") {
-        #include "data/golden_hq2x.h"
-        
         sdl_input_image input(source.get());
         auto output = scale_hq2x<sdl_input_image, sdl_output_image>(input);
         
