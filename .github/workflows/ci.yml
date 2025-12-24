@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master, main]
+    branches: [ "master", "main" ]
   pull_request:
-    branches: [master, main]
+    branches: [ "master", "main" ]
 
 jobs:
   build:
@@ -16,57 +16,55 @@ jobs:
           - os: ubuntu-latest
             compiler: gcc
             version: 11
-            build_type: Release
           - os: ubuntu-latest
             compiler: gcc
             version: 13
-            build_type: Release
 
           # Linux Clang
           - os: ubuntu-latest
             compiler: clang
-            version: 16
-            build_type: Release
+            version: 17
           - os: ubuntu-latest
             compiler: clang
             version: 18
-            build_type: Release
 
-          # macOS (Apple Clang)
+          # macOS
           - os: macos-15
             compiler: apple-clang
-            build_type: Release
 
           # Windows MSVC
           - os: windows-latest
             compiler: msvc
-            build_type: Release
 
-          # Windows Clang
+          # Windows Clang-CL
           - os: windows-latest
             compiler: clang-cl
-            build_type: Release
 
     runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} - ${{ matrix.compiler }}${{ matrix.version && format(' {0}', matrix.version) || '' }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup GCC
-        if: matrix.compiler == 'gcc'
+      - name: Install compiler (Linux GCC)
+        if: runner.os == 'Linux' && matrix.compiler == 'gcc'
         run: |
           sudo apt-get update
           sudo apt-get install -y g++-${{ matrix.version }} libsdl2-dev libglew-dev
-          echo "CXX=g++-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CC=gcc-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "CXX=g++-${{ matrix.version }}" >> $GITHUB_ENV
 
-      - name: Setup Clang (Linux)
-        if: matrix.compiler == 'clang' && runner.os == 'Linux'
+      - name: Install compiler (Linux Clang)
+        if: runner.os == 'Linux' && matrix.compiler == 'clang'
         run: |
+          LLVM_VERSION=${{ matrix.version }}
           sudo apt-get update
-          sudo apt-get install -y clang-${{ matrix.version }} libsdl2-dev libglew-dev
-          echo "CXX=clang++-${{ matrix.version }}" >> $GITHUB_ENV
-          echo "CC=clang-${{ matrix.version }}" >> $GITHUB_ENV
+          sudo apt-get install -y lsb-release wget software-properties-common gnupg libsdl2-dev libglew-dev
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo bash ./llvm.sh "${LLVM_VERSION}" all
+          echo "CC=clang-${LLVM_VERSION}" >> $GITHUB_ENV
+          echo "CXX=clang++-${LLVM_VERSION}" >> $GITHUB_ENV
 
       - name: Setup macOS dependencies
         if: runner.os == 'macOS'
@@ -78,88 +76,86 @@ jobs:
         run: |
           vcpkg install sdl2:x64-windows glew:x64-windows
 
-      - name: Configure (Unix)
+      - name: Configure CMake (Unix)
         if: runner.os != 'Windows'
         run: |
           cmake -B build \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DSCALER_BUILD_TEST=ON \
-            -DSCALER_BUILD_BENCHMARK=OFF \
-            -DBUILD_EXAMPLES=OFF
+            -DCMAKE_BUILD_TYPE=Release \
+            -DNEUTRINO_SCALER_BUILD_TESTS=ON \
+            -DNEUTRINO_SCALER_BUILD_BENCHMARKS=OFF \
+            -DNEUTRINO_SCALER_BUILD_EXAMPLES=OFF
 
-      - name: Configure (Windows MSVC)
-        if: matrix.compiler == 'msvc'
+      - name: Configure CMake (Windows MSVC)
+        if: runner.os == 'Windows' && matrix.compiler == 'msvc'
         run: |
           cmake -B build `
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
-            -DSCALER_BUILD_TEST=ON `
-            -DSCALER_BUILD_BENCHMARK=OFF `
-            -DBUILD_EXAMPLES=OFF
+            -DNEUTRINO_SCALER_BUILD_TESTS=ON `
+            -DNEUTRINO_SCALER_BUILD_BENCHMARKS=OFF `
+            -DNEUTRINO_SCALER_BUILD_EXAMPLES=OFF
 
-      - name: Configure (Windows Clang)
-        if: matrix.compiler == 'clang-cl'
+      - name: Configure CMake (Windows Clang-CL)
+        if: runner.os == 'Windows' && matrix.compiler == 'clang-cl'
         run: |
           cmake -B build `
             -T ClangCL `
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
-            -DSCALER_BUILD_TEST=ON `
-            -DSCALER_BUILD_BENCHMARK=OFF `
-            -DBUILD_EXAMPLES=OFF
+            -DNEUTRINO_SCALER_BUILD_TESTS=ON `
+            -DNEUTRINO_SCALER_BUILD_BENCHMARKS=OFF `
+            -DNEUTRINO_SCALER_BUILD_EXAMPLES=OFF
 
       - name: Build
-        run: cmake --build build --config ${{ matrix.build_type }}
+        run: cmake --build build --config Release
 
-      - name: Test (Linux)
-        if: runner.os == 'Linux'
+      - name: Run tests (Unix)
+        if: runner.os != 'Windows'
         env:
           SDL_VIDEODRIVER: dummy
           SDL_AUDIODRIVER: dummy
-        run: ctest --test-dir build --build-config ${{ matrix.build_type }} --output-on-failure
+        run: |
+          cd build
+          ctest --build-config Release --output-on-failure
 
-      - name: Test (macOS)
-        if: runner.os == 'macOS'
-        env:
-          SDL_VIDEODRIVER: dummy
-          SDL_AUDIODRIVER: dummy
-        run: ctest --test-dir build --build-config ${{ matrix.build_type }} --output-on-failure
-
-      - name: Test (Windows)
+      - name: Run tests (Windows)
         if: runner.os == 'Windows'
         env:
           SDL_VIDEODRIVER: dummy
           SDL_AUDIODRIVER: dummy
         run: |
-          $env:PATH = "${{ github.workspace }}\build\bin\${{ matrix.build_type }};${{ github.workspace }}\build\lib\${{ matrix.build_type }};$env:PATH"
-          ctest --test-dir build --build-config ${{ matrix.build_type }} --output-on-failure
+          cd build
+          ctest --build-config Release --output-on-failure
 
-  # Debug build for additional coverage
   debug:
     runs-on: ubuntu-latest
+    name: Ubuntu - GCC 13 (Debug)
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup GCC 13
+      - name: Install compiler
         run: |
           sudo apt-get update
           sudo apt-get install -y g++-13 libsdl2-dev libglew-dev
-          echo "CXX=g++-13" >> $GITHUB_ENV
           echo "CC=gcc-13" >> $GITHUB_ENV
+          echo "CXX=g++-13" >> $GITHUB_ENV
 
-      - name: Configure
+      - name: Configure CMake
         run: |
           cmake -B build \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DSCALER_BUILD_TEST=ON \
-            -DSCALER_BUILD_BENCHMARK=OFF \
-            -DBUILD_EXAMPLES=OFF
+            -DNEUTRINO_SCALER_BUILD_TESTS=ON \
+            -DNEUTRINO_SCALER_BUILD_BENCHMARKS=OFF \
+            -DNEUTRINO_SCALER_BUILD_EXAMPLES=OFF
 
       - name: Build
         run: cmake --build build --config Debug
 
-      - name: Test
+      - name: Run tests
         env:
           SDL_VIDEODRIVER: dummy
           SDL_AUDIODRIVER: dummy
-        run: ctest --test-dir build --build-config Debug --output-on-failure
+        run: |
+          cd build
+          ctest --build-config Debug --output-on-failure

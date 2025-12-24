@@ -1,19 +1,80 @@
+# =============================================================================
+# scaler - High-performance pixel art scaling algorithms
+# =============================================================================
+
 cmake_minimum_required(VERSION 3.20)
+
 project(scaler
-        VERSION 0.1.0
-        LANGUAGES CXX C
+    VERSION 0.1.0
+    DESCRIPTION "High-performance pixel art scaling algorithms"
+    LANGUAGES CXX C
 )
+
+# =============================================================================
+# Neutrino CMake Integration
+# =============================================================================
+
+include(FetchContent)
+
+if(NOT DEFINED NEUTRINO_CMAKE_DIR)
+    FetchContent_Declare(
+        neutrino_cmake
+        GIT_REPOSITORY https://github.com/devbrain/neutrino-cmake.git
+        GIT_TAG master
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(neutrino_cmake)
+    set(NEUTRINO_CMAKE_DIR "${neutrino_cmake_SOURCE_DIR}/cmake")
+    list(APPEND CMAKE_MODULE_PATH "${NEUTRINO_CMAKE_DIR}")
+endif()
+
+include(NeutrinoInit)
+
+# =============================================================================
+# Options
+# =============================================================================
+
+# Note: scaler is header-only, so we don't use neutrino_define_library_options
+neutrino_is_top_level(_scaler_is_top_level)
+if(_scaler_is_top_level)
+    option(NEUTRINO_SCALER_BUILD_TESTS "Build unit tests" ON)
+    option(NEUTRINO_SCALER_BUILD_BENCHMARKS "Build benchmarks" ON)
+    option(NEUTRINO_SCALER_BUILD_EXAMPLES "Build example applications" ON)
+else()
+    option(NEUTRINO_SCALER_BUILD_TESTS "Build unit tests" OFF)
+    option(NEUTRINO_SCALER_BUILD_BENCHMARKS "Build benchmarks" OFF)
+    option(NEUTRINO_SCALER_BUILD_EXAMPLES "Build example applications" OFF)
+endif()
+
+option(NEUTRINO_SCALER_STRICT_WARNINGS "Treat warnings as errors" ON)
+
+# =============================================================================
+# C++ Standard
+# =============================================================================
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# =============================================================================
+# Output directories
+# =============================================================================
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# =============================================================================
+# Dependencies
+# =============================================================================
 
 # Find SDL - prefer SDL3 if both are available
 find_package(SDL3 QUIET)
 find_package(SDL2 QUIET)
 
 # Find OpenGL for GPU acceleration
-find_package(OpenGL)
-find_package(GLEW)
+find_package(OpenGL QUIET)
+find_package(GLEW QUIET)
 
 if(SDL3_FOUND)
     message(STATUS "Found SDL3 - using SDL3 for image operations")
@@ -30,188 +91,115 @@ else()
     set(SCALER_NO_SDL ON)
 endif()
 
-# Include standard install directories
-include(GNUInstallDirs)
+# =============================================================================
+# Compiler Warnings
+# =============================================================================
 
-# Set default build type if not specified
-if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "Setting build type to 'Release' as none was specified.")
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo" "Performance")
-endif ()
-
-# Custom Performance build type
-set(CMAKE_CXX_FLAGS_PERFORMANCE "-O3 -march=native -mtune=native -DNDEBUG"
-    CACHE STRING "Flags used by the C++ compiler during performance builds.")
-set(CMAKE_C_FLAGS_PERFORMANCE "-O3 -march=native -mtune=native -DNDEBUG"
-    CACHE STRING "Flags used by the C compiler during performance builds.")
-set(CMAKE_EXE_LINKER_FLAGS_PERFORMANCE ""
-    CACHE STRING "Flags used for linking binaries during performance builds.")
-set(CMAKE_SHARED_LINKER_FLAGS_PERFORMANCE ""
-    CACHE STRING "Flags used by the shared libraries linker during performance builds.")
-
-mark_as_advanced(
-    CMAKE_CXX_FLAGS_PERFORMANCE
-    CMAKE_C_FLAGS_PERFORMANCE
-    CMAKE_EXE_LINKER_FLAGS_PERFORMANCE
-    CMAKE_SHARED_LINKER_FLAGS_PERFORMANCE
-)
-
-option(SCALER_BUILD_TEST "Build unittests for scaler" ON)
-option(SCALER_BUILD_BENCHMARK "Build benchmarks for scaler" ON)
-option(SCALER_BUILD_TOOLS "Build command-line tools" ON)
-option(SCALER_STRICT_WARNINGS "Treat warnings as errors" ON)
-
-# Set visibility settings for shared libraries
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     set(SCALER_WARNING_FLAGS
-            -Wall           # All standard warnings
-            -Wextra         # Extra warnings
-            -Wpedantic      # Strict ISO C++ compliance
-            -Wcast-align    # Warn about potential performance problem casts
-            -Wcast-qual     # Warn about casts that remove qualifiers
-            -Wconversion    # Warn about type conversions that may lose data
-            -Wformat=2      # Additional format string warnings
-            -Wnon-virtual-dtor  # Warn about non-virtual destructors
-            -Wold-style-cast    # Warn about C-style casts
-            -Woverloaded-virtual # Warn about overloaded virtual functions
-            -Wshadow        # Warn about variable shadowing
-            -Wsign-conversion   # Warn about sign conversions
-            -Wundef         # Warn about undefined identifiers in #if
-            -Wunused        # Warn about unused entities
-            -Wzero-as-null-pointer-constant # Warn about using 0 as nullptr
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wcast-align
+        -Wcast-qual
+        -Wconversion
+        -Wformat=2
+        -Wnon-virtual-dtor
+        -Wold-style-cast
+        -Woverloaded-virtual
+        -Wshadow
+        -Wsign-conversion
+        -Wundef
+        -Wunused
+        -Wzero-as-null-pointer-constant
     )
 
-    # GCC-specific flags
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         list(APPEND SCALER_WARNING_FLAGS
-                -Wlogical-op    # Warn about logical operations being used where bitwise were probably wanted
-                -Wuseless-cast  # Warn about useless casts
-                -Wstringop-overflow
+            -Wlogical-op
+            -Wuseless-cast
+            -Wstringop-overflow
         )
-    endif ()
+    endif()
 
-    # Clang-specific flags
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         list(APPEND SCALER_WARNING_FLAGS
-                -Wno-c++98-compat           # Don't warn about C++11/14/17 features
-                -Wno-c++98-compat-pedantic  # Don't warn about C++98 incompatibilities in pedantic mode
-                -Wno-newline-eof            # Don't require newline at end of file
-                -Wno-switch-default         # Don't require default in switch (enums are exhaustive)
-                -Wno-switch-enum            # Don't require all enum values in switch (use default)
-                -Wno-missing-prototypes     # Not applicable in C++
-                -Wno-unsafe-buffer-usage    # Pointer arithmetic is normal for low-level image code
-                -Wno-float-equal            # Float comparisons are intentional in vector math
-                -Wno-exit-time-destructors  # Static initialization is normal in C++
-                -Wno-covered-switch-default # Default case is defensive programming
-                -Wno-implicit-int-float-conversion  # Intentional in graphics code
-                -Wno-double-promotion       # Float to double in doctest macros is fine
-                -Wno-unused-template        # Internal helper templates may not be used in all TUs
+            -Wno-c++98-compat
+            -Wno-c++98-compat-pedantic
+            -Wno-newline-eof
+            -Wno-switch-default
+            -Wno-switch-enum
+            -Wno-missing-prototypes
+            -Wno-unsafe-buffer-usage
+            -Wno-float-equal
+            -Wno-exit-time-destructors
+            -Wno-covered-switch-default
+            -Wno-implicit-int-float-conversion
+            -Wno-double-promotion
+            -Wno-unused-template
         )
-    endif ()
+    endif()
 
-    # Treat warnings as errors
-    if (SCALER_STRICT_WARNINGS)
+    if(NEUTRINO_SCALER_STRICT_WARNINGS)
         list(APPEND SCALER_WARNING_FLAGS -Werror)
-    endif ()
+    endif()
 
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(SCALER_WARNING_FLAGS
-            /W4             # Highest warning level
-            /permissive-    # Strict standard conformance
-            /Zc:__cplusplus # Report correct __cplusplus value
+        /W4
+        /permissive-
+        /Zc:__cplusplus
     )
-    # Treat warnings as errors
-    if (SCALER_STRICT_WARNINGS)
+    if(NEUTRINO_SCALER_STRICT_WARNINGS)
         list(APPEND SCALER_WARNING_FLAGS /WX)
-    endif ()
-endif ()
+    endif()
+endif()
 
-# Windows-specific definitions (applies to both MSVC and Clang-CL)
-if (WIN32)
-    # Prevent Windows.h from defining min/max macros
+# Windows-specific definitions
+if(WIN32)
     add_compile_definitions(NOMINMAX)
-    # Suppress deprecation warnings for standard C functions like getenv
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-endif ()
+endif()
 
-# Sanitizer flags
-if (SCALER_ENABLE_SANITIZERS)
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        set(SCALER_SANITIZER_FLAGS
-                -fsanitize=address
-                -fsanitize=undefined
-                -fno-omit-frame-pointer
-        )
-        list(APPEND SCALER_WARNING_FLAGS ${SCALER_SANITIZER_FLAGS})
+# =============================================================================
+# Main Library (Header-only)
+# =============================================================================
 
-        # Link flags for sanitizers
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -fsanitize=undefined")
-        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address -fsanitize=undefined")
-    else ()
-        message(WARNING "Sanitizers are only supported with GCC and Clang")
-    endif ()
-endif ()
-
-
-# Output binary to predictable location.
-set(BINARY_OUT_DIR ${CMAKE_BINARY_DIR}/bin)
-set(LIB_OUT_DIR ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUT_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BINARY_OUT_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_OUT_DIR})
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BINARY_OUT_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${BINARY_OUT_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${LIB_OUT_DIR})
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BINARY_OUT_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${BINARY_OUT_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${LIB_OUT_DIR})
-# ===========================================================================
 set(SCALER_PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_subdirectory(ext)
-
-# ==========================================================================
-
 add_library(scaler INTERFACE
-        # Core utilities
-        ${SCALER_PROJECT_ROOT}/include/scaler/algorithm.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/algorithm_capabilities.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scaler_common.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/vec3.hh
-        # CRTP framework-agnostic interface
-        ${SCALER_PROJECT_ROOT}/include/scaler/image_base.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/sdl/sdl_compat.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/sdl/sdl_image.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/sdl/sdl_scalers.hh
-        # Scaling algorithms (CRTP-based)
-        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/epx.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/eagle.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/2xsai.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/xbr.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/hq2x.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/omniscale.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scale2x_sfx.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scale3x_sfx.hh
-        # GPU utilities (new)
-        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/opengl_utils.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/shader_cache.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/algorithm_traits.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/algorithm_traits_impl.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/shader_source.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/opengl_texture_scaler.hh
-        ${SCALER_PROJECT_ROOT}/include/scaler/gpu/sdl/sdl_texture_adapter.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/algorithm.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/algorithm_capabilities.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scaler_common.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/vec3.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/image_base.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/sdl/sdl_compat.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/sdl/sdl_image.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/sdl/sdl_scalers.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/cpu/epx.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/cpu/eagle.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/cpu/2xsai.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/cpu/xbr.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/cpu/hq2x.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/cpu/omniscale.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scale2x_sfx.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/cpu/scale3x_sfx.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/gpu/opengl_utils.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/gpu/shader_cache.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/gpu/algorithm_traits.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/gpu/algorithm_traits_impl.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/gpu/shader_source.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/gpu/opengl_texture_scaler.hh
+    ${SCALER_PROJECT_ROOT}/include/scaler/gpu/sdl/sdl_texture_adapter.hh
 )
 
-# Create alias for consistent usage
+# Create aliases
 add_library(scaler::scaler ALIAS scaler)
+add_library(neutrino::scaler ALIAS scaler)
 
 target_include_directories(scaler INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    $<INSTALL_INTERFACE:include>
 )
 
 # Add SDL dependency if available
@@ -229,7 +217,6 @@ endif()
 if(OpenGL_FOUND)
     target_link_libraries(scaler INTERFACE OpenGL::GL)
     target_compile_definitions(scaler INTERFACE SCALER_HAS_OPENGL)
-    # Silence OpenGL deprecation warnings on macOS
     if(APPLE)
         target_compile_definitions(scaler INTERFACE GL_SILENCE_DEPRECATION)
     endif()
@@ -239,18 +226,42 @@ if(OpenGL_FOUND)
     endif()
 endif()
 
-if (SCALER_BUILD_TEST)
+# =============================================================================
+# Unit Tests
+# =============================================================================
+
+if(NEUTRINO_SCALER_BUILD_TESTS)
     enable_testing()
-    add_subdirectory(unittest)
+    add_subdirectory(test)
 endif()
 
-if (SCALER_BUILD_BENCHMARK)
+# =============================================================================
+# Benchmarks
+# =============================================================================
+
+if(NEUTRINO_SCALER_BUILD_BENCHMARKS)
     add_subdirectory(benchmark)
 endif()
 
-# ===========================================================================
-# Installation and Packaging
-# ===========================================================================
+# =============================================================================
+# Examples
+# =============================================================================
+
+if(NEUTRINO_SCALER_BUILD_EXAMPLES)
+    add_subdirectory(examples/scaler_cli)
+
+    # Build GPU scaler example if OpenGL is available
+    if(OpenGL_FOUND AND GLEW_FOUND AND NOT SCALER_NO_SDL)
+        add_subdirectory(examples/gpu_scaler)
+    endif()
+endif()
+
+# =============================================================================
+# Installation
+# =============================================================================
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 # Install headers
 install(DIRECTORY include/scaler
@@ -261,9 +272,6 @@ install(DIRECTORY include/scaler
 # Install the library target
 install(TARGETS scaler
     EXPORT scalerTargets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
@@ -273,9 +281,6 @@ install(EXPORT scalerTargets
     NAMESPACE scaler::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
 )
-
-# Generate the config file that includes the exports
-include(CMakePackageConfigHelpers)
 
 # Create version file
 write_basic_package_version_file(
@@ -304,60 +309,25 @@ export(EXPORT scalerTargets
     NAMESPACE scaler::
 )
 
-# Register package in user's package registry
-export(PACKAGE scaler)
+# =============================================================================
+# Summary
+# =============================================================================
 
-# ===========================================================================
-# CPack Configuration
-# ===========================================================================
-
-set(CPACK_PACKAGE_NAME "scaler")
-set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_PACKAGE_VENDOR "Scaler Project")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "High-performance pixel art scaling algorithms")
-set(CPACK_PACKAGE_DESCRIPTION "A header-only C++ library providing efficient implementations of popular pixel art scaling algorithms")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-
-# Generator-specific settings
-set(CPACK_GENERATOR "TGZ;ZIP")
-if(UNIX AND NOT APPLE)
-    list(APPEND CPACK_GENERATOR "DEB")
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Your Name")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsdl3-dev | libsdl2-dev")
-endif()
-
-if(WIN32)
-    list(APPEND CPACK_GENERATOR "NSIS")
-    set(CPACK_NSIS_DISPLAY_NAME "Scaler Library")
-    set(CPACK_NSIS_PACKAGE_NAME "Scaler")
-endif()
-
-# Source package settings
-set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
-set(CPACK_SOURCE_IGNORE_FILES
-    /.git/
-    /build/
-    /cmake-build-.*/
-    /.idea/
-    /.vscode/
-    /\\\\.DS_Store
-    /.*\\\\.swp
-)
-
-include(CPack)
-
-# Build examples
-option(BUILD_EXAMPLES "Build example applications" ON)
-if(BUILD_EXAMPLES)
-    add_subdirectory(examples/scaler_cli)
-
-    # Build GPU scaler example if OpenGL is available
-    if(OpenGL_FOUND AND GLEW_FOUND AND NOT SCALER_NO_SDL)
-        add_subdirectory(examples/gpu_scaler)
+neutrino_is_top_level(_scaler_is_top_level)
+if(_scaler_is_top_level)
+    message(STATUS "")
+    message(STATUS "scaler ${PROJECT_VERSION} Configuration:")
+    message(STATUS "  C++ Standard:     17")
+    message(STATUS "  Build tests:      ${NEUTRINO_SCALER_BUILD_TESTS}")
+    message(STATUS "  Build benchmarks: ${NEUTRINO_SCALER_BUILD_BENCHMARKS}")
+    message(STATUS "  Build examples:   ${NEUTRINO_SCALER_BUILD_EXAMPLES}")
+    message(STATUS "  Strict warnings:  ${NEUTRINO_SCALER_STRICT_WARNINGS}")
+    if(SCALER_SDL_VERSION)
+        message(STATUS "  SDL:              ${SCALER_SDL_VERSION}")
+    else()
+        message(STATUS "  SDL:              Not found")
     endif()
+    message(STATUS "  OpenGL:           ${OpenGL_FOUND}")
+    message(STATUS "  GLEW:             ${GLEW_FOUND}")
+    message(STATUS "")
 endif()
-
-
-
-
