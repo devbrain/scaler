@@ -101,7 +101,7 @@ target_link_libraries(gpu_scaler PRIVATE
 target_compile_features(gpu_scaler PRIVATE cxx_std_17)
 
 # Add compile options
-target_compile_options(gpu_scaler PRIVATE ${SCALER_WARNING_FLAGS})
+neutrino_target_warnings(gpu_scaler)
 
 # Install target
 install(TARGETS gpu_scaler

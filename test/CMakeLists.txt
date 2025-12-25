@@ -52,7 +52,7 @@ if(OpenGL_FOUND)
     endif()
 endif()
 
-target_compile_options(scaler_unittest PRIVATE ${SCALER_WARNING_FLAGS})
+neutrino_target_warnings(scaler_unittest)
 
 # Set target properties
 set_target_properties(scaler_unittest PROPERTIES
@@ -75,4 +75,4 @@ target_link_libraries(generate_golden_data
         scaler
 )
 
-target_compile_options(generate_golden_data PRIVATE ${SCALER_WARNING_FLAGS})
+neutrino_target_warnings(generate_golden_data)

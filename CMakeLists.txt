@@ -34,19 +34,7 @@ include(NeutrinoInit)
 # Options
 # =============================================================================
 
-# Note: scaler is header-only, so we don't use neutrino_define_library_options
-neutrino_is_top_level(_scaler_is_top_level)
-if(_scaler_is_top_level)
-    option(NEUTRINO_SCALER_BUILD_TESTS "Build unit tests" ON)
-    option(NEUTRINO_SCALER_BUILD_BENCHMARKS "Build benchmarks" ON)
-    option(NEUTRINO_SCALER_BUILD_EXAMPLES "Build example applications" ON)
-else()
-    option(NEUTRINO_SCALER_BUILD_TESTS "Build unit tests" OFF)
-    option(NEUTRINO_SCALER_BUILD_BENCHMARKS "Build benchmarks" OFF)
-    option(NEUTRINO_SCALER_BUILD_EXAMPLES "Build example applications" OFF)
-endif()
-
-option(NEUTRINO_SCALER_STRICT_WARNINGS "Treat warnings as errors" ON)
+neutrino_define_options(scaler)
 
 # =============================================================================
 # C++ Standard
@@ -89,70 +77,6 @@ elseif(SDL2_FOUND)
 else()
     message(STATUS "No SDL found - SDL image operations will not be available")
     set(SCALER_NO_SDL ON)
-endif()
-
-# =============================================================================
-# Compiler Warnings
-# =============================================================================
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    set(SCALER_WARNING_FLAGS
-        -Wall
-        -Wextra
-        -Wpedantic
-        -Wcast-align
-        -Wcast-qual
-        -Wconversion
-        -Wformat=2
-        -Wnon-virtual-dtor
-        -Wold-style-cast
-        -Woverloaded-virtual
-        -Wshadow
-        -Wsign-conversion
-        -Wundef
-        -Wunused
-        -Wzero-as-null-pointer-constant
-    )
-
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        list(APPEND SCALER_WARNING_FLAGS
-            -Wlogical-op
-            -Wuseless-cast
-            -Wstringop-overflow
-        )
-    endif()
-
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        list(APPEND SCALER_WARNING_FLAGS
-            -Wno-c++98-compat
-            -Wno-c++98-compat-pedantic
-            -Wno-newline-eof
-            -Wno-switch-default
-            -Wno-switch-enum
-            -Wno-missing-prototypes
-            -Wno-unsafe-buffer-usage
-            -Wno-float-equal
-            -Wno-exit-time-destructors
-            -Wno-covered-switch-default
-            -Wno-implicit-int-float-conversion
-            -Wno-double-promotion
-            -Wno-unused-template
-        )
-    endif()
-
-    if(NEUTRINO_SCALER_STRICT_WARNINGS)
-        list(APPEND SCALER_WARNING_FLAGS -Werror)
-    endif()
-
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(SCALER_WARNING_FLAGS
-        /W4
-        /permissive-
-        /Zc:__cplusplus
-    )
-    if(NEUTRINO_SCALER_STRICT_WARNINGS)
-        list(APPEND SCALER_WARNING_FLAGS /WX)
-    endif()
 endif()
 
 # Windows-specific definitions
@@ -278,7 +202,7 @@ install(TARGETS scaler
 # Generate and install export file
 install(EXPORT scalerTargets
     FILE scalerTargets.cmake
-    NAMESPACE scaler::
+    NAMESPACE neutrino::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
 )
 
@@ -306,7 +230,7 @@ install(FILES
 # Export for build tree
 export(EXPORT scalerTargets
     FILE "${CMAKE_CURRENT_BINARY_DIR}/scalerTargets.cmake"
-    NAMESPACE scaler::
+    NAMESPACE neutrino::
 )
 
 # =============================================================================

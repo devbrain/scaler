@@ -32,7 +32,7 @@ target_link_libraries(scaler_cli PRIVATE
 target_compile_features(scaler_cli PRIVATE cxx_std_17)
 
 # Add compile options
-target_compile_options(scaler_cli PRIVATE ${SCALER_WARNING_FLAGS})
+neutrino_target_warnings(scaler_cli)
 
 # Install target
 install(TARGETS scaler_cli

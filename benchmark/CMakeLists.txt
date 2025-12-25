@@ -8,7 +8,7 @@ target_link_libraries(benchmark_scalers
     scaler
 )
 
-target_compile_options(benchmark_scalers PRIVATE ${SCALER_WARNING_FLAGS})
+neutrino_target_warnings(benchmark_scalers)
 
 # Profiling build options
 option(SCALER_ENABLE_PROFILING "Enable profiling with gprof" OFF)
