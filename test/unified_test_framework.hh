@@ -4,7 +4,7 @@
 #include "test_common.hh"
 #include <scaler/gpu/unified_gpu_scaler.hh>
 #include <scaler/sdl/sdl_image.hh>
-#include <SDL.h>
+#include <scaler/sdl/sdl_compat.hh>
 #include <doctest/doctest.h>
 #include <functional>
 #include <type_traits>

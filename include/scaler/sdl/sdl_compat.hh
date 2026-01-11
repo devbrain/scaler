@@ -88,18 +88,18 @@
     
     // SDL2 RWops compatibility (SDL3 uses SDL_IOStream)
     using SDL_IOStream = SDL_RWops;
-    
+
     inline SDL_IOStream* SDL_IOFromConstMem(const void* mem, size_t size) {
         return SDL_RWFromConstMem(mem, static_cast<int>(size));
     }
-    
+
     inline SDL_Surface* SDL_LoadBMP_IO(SDL_IOStream* src, bool closeio) {
         return SDL_LoadBMP_RW(src, closeio ? 1 : 0);
     }
-#else
-    // SDL3 definitions - these are already in SDL3
-    // Just provide helper for consistency
-    inline SDL_Surface* SDL_LoadBMP_IO(SDL_IOStream* src, bool closeio) {
-        return SDL_LoadBMP_IO(src, closeio);
+
+    // SDL2 uses SDL_GL_DeleteContext, SDL3 uses SDL_GL_DestroyContext
+    inline void SDL_GL_DestroyContext(SDL_GLContext context) {
+        SDL_GL_DeleteContext(context);
     }
 #endif
+    // SDL3 already has SDL_LoadBMP_IO, SDL_IOFromConstMem, SDL_GL_DestroyContext, etc.

@@ -2,7 +2,7 @@
 #include "unified_test_framework.hh"
 #include "test_common.hh"
 #include <scaler/gpu/unified_gpu_scaler.hh>
-#include <SDL.h>
+#include <scaler/sdl/sdl_compat.hh>
 #include <memory>
 
 using namespace scaler;

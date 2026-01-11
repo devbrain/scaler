@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SDL.h>
+#include <scaler/sdl/sdl_compat.hh>
 #include <iostream>
 
 #ifndef SCALER_PLATFORM_MACOS
@@ -31,19 +31,31 @@ public:
         if (!initialized_) {
             // Make sure SDL video is initialized
             if (!(SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO)) {
+#ifdef SCALER_HAS_SDL3
+                if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
+#else
                 if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
+#endif
                     std::cerr << "Failed to initialize SDL video: " << SDL_GetError() << std::endl;
                     return false;
                 }
             }
 
             // Create hidden window with OpenGL context
+#ifdef SCALER_HAS_SDL3
+            window_ = SDL_CreateWindow(
+                "GPU Test Context",
+                640, 480,
+                SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN
+            );
+#else
             window_ = SDL_CreateWindow(
                 "GPU Test Context",
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                 640, 480,
                 SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN
             );
+#endif
 
             if (!window_) {
                 std::cerr << "Failed to create OpenGL window: " << SDL_GetError() << std::endl;
@@ -62,7 +74,7 @@ public:
             GLenum glew_error = glewInit();
             if (glew_error != GLEW_OK) {
                 std::cerr << "Failed to initialize GLEW: " << glewGetErrorString(glew_error) << std::endl;
-                SDL_GL_DeleteContext(context_);
+                SDL_GL_DestroyContext(context_);
                 SDL_DestroyWindow(window_);
                 window_ = nullptr;
                 context_ = nullptr;
@@ -74,7 +86,11 @@ public:
         }
 
         // Make sure context is current
+#ifdef SCALER_HAS_SDL3
+        if (!SDL_GL_MakeCurrent(window_, context_)) {
+#else
         if (SDL_GL_MakeCurrent(window_, context_) != 0) {
+#endif
             std::cerr << "Failed to make OpenGL context current: " << SDL_GetError() << std::endl;
             return false;
         }
@@ -104,7 +120,7 @@ public:
     static void cleanup() {
         if (initialized_) {
             if (context_) {
-                SDL_GL_DeleteContext(context_);
+                SDL_GL_DestroyContext(context_);
                 context_ = nullptr;
             }
             if (window_) {

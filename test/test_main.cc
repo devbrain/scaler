@@ -3,7 +3,7 @@
 #include <doctest/doctest.h>
 // Bypass SDL_main on Windows - we handle main ourselves
 #define SDL_MAIN_HANDLED
-#include <SDL.h>
+#include <scaler/sdl/sdl_compat.hh>
 #include <cstdlib>
 #include <iostream>
 
@@ -32,11 +32,17 @@ int main(int argc, char** argv) {
 #endif
     }
 
-    // Tell SDL we're handling main ourselves
+    // Tell SDL we're handling main ourselves (SDL2 only - not needed in SDL3)
+#ifndef SCALER_HAS_SDL3
     SDL_SetMainReady();
+#endif
 
     // Initialize SDL once for all tests
+#ifdef SCALER_HAS_SDL3
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+#else
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+#endif
         std::cerr << "Warning: SDL initialization failed: " << SDL_GetError() << std::endl;
         std::cerr << "GPU tests will be skipped." << std::endl;
     }

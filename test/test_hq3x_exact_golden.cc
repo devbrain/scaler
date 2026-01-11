@@ -4,7 +4,6 @@
 #include <scaler/sdl/sdl_image.hh>
 #include <vector>
 #include <cstring>
-#include <SDL.h>
 
 // Include the embedded input and golden output data
 #include "data/rotozoom_input.h"
@@ -12,10 +11,10 @@
 
 // BMP loader helper
 SDL_Surface* LoadBMPFromMemory(const unsigned char* data, size_t size) {
-    SDL_RWops* rw = SDL_RWFromConstMem(data, static_cast<int>(size));
-    if (!rw) return nullptr;
-    
-    SDL_Surface* surface = SDL_LoadBMP_RW(rw, 1);
+    SDL_IOStream* io = SDL_IOFromConstMem(data, size);
+    if (!io) return nullptr;
+
+    SDL_Surface* surface = SDL_LoadBMP_IO(io, true);
     return surface;
 }
 
@@ -23,9 +22,16 @@ TEST_CASE("HQ3x Exact Golden Data Comparison") {
     // Load input image from embedded data
     SDL_Surface* input_surface = LoadBMPFromMemory(rotozoom_input_data, rotozoom_input_len);
     REQUIRE(input_surface != nullptr);
-    
+
     // Convert to 24-bit RGB if needed
     SDL_Surface* rgb_surface = nullptr;
+#ifdef SCALER_HAS_SDL3
+    if (input_surface->format != SDL_PIXELFORMAT_RGB24) {
+        rgb_surface = SDL_ConvertSurface(input_surface, SDL_PIXELFORMAT_RGB24);
+        SDL_DestroySurface(input_surface);
+        input_surface = rgb_surface;
+    }
+#else
     if (input_surface->format->BitsPerPixel != 24) {
         SDL_PixelFormat* fmt = SDL_AllocFormat(SDL_PIXELFORMAT_RGB24);
         rgb_surface = SDL_ConvertSurface(input_surface, fmt, 0);
@@ -33,9 +39,14 @@ TEST_CASE("HQ3x Exact Golden Data Comparison") {
         SDL_FreeSurface(input_surface);
         input_surface = rgb_surface;
     }
+#endif
     
     REQUIRE(input_surface != nullptr);
+#ifdef SCALER_HAS_SDL3
+    REQUIRE(SDL_BYTESPERPIXEL(input_surface->format) == 3);
+#else
     REQUIRE(input_surface->format->BitsPerPixel == 24);
+#endif
     
     // Apply exact HQ3x scaling using CRTP interface
     scaler::sdl_input_image input_image(input_surface);
@@ -115,6 +126,6 @@ TEST_CASE("HQ3x Exact Golden Data Comparison") {
     CHECK(high_fidelity);
     
     // Cleanup
-    SDL_FreeSurface(golden_surface);
-    SDL_FreeSurface(input_surface);
+    SDL_DestroySurface(golden_surface);
+    SDL_DestroySurface(input_surface);
 }

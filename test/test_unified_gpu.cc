@@ -1,7 +1,7 @@
 #include <doctest/doctest.h>
 #include <scaler/gpu/unified_gpu_scaler.hh>
 #include <scaler/gpu/opengl_texture_scaler.hh>
-#include <SDL.h>
+#include <scaler/sdl/sdl_compat.hh>
 #include <memory>
 #include <vector>
 #include <cstdlib>
