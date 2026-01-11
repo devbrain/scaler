@@ -56,28 +56,19 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # Dependencies
 # =============================================================================
 
-# Find SDL - prefer SDL3 if both are available
-find_package(SDL3 QUIET)
-find_package(SDL2 QUIET)
+# SDL3 integration (optional, enabled by default)
+option(SCALER_WITH_SDL "Enable SDL3 integration for image operations" ON)
+
+if(SCALER_WITH_SDL)
+    include(${NEUTRINO_CMAKE_DIR}/deps/SDL3.cmake)
+    neutrino_fetch_sdl3()
+    set(SCALER_SDL_TARGET SDL3::SDL3)
+    message(STATUS "SDL3 integration enabled")
+endif()
 
 # Find OpenGL for GPU acceleration
 find_package(OpenGL QUIET)
 find_package(GLEW QUIET)
-
-if(SDL3_FOUND)
-    message(STATUS "Found SDL3 - using SDL3 for image operations")
-    set(SCALER_USE_SDL3 ON)
-    set(SCALER_SDL_TARGET SDL3::SDL3)
-    set(SCALER_SDL_VERSION 3)
-elseif(SDL2_FOUND)
-    message(STATUS "Found SDL2 - using SDL2 for image operations")
-    set(SCALER_USE_SDL2 ON)
-    set(SCALER_SDL_TARGET SDL2::SDL2)
-    set(SCALER_SDL_VERSION 2)
-else()
-    message(STATUS "No SDL found - SDL image operations will not be available")
-    set(SCALER_NO_SDL ON)
-endif()
 
 # Windows-specific definitions
 if(WIN32)
@@ -126,15 +117,10 @@ target_include_directories(scaler INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-# Add SDL dependency if available
-if(NOT SCALER_NO_SDL)
+# Add SDL3 dependency if enabled
+if(SCALER_WITH_SDL)
     target_link_libraries(scaler INTERFACE ${SCALER_SDL_TARGET})
-    target_compile_definitions(scaler INTERFACE SCALER_SDL_VERSION=${SCALER_SDL_VERSION})
-    if(SCALER_USE_SDL3)
-        target_compile_definitions(scaler INTERFACE SCALER_HAS_SDL3)
-    elseif(SCALER_USE_SDL2)
-        target_compile_definitions(scaler INTERFACE SCALER_HAS_SDL2)
-    endif()
+    target_compile_definitions(scaler INTERFACE SCALER_HAS_SDL3)
 endif()
 
 # Add OpenGL and GLEW dependencies if available
@@ -174,8 +160,8 @@ endif()
 if(NEUTRINO_SCALER_BUILD_EXAMPLES)
     add_subdirectory(examples/scaler_cli)
 
-    # Build GPU scaler example if OpenGL is available
-    if(OpenGL_FOUND AND GLEW_FOUND AND NOT SCALER_NO_SDL)
+    # Build GPU scaler example if OpenGL and SDL are available
+    if(OpenGL_FOUND AND GLEW_FOUND AND SCALER_WITH_SDL)
         add_subdirectory(examples/gpu_scaler)
     endif()
 endif()
@@ -246,11 +232,7 @@ if(_scaler_is_top_level)
     message(STATUS "  Build benchmarks: ${NEUTRINO_SCALER_BUILD_BENCHMARKS}")
     message(STATUS "  Build examples:   ${NEUTRINO_SCALER_BUILD_EXAMPLES}")
     message(STATUS "  Strict warnings:  ${NEUTRINO_SCALER_STRICT_WARNINGS}")
-    if(SCALER_SDL_VERSION)
-        message(STATUS "  SDL:              ${SCALER_SDL_VERSION}")
-    else()
-        message(STATUS "  SDL:              Not found")
-    endif()
+    message(STATUS "  SDL3:             ${SCALER_WITH_SDL}")
     message(STATUS "  OpenGL:           ${OpenGL_FOUND}")
     message(STATUS "  GLEW:             ${GLEW_FOUND}")
     message(STATUS "")

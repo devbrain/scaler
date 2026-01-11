@@ -16,19 +16,11 @@ FetchContent_MakeAvailable(imgui)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
-# Check for SDL
-if(NOT DEFINED SCALER_SDL_TARGET)
-    # If not defined from parent, find SDL ourselves
-    find_package(SDL3 QUIET)
-    if(SDL3_FOUND)
-        set(SCALER_SDL_TARGET SDL3::SDL3)
-        set(SCALER_SDL_VERSION 3)
-    else()
-        find_package(SDL2 REQUIRED)
-        set(SCALER_SDL_TARGET SDL2::SDL2)
-        set(SCALER_SDL_VERSION 2)
-    endif()
+# SDL3 should be available from parent (via neutrino_fetch_sdl3)
+if(NOT TARGET SDL3::SDL3)
+    message(FATAL_ERROR "SDL3::SDL3 target not found. Ensure SCALER_WITH_SDL is ON.")
 endif()
+set(SCALER_SDL_TARGET SDL3::SDL3)
 
 # Create ImGui library
 add_library(imgui_lib STATIC
@@ -40,24 +32,13 @@ add_library(imgui_lib STATIC
     ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
-# Add SDL backend based on version
-if(SCALER_SDL_VERSION EQUAL 3)
-    target_sources(imgui_lib PRIVATE
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
-    )
-    target_compile_definitions(imgui_lib PUBLIC
-        IMGUI_IMPL_OPENGL_LOADER_GLEW
-        SCALER_SDL_VERSION=3
-    )
-else()
-    target_sources(imgui_lib PRIVATE
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl2.cpp
-    )
-    target_compile_definitions(imgui_lib PUBLIC
-        IMGUI_IMPL_OPENGL_LOADER_GLEW
-        SCALER_SDL_VERSION=2
-    )
-endif()
+# Add SDL3 backend for ImGui
+target_sources(imgui_lib PRIVATE
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+)
+target_compile_definitions(imgui_lib PUBLIC
+    IMGUI_IMPL_OPENGL_LOADER_GLEW
+)
 
 target_include_directories(imgui_lib PUBLIC
     ${imgui_SOURCE_DIR}
