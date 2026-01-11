@@ -5,12 +5,15 @@
 #include <scaler/sdl/sdl_compat.hh>
 #include <stdexcept>
 #include <memory>
+#include <algorithm>
+#include <cctype>
 
 namespace scaler::gpu {
 
     /**
      * SDL texture adapter for GPU scaling
      * Wraps the pure OpenGL texture scaler for use with SDL
+     * Supports both SDL2 and SDL3
      */
     class sdl_texture_adapter {
     private:
@@ -19,18 +22,74 @@ namespace scaler::gpu {
         bool renderer_is_opengl_ = false;
 
         /**
+         * Get texture dimensions (SDL2/SDL3 compatible)
+         */
+        static bool get_texture_dimensions(SDL_Texture* texture, int* w, int* h) {
+#ifdef SCALER_HAS_SDL3
+            float fw, fh;
+            if (!SDL_GetTextureSize(texture, &fw, &fh)) {
+                return false;
+            }
+            if (w) *w = static_cast<int>(fw);
+            if (h) *h = static_cast<int>(fh);
+            return true;
+#else
+            return SDL_QueryTexture(texture, nullptr, nullptr, w, h) == 0;
+#endif
+        }
+
+        /**
+         * Get texture access mode (SDL2/SDL3 compatible)
+         */
+        static int get_texture_access(SDL_Texture* texture) {
+#ifdef SCALER_HAS_SDL3
+            SDL_PropertiesID props = SDL_GetTextureProperties(texture);
+            if (!props) {
+                return -1;
+            }
+            return static_cast<int>(SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_ACCESS_NUMBER, -1));
+#else
+            int access = -1;
+            SDL_QueryTexture(texture, nullptr, &access, nullptr, nullptr);
+            return access;
+#endif
+        }
+
+        /**
          * Get the OpenGL texture ID from an SDL texture
          * Only works if the renderer is using OpenGL backend
          */
         GLuint get_gl_texture_id(SDL_Texture* texture) {
-            GLuint texture_id = 0;
-
             // This only works with OpenGL renderer backend
             if (!renderer_is_opengl_) {
                 throw std::runtime_error("SDL renderer is not using OpenGL backend");
             }
 
-            // Bind the texture to get its GL ID
+#ifdef SCALER_HAS_SDL3
+            // SDL3: Use texture properties to get the GL texture ID
+            SDL_PropertiesID props = SDL_GetTextureProperties(texture);
+            if (!props) {
+                throw std::runtime_error(std::string("Failed to get texture properties: ") + SDL_GetError());
+            }
+
+            // Try OpenGL first, then OpenGL ES2
+            GLuint texture_id = static_cast<GLuint>(
+                SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_OPENGL_TEXTURE_NUMBER, 0));
+
+            if (texture_id == 0) {
+                texture_id = static_cast<GLuint>(
+                    SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_OPENGLES2_TEXTURE_NUMBER, 0));
+            }
+
+            if (texture_id == 0) {
+                throw std::runtime_error("Failed to get OpenGL texture ID from SDL texture");
+            }
+
+            return texture_id;
+#else
+            // SDL2: Use SDL_GL_BindTexture to get the texture ID
+            GLuint texture_id = 0;
+
             if (SDL_GL_BindTexture(texture, nullptr, nullptr) != 0) {
                 throw std::runtime_error(std::string("Failed to bind SDL texture: ") + SDL_GetError());
             }
@@ -42,21 +101,47 @@ namespace scaler::gpu {
             SDL_GL_UnbindTexture(texture);
 
             return texture_id;
+#endif
         }
 
         /**
          * Check if renderer is using OpenGL backend
          */
         bool is_opengl_renderer(SDL_Renderer* renderer) {
+#ifdef SCALER_HAS_SDL3
+            // SDL3: Use SDL_GetRendererName
+            const char* name = SDL_GetRendererName(renderer);
+            if (!name) {
+                return false;
+            }
+
+            std::string name_lower(name);
+            std::transform(name_lower.begin(), name_lower.end(), name_lower.begin(),
+                          [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            return name_lower.find("opengl") != std::string::npos;
+#else
+            // SDL2: Use SDL_GetRendererInfo
             SDL_RendererInfo info;
             if (SDL_GetRendererInfo(renderer, &info) != 0) {
                 return false;
             }
 
-            // Check if renderer name contains "opengl"
             std::string name(info.name);
-            std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+            std::transform(name.begin(), name.end(), name.begin(),
+                          [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
             return name.find("opengl") != std::string::npos;
+#endif
+        }
+
+        /**
+         * Get renderer output size (SDL2/SDL3 compatible)
+         */
+        bool get_renderer_output_size(int* w, int* h) {
+#ifdef SCALER_HAS_SDL3
+            return SDL_GetCurrentRenderOutputSize(renderer_, w, h);
+#else
+            return SDL_GetRendererOutputSize(renderer_, w, h) == 0;
+#endif
         }
 
     public:
@@ -104,11 +189,11 @@ namespace scaler::gpu {
             float scale_factor) {
 
             int w, h;
-            if (SDL_QueryTexture(input, nullptr, nullptr, &w, &h) != 0) {
+            if (!get_texture_dimensions(input, &w, &h)) {
                 throw std::runtime_error(std::string("Failed to query texture: ") + SDL_GetError());
             }
 
-            return calculate_output_size(w, h, algo, scale_factor);
+            return calculate_output_size(static_cast<size_t>(w), static_cast<size_t>(h), algo, scale_factor);
         }
 
         /**
@@ -130,20 +215,21 @@ namespace scaler::gpu {
                 }
 
                 // Check that output is a render target
-                Uint32 format;
-                int access, w_out, h_out;
-                if (SDL_QueryTexture(output, &format, &access, &w_out, &h_out) != 0) {
-                    return false;
-                }
-
+                int access = get_texture_access(output);
                 if (access != SDL_TEXTUREACCESS_TARGET) {
                     SDL_SetError("Output texture must be created with SDL_TEXTUREACCESS_TARGET");
                     return false;
                 }
 
+                // Get output dimensions
+                int w_out, h_out;
+                if (!get_texture_dimensions(output, &w_out, &h_out)) {
+                    return false;
+                }
+
                 // Get input dimensions
                 int w_in, h_in;
-                if (SDL_QueryTexture(input, nullptr, nullptr, &w_in, &h_in) != 0) {
+                if (!get_texture_dimensions(input, &w_in, &h_in)) {
                     return false;
                 }
 
@@ -153,8 +239,8 @@ namespace scaler::gpu {
 
                 // Perform the scaling
                 gl_scaler_.scale_texture_to_texture(
-                    input_id, w_in, h_in,
-                    output_id, w_out, h_out,
+                    input_id, static_cast<GLsizei>(w_in), static_cast<GLsizei>(h_in),
+                    output_id, static_cast<GLsizei>(w_out), static_cast<GLsizei>(h_out),
                     algo
                 );
 
@@ -193,10 +279,10 @@ namespace scaler::gpu {
 
                 // Get texture dimensions
                 int w_in, h_in, w_out, h_out;
-                if (SDL_QueryTexture(input, nullptr, nullptr, &w_in, &h_in) != 0) {
+                if (!get_texture_dimensions(input, &w_in, &h_in)) {
                     return false;
                 }
-                if (SDL_QueryTexture(output, nullptr, nullptr, &w_out, &h_out) != 0) {
+                if (!get_texture_dimensions(output, &w_out, &h_out)) {
                     return false;
                 }
 
@@ -226,8 +312,8 @@ namespace scaler::gpu {
                 // Note: This currently scales the entire input to the destination region
                 // Full region support would require texture coordinate adjustment
                 gl_scaler_.scale_texture_to_framebuffer(
-                    input_id, src.w, src.h,
-                    fbo, dst.w, dst.h,
+                    input_id, static_cast<GLsizei>(src.w), static_cast<GLsizei>(src.h),
+                    fbo, static_cast<GLsizei>(dst.w), static_cast<GLsizei>(dst.h),
                     algo
                 );
 
@@ -257,19 +343,20 @@ namespace scaler::gpu {
 
             // Get input dimensions
             int w_in, h_in;
-            if (SDL_QueryTexture(input, nullptr, nullptr, &w_in, &h_in) != 0) {
+            if (!get_texture_dimensions(input, &w_in, &h_in)) {
                 throw std::runtime_error(std::string("Failed to query texture: ") + SDL_GetError());
             }
 
             // Calculate output dimensions
-            auto dims = opengl_texture_scaler::get_output_size(w_in, h_in, algo, scale_factor);
+            auto dims = opengl_texture_scaler::get_output_size(
+                static_cast<GLsizei>(w_in), static_cast<GLsizei>(h_in), algo, scale_factor);
 
             // Get the current render target
             SDL_Texture* current_target = SDL_GetRenderTarget(renderer_);
 
             GLuint target_fbo = 0;
-            int target_width = dims.width;
-            int target_height = dims.height;
+            int target_width = static_cast<int>(dims.width);
+            int target_height = static_cast<int>(dims.height);
 
             if (current_target) {
                 // Rendering to a texture
@@ -282,10 +369,10 @@ namespace scaler::gpu {
                                       GL_TEXTURE_2D, target_id, 0);
 
                 // Get actual target dimensions
-                SDL_QueryTexture(current_target, nullptr, nullptr, &target_width, &target_height);
+                get_texture_dimensions(current_target, &target_width, &target_height);
             } else {
                 // Rendering to screen (default framebuffer)
-                SDL_GetRendererOutputSize(renderer_, &target_width, &target_height);
+                get_renderer_output_size(&target_width, &target_height);
             }
 
             // Get input GL texture ID
@@ -293,8 +380,8 @@ namespace scaler::gpu {
 
             // Perform the scaling
             gl_scaler_.scale_texture_to_framebuffer(
-                input_id, w_in, h_in,
-                target_fbo, target_width, target_height,
+                input_id, static_cast<GLsizei>(w_in), static_cast<GLsizei>(h_in),
+                target_fbo, static_cast<GLsizei>(target_width), static_cast<GLsizei>(target_height),
                 algo
             );
 
@@ -321,7 +408,7 @@ namespace scaler::gpu {
 
             SDL_Texture* texture = SDL_CreateTexture(
                 renderer,
-                format,
+                static_cast<SDL_PixelFormat>(format),
                 SDL_TEXTUREACCESS_TARGET,
                 width,
                 height
@@ -360,7 +447,7 @@ namespace scaler::gpu {
             for (SDL_Texture* input : inputs) {
                 // Get input dimensions
                 int w, h;
-                if (SDL_QueryTexture(input, nullptr, nullptr, &w, &h) != 0) {
+                if (!get_texture_dimensions(input, &w, &h)) {
                     // Clean up already created textures before throwing
                     for (SDL_Texture* tex : outputs) {
                         SDL_DestroyTexture(tex);
@@ -373,7 +460,7 @@ namespace scaler::gpu {
 
                 // Create output texture
                 SDL_Texture* output = create_output_texture(
-                    renderer_, dims.width, dims.height
+                    renderer_, static_cast<int>(dims.width), static_cast<int>(dims.height)
                 );
 
                 // Scale the texture
