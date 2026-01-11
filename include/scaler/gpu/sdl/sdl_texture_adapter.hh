@@ -3,7 +3,6 @@
 #include <scaler/algorithm.hh>
 #include <scaler/gpu/opengl_texture_scaler.hh>  // This includes opengl_utils.hh with platform detection
 #include <scaler/sdl/sdl_compat.hh>
-#include <SDL.h>
 #include <stdexcept>
 #include <memory>
 
