@@ -170,54 +170,56 @@ endif()
 # Installation
 # =============================================================================
 
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
+if(NEUTRINO_SCALER_INSTALL)
+    include(GNUInstallDirs)
+    include(CMakePackageConfigHelpers)
 
-# Install headers
-install(DIRECTORY include/scaler
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    FILES_MATCHING PATTERN "*.hh"
-)
+    # Install headers
+    install(DIRECTORY include/scaler
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING PATTERN "*.hh"
+    )
 
-# Install the library target
-install(TARGETS scaler
-    EXPORT scalerTargets
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+    # Install the library target
+    install(TARGETS scaler
+        EXPORT scalerTargets
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
 
-# Generate and install export file
-install(EXPORT scalerTargets
-    FILE scalerTargets.cmake
-    NAMESPACE neutrino::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
-)
+    # Generate and install export file
+    install(EXPORT scalerTargets
+        FILE scalerTargets.cmake
+        NAMESPACE neutrino::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
+    )
 
-# Create version file
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/scalerConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
-)
+    # Create version file
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/scalerConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY AnyNewerVersion
+    )
 
-# Configure the config file
-configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/scalerConfig.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/scalerConfig.cmake"
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
-)
+    # Configure the config file
+    configure_package_config_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/scalerConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/scalerConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
+    )
 
-# Install the config files
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/scalerConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/scalerConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
-)
+    # Install the config files
+    install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/scalerConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/scalerConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/scaler
+    )
 
-# Export for build tree
-export(EXPORT scalerTargets
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/scalerTargets.cmake"
-    NAMESPACE neutrino::
-)
+    # Export for build tree
+    export(EXPORT scalerTargets
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/scalerTargets.cmake"
+        NAMESPACE neutrino::
+    )
+endif()
 
 # =============================================================================
 # Summary
