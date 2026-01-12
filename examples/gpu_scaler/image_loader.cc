@@ -12,7 +12,7 @@ ImageLoader::ImageLoader() = default;
 
 ImageLoader::~ImageLoader() {
     if (surface_) {
-        SDL_FreeSurface(surface_);
+        SDL_DestroySurface(surface_);
         surface_ = nullptr;
     }
 }
@@ -26,7 +26,7 @@ bool ImageLoader::load_embedded_image() {
 bool ImageLoader::load_from_file(const char* filename) {
     // Clean up previous surface
     if (surface_) {
-        SDL_FreeSurface(surface_);
+        SDL_DestroySurface(surface_);
         surface_ = nullptr;
     }
 
@@ -39,12 +39,10 @@ bool ImageLoader::load_from_file(const char* filename) {
     }
 
     // Convert to RGBA format if needed
-    SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32);
-    SDL_Surface* converted = SDL_ConvertSurface(surface_, format, 0);
-    SDL_FreeFormat(format);
+    SDL_Surface* converted = SDL_ConvertSurfaceFormat(surface_, SDL_PIXELFORMAT_RGBA32, 0);
 
     if (converted) {
-        SDL_FreeSurface(surface_);
+        SDL_DestroySurface(surface_);
         surface_ = converted;
     }
 
@@ -94,10 +92,10 @@ SDL_Surface* ImageLoader::flip_surface_vertically(SDL_Surface* surface) {
     }
 
     // Create a new surface with the same format
-#if SCALER_SDL_VERSION == 3
+#ifdef SCALER_HAS_SDL3
     SDL_Surface* flipped = SDL_CreateSurface(
         surface->w, surface->h,
-        surface->format->format
+        surface->format
     );
 #else
     SDL_Surface* flipped = SDL_CreateRGBSurfaceWithFormat(
@@ -136,19 +134,16 @@ SDL_Surface* ImageLoader::flip_surface_vertically(SDL_Surface* surface) {
 }
 
 SDL_Surface* ImageLoader::create_surface_from_embedded() {
-    // Create SDL_RWops from embedded BMP data
-    SDL_RWops* rw = SDL_RWFromMem(
-        const_cast<void*>(static_cast<const void*>(rotozoom_bmp_data)),
-        static_cast<int>(rotozoom_bmp_data_len)
-    );
+    // Create IOStream from embedded BMP data
+    SDL_IOStream* io = SDL_IOFromConstMem(rotozoom_bmp_data, rotozoom_bmp_data_len);
 
-    if (!rw) {
-        std::cerr << "Failed to create RWops: " << SDL_GetError() << "\n";
+    if (!io) {
+        std::cerr << "Failed to create IOStream: " << SDL_GetError() << "\n";
         return nullptr;
     }
 
     // Load BMP from memory
-    SDL_Surface* surface = SDL_LoadBMP_RW(rw, 1);  // 1 = free RWops after use
+    SDL_Surface* surface = SDL_LoadBMP_IO(io, true);  // true = close IOStream after use
 
     if (!surface) {
         std::cerr << "Failed to load BMP from memory: " << SDL_GetError() << "\n";
@@ -156,12 +151,10 @@ SDL_Surface* ImageLoader::create_surface_from_embedded() {
     }
 
     // Convert to RGBA format for OpenGL
-    SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32);
-    SDL_Surface* converted = SDL_ConvertSurface(surface, format, 0);
-    SDL_FreeFormat(format);
+    SDL_Surface* converted = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
 
     if (converted) {
-        SDL_FreeSurface(surface);
+        SDL_DestroySurface(surface);
         surface = converted;
     }
 
@@ -169,7 +162,7 @@ SDL_Surface* ImageLoader::create_surface_from_embedded() {
     if (surface) {
         SDL_Surface* flipped = flip_surface_vertically(surface);
         if (flipped) {
-            SDL_FreeSurface(surface);
+            SDL_DestroySurface(surface);
             surface = flipped;
         }
     }

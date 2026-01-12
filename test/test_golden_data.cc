@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include <scaler/sdl/sdl_compat.hh>
 #include <scaler/sdl/sdl_image.hh>
 #include <scaler/cpu/epx.hh>
 #include <scaler/cpu/eagle.hh>
@@ -29,12 +30,12 @@
 #include "data/golden_hq2x.h"
 using namespace scaler;
 // Helper to create SDL surface from raw RGBA data
-std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> 
+std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> 
 createSurfaceFromData(const unsigned char* data, int width, int height) {
     SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(
         0, width, height, 32, SDL_PIXELFORMAT_RGBA8888);
     
-    if (!surface) return {nullptr, SDL_FreeSurface};
+    if (!surface) return {nullptr, SDL_DestroySurface};
     
     if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
     
@@ -45,12 +46,12 @@ createSurfaceFromData(const unsigned char* data, int width, int height) {
         Uint8 g = data[i * 4 + 1];
         Uint8 b = data[i * 4 + 2];
         Uint8 a = data[i * 4 + 3];
-        pixels[i] = SDL_MapRGBA(surface->format, r, g, b, a);
+        pixels[i] = SDL_MapRGBA_Format(surface->format, r, g, b, a);
     }
     
     if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
     
-    return {surface, SDL_FreeSurface};
+    return {surface, SDL_DestroySurface};
 }
 
 // Helper to compare surface with golden data
@@ -68,7 +69,7 @@ bool compareSurfaceWithGolden(SDL_Surface* surface,
     
     for (int i = 0; i < expected_width * expected_height && matches; ++i) {
         Uint8 r, g, b, a;
-        SDL_GetRGBA(pixels[i], surface->format, &r, &g, &b, &a);
+        SDL_GetRGBA_Format(pixels[i], surface->format, &r, &g, &b, &a);
         
         Uint8 expected_r = golden_data[i * 4 + 0];
         Uint8 expected_g = golden_data[i * 4 + 1];
@@ -104,7 +105,7 @@ TEST_CASE("Golden Data Tests - Test Pattern") {
     // Initialize SDL
     static bool sdl_initialized = false;
     if (!sdl_initialized) {
-        REQUIRE(SDL_Init(SDL_INIT_VIDEO) == 0);
+        REQUIRE(SDL_InitCompat(SDL_INIT_VIDEO));
         sdl_initialized = true;
     }
     
@@ -192,7 +193,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     // Initialize SDL
     static bool sdl_initialized = false;
     if (!sdl_initialized) {
-        REQUIRE(SDL_Init(SDL_INIT_VIDEO) == 0);
+        REQUIRE(SDL_InitCompat(SDL_INIT_VIDEO));
         sdl_initialized = true;
     }
     
@@ -205,10 +206,10 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
     
     // Convert to RGBA
     SDL_Surface* rgba_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
-    SDL_FreeSurface(surface);
+    SDL_DestroySurface(surface);
     REQUIRE(rgba_surface != nullptr);
     
-    std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> source(rgba_surface, SDL_FreeSurface);
+    std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> source(rgba_surface, SDL_DestroySurface);
     
     // Helper to check specific pixels from golden data
     auto checkPixels = [](SDL_Surface* surf, const unsigned char* golden, 
@@ -222,7 +223,7 @@ TEST_CASE("Golden Data Tests - Full Image Spot Checks") {
             if (idx >= width * height) continue;
             
             Uint8 r, g, b, a;
-            SDL_GetRGBA(pixels[idx], surf->format, &r, &g, &b, &a);
+            SDL_GetRGBA_Format(pixels[idx], surf->format, &r, &g, &b, &a);
             
             Uint8 expected_r = golden[idx * 4 + 0];
             Uint8 expected_g = golden[idx * 4 + 1];

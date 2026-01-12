@@ -101,5 +101,55 @@
     inline void SDL_GL_DestroyContext(SDL_GLContext context) {
         SDL_GL_DeleteContext(context);
     }
+    // SDL2 uses SDL_ConvertSurfaceFormat, but with different signature
+    inline SDL_Surface* SDL_ConvertSurface(SDL_Surface* surface, Uint32 format) {
+        SDL_PixelFormat* fmt = SDL_AllocFormat(format);
+        if (!fmt) return nullptr;
+        SDL_Surface* result = SDL_ConvertSurface(surface, fmt, 0);
+        SDL_FreeFormat(fmt);
+        return result;
+    }
+
+    // SDL2 compatibility: SDL_Init returns 0 on success
+    inline bool SDL_InitCompat(Uint32 flags) {
+        return SDL_Init(flags) == 0;
+    }
+#else
+    // SDL3 section
+
+    // SDL3 compatibility: SDL_Init returns bool (true on success)
+    inline bool SDL_InitCompat(Uint32 flags) {
+        return SDL_Init(flags);
+    }
+
+    // SDL3: Wrapper for SDL_MapRGBA that takes SDL_PixelFormat enum (surface->format)
+    inline Uint32 SDL_MapRGBA_Format(SDL_PixelFormat format, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+        const SDL_PixelFormatDetails* details = SDL_GetPixelFormatDetails(format);
+        return SDL_MapRGBA(details, nullptr, r, g, b, a);
+    }
+
+    // SDL3: Wrapper for SDL_GetRGBA that takes SDL_PixelFormat enum (surface->format)
+    inline void SDL_GetRGBA_Format(Uint32 pixel, SDL_PixelFormat format, Uint8* r, Uint8* g, Uint8* b, Uint8* a) {
+        const SDL_PixelFormatDetails* details = SDL_GetPixelFormatDetails(format);
+        SDL_GetRGBA(pixel, details, nullptr, r, g, b, a);
+    }
+
+    // SDL3 uses SDL_CreateSurface instead of SDL_CreateRGBSurfaceWithFormat
+    inline SDL_Surface* SDL_CreateRGBSurfaceWithFormat(Uint32 /*flags*/, int width, int height,
+                                                        int /*depth*/, Uint32 format) {
+        return SDL_CreateSurface(width, height, static_cast<SDL_PixelFormat>(format));
+    }
+
+    // SDL3 uses SDL_ConvertSurface with format enum
+    inline SDL_Surface* SDL_ConvertSurfaceFormat(SDL_Surface* surface, Uint32 format, Uint32 /*flags*/) {
+        return SDL_ConvertSurface(surface, static_cast<SDL_PixelFormat>(format));
+    }
+#endif
+
+// Common compatibility macros for both SDL2 and SDL3
+#ifdef SCALER_HAS_SDL2
+    // SDL2: SDL_MapRGBA takes SDL_PixelFormat* directly, surface->format is SDL_PixelFormat*
+    #define SDL_MapRGBA_Format(format, r, g, b, a) SDL_MapRGBA(format, r, g, b, a)
+    #define SDL_GetRGBA_Format(pixel, format, r, g, b, a) SDL_GetRGBA(pixel, format, r, g, b, a)
 #endif
     // SDL3 already has SDL_LoadBMP_IO, SDL_IOFromConstMem, SDL_GL_DestroyContext, etc.

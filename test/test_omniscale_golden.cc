@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include <scaler/sdl/sdl_compat.hh>
 #include <../include/scaler/sdl/sdl_image.hh>
 #include <../include/scaler/cpu/omniscale.hh>
 #include <memory>
@@ -11,23 +12,23 @@
 #include "data/rotozoom_omniscale_3x_bmp.h"
 using namespace scaler;
 // Helper to load BMP from embedded data
-std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> 
+std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> 
 loadBMPFromMemory(const unsigned char* data, unsigned int size) {
     SDL_IOStream* io = SDL_IOFromConstMem(data, size);
     if (!io) {
-        return {nullptr, SDL_FreeSurface};
+        return {nullptr, SDL_DestroySurface};
     }
     
     SDL_Surface* surface = SDL_LoadBMP_IO(io, true);
     if (!surface) {
-        return {nullptr, SDL_FreeSurface};
+        return {nullptr, SDL_DestroySurface};
     }
     
     // Convert to RGBA for consistency
     SDL_Surface* rgba_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
-    SDL_FreeSurface(surface);
+    SDL_DestroySurface(surface);
     
-    return {rgba_surface, SDL_FreeSurface};
+    return {rgba_surface, SDL_DestroySurface};
 }
 
 // Helper to compare two surfaces
@@ -46,8 +47,8 @@ bool compareSurfaces(SDL_Surface* surf1, SDL_Surface* surf2, int tolerance = 0) 
     for (int i = 0; i < surf1->w * surf1->h && matches; ++i) {
         Uint8 r1, g1, b1, a1;
         Uint8 r2, g2, b2, a2;
-        SDL_GetRGBA(pixels1[i], surf1->format, &r1, &g1, &b1, &a1);
-        SDL_GetRGBA(pixels2[i], surf2->format, &r2, &g2, &b2, &a2);
+        SDL_GetRGBA_Format(pixels1[i], surf1->format, &r1, &g1, &b1, &a1);
+        SDL_GetRGBA_Format(pixels2[i], surf2->format, &r2, &g2, &b2, &a2);
         
         int dr = abs(r1 - r2);
         int dg = abs(g1 - g2);
@@ -88,7 +89,7 @@ TEST_CASE("OmniScale Golden Data Tests") {
     // Initialize SDL
     static bool sdl_initialized = false;
     if (!sdl_initialized) {
-        REQUIRE(SDL_Init(SDL_INIT_VIDEO) == 0);
+        REQUIRE(SDL_InitCompat(SDL_INIT_VIDEO));
         sdl_initialized = true;
     }
     
@@ -175,8 +176,8 @@ TEST_CASE("OmniScale Golden Data Tests") {
         REQUIRE(pattern != nullptr);
         
         Uint32* pixels = static_cast<Uint32*>(pattern->pixels);
-        Uint32 white = SDL_MapRGBA(pattern->format, 255, 255, 255, 255);
-        Uint32 black = SDL_MapRGBA(pattern->format, 0, 0, 0, 255);
+        Uint32 white = SDL_MapRGBA_Format(pattern->format, 255, 255, 255, 255);
+        Uint32 black = SDL_MapRGBA_Format(pattern->format, 0, 0, 0, 255);
         
         // Create checkerboard
         for (int y = 0; y < 4; y++) {
@@ -195,7 +196,7 @@ TEST_CASE("OmniScale Golden Data Tests") {
         
         // The output should maintain the checkerboard pattern
         // but with smooth transitions at edges
-        SDL_FreeSurface(pattern);
+        SDL_DestroySurface(pattern);
     }
     
     SUBCASE("OmniScale 3x basic patterns") {
@@ -205,8 +206,8 @@ TEST_CASE("OmniScale Golden Data Tests") {
         REQUIRE(pattern != nullptr);
         
         Uint32* pixels = static_cast<Uint32*>(pattern->pixels);
-        Uint32 white = SDL_MapRGBA(pattern->format, 255, 255, 255, 255);
-        Uint32 black = SDL_MapRGBA(pattern->format, 0, 0, 0, 255);
+        Uint32 white = SDL_MapRGBA_Format(pattern->format, 255, 255, 255, 255);
+        Uint32 black = SDL_MapRGBA_Format(pattern->format, 0, 0, 0, 255);
         
         // Create a cross pattern
         for (int i = 0; i < 9; i++) pixels[i] = black;
@@ -224,6 +225,6 @@ TEST_CASE("OmniScale Golden Data Tests") {
         CHECK(output.width() == 9);
         CHECK(output.height() == 9);
         
-        SDL_FreeSurface(pattern);
+        SDL_DestroySurface(pattern);
     }
 }

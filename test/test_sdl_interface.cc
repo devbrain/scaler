@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include <scaler/sdl/sdl_compat.hh>
 #include <scaler/sdl/sdl_image.hh>
 #include <scaler/sdl/sdl_scalers.hh>
 #include <scaler/cpu/epx.hh>
@@ -13,13 +14,13 @@
 #include "data/rotozoom_bmp.h"
 using namespace scaler;
 // Helper to load test image from memory
-std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> loadTestImage() {
+std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> loadTestImage() {
     SDL_IOStream* io = SDL_IOFromConstMem(data_rotozoom_bmp, data_rotozoom_bmp_len);
     if (!io) {
-        return {nullptr, SDL_FreeSurface};
+        return {nullptr, SDL_DestroySurface};
     }
     SDL_Surface* surface = SDL_LoadBMP_IO(io, true); // true = close IO after load
-    return {surface, SDL_FreeSurface};
+    return {surface, SDL_DestroySurface};
 }
 
 // Helper to compare two surfaces pixel by pixel
@@ -43,8 +44,8 @@ bool compareSurfaces(SDL_Surface* surf1, SDL_Surface* surf2) {
             Uint32 pixel1 = pixels1[y * surf1->w + x];
             Uint32 pixel2 = pixels2[y * surf2->w + x];
             
-            SDL_GetRGBA(pixel1, surf1->format, &r1, &g1, &b1, &a1);
-            SDL_GetRGBA(pixel2, surf2->format, &r2, &g2, &b2, &a2);
+            SDL_GetRGBA_Format(pixel1, surf1->format, &r1, &g1, &b1, &a1);
+            SDL_GetRGBA_Format(pixel2, surf2->format, &r2, &g2, &b2, &a2);
             
             if (r1 != r2 || g1 != g2 || b1 != b2 || a1 != a2) {
                 identical = false;
@@ -60,7 +61,7 @@ bool compareSurfaces(SDL_Surface* surf1, SDL_Surface* surf2) {
 
 TEST_CASE("SDL Interface Tests") {
     // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+    if (!SDL_InitCompat(SDL_INIT_VIDEO)) {
         FAIL("SDL initialization failed: " << SDL_GetError());
     }
     
@@ -73,7 +74,7 @@ TEST_CASE("SDL Interface Tests") {
         // Convert to 32-bit RGBA format for consistency
         SDL_Surface* converted = SDL_ConvertSurfaceFormat(input_surface.get(), SDL_PIXELFORMAT_RGBA8888, 0);
         REQUIRE(converted != nullptr);
-        std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> input_32bit(converted, SDL_FreeSurface);
+        std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> input_32bit(converted, SDL_DestroySurface);
         
         // Test EPX: Direct CRTP vs convenience function
         {
@@ -84,7 +85,7 @@ TEST_CASE("SDL Interface Tests") {
             // Convenience function
             SDL_Surface* output_conv = scaleEpxSDL(input_32bit.get());
             REQUIRE(output_conv != nullptr);
-            std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> conv_result(output_conv, SDL_FreeSurface);
+            std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> conv_result(output_conv, SDL_DestroySurface);
             
             // Compare results
             CHECK(compareSurfaces(output_crtp.get_surface(), output_conv));
@@ -97,7 +98,7 @@ TEST_CASE("SDL Interface Tests") {
             
             SDL_Surface* output_conv = scaleEagleSDL(input_32bit.get());
             REQUIRE(output_conv != nullptr);
-            std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> conv_result(output_conv, SDL_FreeSurface);
+            std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> conv_result(output_conv, SDL_DestroySurface);
             
             CHECK(compareSurfaces(output_crtp.get_surface(), output_conv));
         }
@@ -109,7 +110,7 @@ TEST_CASE("SDL Interface Tests") {
             
             SDL_Surface* output_conv = scale2xSaISDL(input_32bit.get());
             REQUIRE(output_conv != nullptr);
-            std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> conv_result(output_conv, SDL_FreeSurface);
+            std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> conv_result(output_conv, SDL_DestroySurface);
             
             CHECK(compareSurfaces(output_crtp.get_surface(), output_conv));
         }
@@ -121,7 +122,7 @@ TEST_CASE("SDL Interface Tests") {
             
             SDL_Surface* output_conv = scaleXbrSDL(input_32bit.get());
             REQUIRE(output_conv != nullptr);
-            std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> conv_result(output_conv, SDL_FreeSurface);
+            std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> conv_result(output_conv, SDL_DestroySurface);
             
             CHECK(compareSurfaces(output_crtp.get_surface(), output_conv));
         }
@@ -133,7 +134,7 @@ TEST_CASE("SDL Interface Tests") {
             
             SDL_Surface* output_conv = scaleHq2xSDL(input_32bit.get());
             REQUIRE(output_conv != nullptr);
-            std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> conv_result(output_conv, SDL_FreeSurface);
+            std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> conv_result(output_conv, SDL_DestroySurface);
             
             CHECK(compareSurfaces(output_crtp.get_surface(), output_conv));
         }
@@ -143,16 +144,16 @@ TEST_CASE("SDL Interface Tests") {
         // Create a small test pattern
         SDL_Surface* small_input = SDL_CreateRGBSurfaceWithFormat(0, 2, 2, 32, SDL_PIXELFORMAT_RGBA8888);
         REQUIRE(small_input != nullptr);
-        std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> input(small_input, SDL_FreeSurface);
+        std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> input(small_input, SDL_DestroySurface);
         
         // Fill with a pattern
         if (SDL_MUSTLOCK(small_input)) SDL_LockSurface(small_input);
         
         Uint32* pixels = static_cast<Uint32*>(small_input->pixels);
-        pixels[0] = SDL_MapRGBA(small_input->format, 255, 0, 0, 255);   // Red
-        pixels[1] = SDL_MapRGBA(small_input->format, 0, 255, 0, 255);   // Green
-        pixels[2] = SDL_MapRGBA(small_input->format, 0, 0, 255, 255);   // Blue
-        pixels[3] = SDL_MapRGBA(small_input->format, 255, 255, 0, 255); // Yellow
+        pixels[0] = SDL_MapRGBA_Format(small_input->format, 255, 0, 0, 255);   // Red
+        pixels[1] = SDL_MapRGBA_Format(small_input->format, 0, 255, 0, 255);   // Green
+        pixels[2] = SDL_MapRGBA_Format(small_input->format, 0, 0, 255, 255);   // Blue
+        pixels[3] = SDL_MapRGBA_Format(small_input->format, 255, 255, 0, 255); // Yellow
         
         if (SDL_MUSTLOCK(small_input)) SDL_UnlockSurface(small_input);
         
@@ -162,7 +163,7 @@ TEST_CASE("SDL Interface Tests") {
             CHECK(epx_output != nullptr);
             CHECK(epx_output->w == 4);
             CHECK(epx_output->h == 4);
-            SDL_FreeSurface(epx_output);
+            SDL_DestroySurface(epx_output);
         }
         
         {
@@ -170,7 +171,7 @@ TEST_CASE("SDL Interface Tests") {
             CHECK(eagle_output != nullptr);
             CHECK(eagle_output->w == 4);
             CHECK(eagle_output->h == 4);
-            SDL_FreeSurface(eagle_output);
+            SDL_DestroySurface(eagle_output);
         }
         
         {
@@ -178,7 +179,7 @@ TEST_CASE("SDL Interface Tests") {
             CHECK(sai_output != nullptr);
             CHECK(sai_output->w == 4);
             CHECK(sai_output->h == 4);
-            SDL_FreeSurface(sai_output);
+            SDL_DestroySurface(sai_output);
         }
         
         {
@@ -186,7 +187,7 @@ TEST_CASE("SDL Interface Tests") {
             CHECK(xbr_output != nullptr);
             CHECK(xbr_output->w == 4);
             CHECK(xbr_output->h == 4);
-            SDL_FreeSurface(xbr_output);
+            SDL_DestroySurface(xbr_output);
         }
         
         {
@@ -194,7 +195,7 @@ TEST_CASE("SDL Interface Tests") {
             CHECK(hq2x_output != nullptr);
             CHECK(hq2x_output->w == 4);
             CHECK(hq2x_output->h == 4);
-            SDL_FreeSurface(hq2x_output);
+            SDL_DestroySurface(hq2x_output);
         }
     }
     

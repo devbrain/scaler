@@ -36,7 +36,7 @@ std::vector<PixelData> extractPixelData(SDL_Surface* surface) {
             Uint32 pixel = pixels[y * surface->w + x];
 
             PixelData pd;
-            SDL_GetRGBA(pixel, surface->format, &pd.r, &pd.g, &pd.b, &pd.a);
+            SDL_GetRGBA_Format(pixel, surface->format, &pd.r, &pd.g, &pd.b, &pd.a);
             data.push_back(pd);
         }
     }
@@ -102,28 +102,28 @@ void generateTestPattern() {
     
     // Create a pattern with various colors and patterns
     // Row 0: Red gradient
-    pixels[0] = SDL_MapRGBA(pattern->format, 255, 0, 0, 255);
-    pixels[1] = SDL_MapRGBA(pattern->format, 192, 0, 0, 255);
-    pixels[2] = SDL_MapRGBA(pattern->format, 128, 0, 0, 255);
-    pixels[3] = SDL_MapRGBA(pattern->format, 64, 0, 0, 255);
+    pixels[0] = SDL_MapRGBA_Format(pattern->format, 255, 0, 0, 255);
+    pixels[1] = SDL_MapRGBA_Format(pattern->format, 192, 0, 0, 255);
+    pixels[2] = SDL_MapRGBA_Format(pattern->format, 128, 0, 0, 255);
+    pixels[3] = SDL_MapRGBA_Format(pattern->format, 64, 0, 0, 255);
     
     // Row 1: Green gradient
-    pixels[4] = SDL_MapRGBA(pattern->format, 0, 255, 0, 255);
-    pixels[5] = SDL_MapRGBA(pattern->format, 0, 192, 0, 255);
-    pixels[6] = SDL_MapRGBA(pattern->format, 0, 128, 0, 255);
-    pixels[7] = SDL_MapRGBA(pattern->format, 0, 64, 0, 255);
+    pixels[4] = SDL_MapRGBA_Format(pattern->format, 0, 255, 0, 255);
+    pixels[5] = SDL_MapRGBA_Format(pattern->format, 0, 192, 0, 255);
+    pixels[6] = SDL_MapRGBA_Format(pattern->format, 0, 128, 0, 255);
+    pixels[7] = SDL_MapRGBA_Format(pattern->format, 0, 64, 0, 255);
     
     // Row 2: Blue gradient
-    pixels[8] = SDL_MapRGBA(pattern->format, 0, 0, 255, 255);
-    pixels[9] = SDL_MapRGBA(pattern->format, 0, 0, 192, 255);
-    pixels[10] = SDL_MapRGBA(pattern->format, 0, 0, 128, 255);
-    pixels[11] = SDL_MapRGBA(pattern->format, 0, 0, 64, 255);
+    pixels[8] = SDL_MapRGBA_Format(pattern->format, 0, 0, 255, 255);
+    pixels[9] = SDL_MapRGBA_Format(pattern->format, 0, 0, 192, 255);
+    pixels[10] = SDL_MapRGBA_Format(pattern->format, 0, 0, 128, 255);
+    pixels[11] = SDL_MapRGBA_Format(pattern->format, 0, 0, 64, 255);
     
     // Row 3: Mixed colors
-    pixels[12] = SDL_MapRGBA(pattern->format, 255, 255, 0, 255);  // Yellow
-    pixels[13] = SDL_MapRGBA(pattern->format, 255, 0, 255, 255);  // Magenta
-    pixels[14] = SDL_MapRGBA(pattern->format, 0, 255, 255, 255);  // Cyan
-    pixels[15] = SDL_MapRGBA(pattern->format, 255, 255, 255, 255); // White
+    pixels[12] = SDL_MapRGBA_Format(pattern->format, 255, 255, 0, 255);  // Yellow
+    pixels[13] = SDL_MapRGBA_Format(pattern->format, 255, 0, 255, 255);  // Magenta
+    pixels[14] = SDL_MapRGBA_Format(pattern->format, 0, 255, 255, 255);  // Cyan
+    pixels[15] = SDL_MapRGBA_Format(pattern->format, 255, 255, 255, 255); // White
     
     if (SDL_MUSTLOCK(pattern)) SDL_UnlockSurface(pattern);
     
@@ -169,15 +169,17 @@ void generateTestPattern() {
         writeGoldenData("test_pattern_hq2x", output.width(), output.height(), data);
     }
     
-    SDL_FreeSurface(pattern);
+    SDL_DestroySurface(pattern);
 }
 
 int main() {
-    // Tell SDL we're handling main ourselves
+#ifndef SCALER_HAS_SDL3
+    // Tell SDL we're handling main ourselves (SDL2 only)
     SDL_SetMainReady();
+#endif
 
     // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+    if (!SDL_InitCompat(SDL_INIT_VIDEO)) {
         std::cerr << "SDL initialization failed: " << SDL_GetError() << std::endl;
         return 1;
     }
@@ -199,7 +201,7 @@ int main() {
     
     // Convert to RGBA for consistency
     SDL_Surface* rgba_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
-    SDL_FreeSurface(surface);
+    SDL_DestroySurface(surface);
     
     if (!rgba_surface) {
         std::cerr << "Failed to convert surface format" << std::endl;
@@ -254,7 +256,7 @@ int main() {
     std::cout << "\nGenerating golden data for test patterns...\n";
     generateTestPattern();
     
-    SDL_FreeSurface(rgba_surface);
+    SDL_DestroySurface(rgba_surface);
     SDL_Quit();
     
     std::cout << "\nGolden data generation complete!\n";
