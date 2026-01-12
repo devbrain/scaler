@@ -68,7 +68,18 @@ endif()
 
 # Find OpenGL for GPU acceleration
 find_package(OpenGL QUIET)
-find_package(GLEW QUIET)
+
+# GLEW integration (optional, for non-Apple platforms)
+if(NOT APPLE)
+    include(${NEUTRINO_CMAKE_DIR}/deps/GLEW.cmake)
+    neutrino_fetch_GLEW()
+endif()
+# Set GLEW_FOUND for backwards compatibility
+if(TARGET GLEW::GLEW)
+    set(GLEW_FOUND TRUE)
+else()
+    set(GLEW_FOUND FALSE)
+endif()
 
 # Windows-specific definitions
 if(WIN32)

@@ -117,6 +117,11 @@
 #else
     // SDL3 section
 
+    // SDL3 GL context flag compatibility - provide alias used in SDL2
+    #ifndef SDL_GL_CONTEXT_FORWARD_COMPATIBLE
+        #define SDL_GL_CONTEXT_FORWARD_COMPATIBLE SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG
+    #endif
+
     // SDL3 compatibility: SDL_Init returns bool (true on success)
     inline bool SDL_InitCompat(Uint32 flags) {
         return SDL_Init(flags);

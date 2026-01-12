@@ -14,7 +14,11 @@ FetchContent_MakeAvailable(imgui)
 
 # Find required packages
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
+
+# GLEW should be available from parent (via neutrino_fetch_GLEW)
+if(NOT TARGET GLEW::GLEW)
+    message(FATAL_ERROR "GLEW::GLEW target not found. GLEW is required for gpu_scaler example.")
+endif()
 
 # SDL3 should be available from parent (via neutrino_fetch_sdl3)
 if(NOT TARGET SDL3::SDL3)

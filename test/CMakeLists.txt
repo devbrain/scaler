@@ -47,7 +47,7 @@ if(OpenGL_FOUND)
     target_link_libraries(scaler_unittest PRIVATE OpenGL::GL)
 
     # Link GLEW on non-Apple platforms
-    if(NOT APPLE AND GLEW_FOUND)
+    if(NOT APPLE AND TARGET GLEW::GLEW)
         target_link_libraries(scaler_unittest PRIVATE GLEW::GLEW)
     endif()
 endif()
